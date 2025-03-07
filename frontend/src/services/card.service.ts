@@ -1,46 +1,47 @@
 import api from '../api/axios';
 import { Card } from '../store/types';
+import { API_ENDPOINTS } from '../config';
 
 interface CreateCardData {
     title: string;
     description?: string;
-    list_id: number;
     position: number;
+    list_id: number;
 }
 
 interface UpdateCardData {
     title?: string;
     description?: string;
-    position?: number;
-}
-
-interface MoveCardData {
-    target_list_id: number;
-    new_position: number;
 }
 
 export const cardService = {
-    async getCard(id: number): Promise<Card> {
-        const response = await api.get<Card>(`/cards/${id}`);
+    async getListCards(listId: number): Promise<Card[]> {
+        const response = await api.get<Card[]>(API_ENDPOINTS.CARDS.LIST(listId));
         return response.data;
     },
 
-    async createCard(data: CreateCardData): Promise<Card> {
-        const response = await api.post<Card>('/cards/', data);
+    async createCard(listId: number, data: CreateCardData): Promise<Card> {
+        const response = await api.post<Card>(API_ENDPOINTS.CARDS.CREATE(listId), data);
         return response.data;
     },
 
-    async updateCard(id: number, data: UpdateCardData): Promise<Card> {
-        const response = await api.put<Card>(`/cards/${id}`, data);
+    async updateCard(cardId: number, data: UpdateCardData): Promise<Card> {
+        const response = await api.put<Card>(API_ENDPOINTS.CARDS.UPDATE(cardId), data);
         return response.data;
     },
 
-    async deleteCard(id: number): Promise<void> {
-        await api.delete(`/cards/${id}`);
+    async deleteCard(cardId: number): Promise<void> {
+        await api.delete(API_ENDPOINTS.CARDS.DELETE(cardId));
     },
 
-    async moveCard(id: number, data: MoveCardData): Promise<Card> {
-        const response = await api.post<Card>(`/cards/${id}/move`, data);
+    async moveCard(listId: number, cardId: number, targetListId: number, newPosition: number): Promise<Card> {
+        const response = await api.post<Card>(
+            API_ENDPOINTS.CARDS.MOVE(listId, cardId),
+            {
+                target_list_id: targetListId,
+                new_position: newPosition
+            }
+        );
         return response.data;
     }
 }; 

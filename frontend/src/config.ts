@@ -19,8 +19,10 @@ export const API_ENDPOINTS = {
     DELETE: (id: number) => `${API_BASE_URL}/lists/${id}`,
   },
   CARDS: {
+    LIST: (listId: number) => `${API_BASE_URL}/lists/${listId}/cards`,
     CREATE: (listId: number) => `${API_BASE_URL}/lists/${listId}/cards`,
-    UPDATE: (id: number) => `${API_BASE_URL}/cards/${id}`,
-    DELETE: (id: number) => `${API_BASE_URL}/cards/${id}`,
+    UPDATE: (listId: number, cardId: number) => `${API_BASE_URL}/lists/${listId}/cards/${cardId}`,
+    DELETE: (listId: number, cardId: number) => `${API_BASE_URL}/lists/${listId}/cards/${cardId}`,
+    MOVE: (listId: number, cardId: number) => `${API_BASE_URL}/lists/${listId}/cards/${cardId}/move`,
   },
 }; 

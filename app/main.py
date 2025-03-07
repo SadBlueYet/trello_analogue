@@ -35,6 +35,6 @@ app.include_router(
 )
 app.include_router(
     cards.router,
-    prefix=f"{settings.API_V1_STR}/cards",
+    prefix=f"{settings.API_V1_STR}",
     tags=["cards"]
 )

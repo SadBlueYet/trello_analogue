@@ -7,6 +7,7 @@ import { fetchBoard, setCurrentBoard } from '../store/board.slice';
 import api from '../api/axios';
 import { Board, BoardList, Card } from '../store/types';
 import { listService } from '../services/list.service';
+import { cardService } from '../services/card.service';
 import { 
   Button, 
   Input, 
@@ -108,8 +109,16 @@ const BoardPage: React.FC = () => {
       console.log('Dispatching fetchBoard with ID:', parseInt(boardId));
       dispatch(fetchBoard(parseInt(boardId)))
         .unwrap()
-        .then(result => {
+        .then(async (result) => {
           console.log('Successfully loaded board:', JSON.stringify(result, null, 2));
+          // Load cards for each list
+          const updatedLists = await Promise.all(
+            result.lists.map(async (list) => {
+              const cards = await cardService.getListCards(list.id);
+              return { ...list, cards };
+            })
+          );
+          dispatch(setCurrentBoard({ ...result, lists: updatedLists }));
         })
         .catch(err => {
           console.error('Error loading board:', err);
@@ -189,20 +198,17 @@ const BoardPage: React.FC = () => {
       const list = currentBoard.lists.find(l => l.id === listId);
       if (!list) return;
 
-      const response = await api.post<Card>(
-        `/lists/${listId}/cards`,
-        {
-          title: newCardTitle,
-          position: list.cards.length,
-          list_id: listId
-        }
-      );
+      const response = await cardService.createCard(listId, {
+        title: newCardTitle,
+        position: list.cards.length,
+        list_id: listId
+      });
 
       const updatedBoard: Board = {
         ...currentBoard,
         lists: currentBoard.lists.map(list =>
           list.id === listId
-            ? { ...list, cards: [...list.cards, response.data] }
+            ? { ...list, cards: [...list.cards, response] }
             : list
         )
       };
