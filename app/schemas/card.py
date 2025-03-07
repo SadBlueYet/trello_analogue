@@ -12,8 +12,11 @@ class CardCreate(CardBase):
     list_id: int
 
 
-class CardUpdate(CardBase):
-    pass
+class CardUpdate(BaseModel):
+    title: Optional[str] = None
+    description: Optional[str] = None
+    position: Optional[int] = None
+    list_id: Optional[int] = None
 
 
 class CardInDBBase(CardBase):
@@ -27,6 +30,9 @@ class CardInDBBase(CardBase):
 class Card(CardInDBBase):
     pass
 
+class MoveCard(BaseModel):
+    new_position: int
+    target_list_id: int
 
 # Update List schema to include cards
 from app.schemas.board import BoardListInDBBase

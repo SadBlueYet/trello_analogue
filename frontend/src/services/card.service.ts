@@ -21,7 +21,10 @@ export const cardService = {
     },
 
     async createCard(listId: number, data: CreateCardData): Promise<Card> {
-        const response = await api.post<Card>(API_ENDPOINTS.CARDS.CREATE(listId), data);
+        const response = await api.post<Card>(API_ENDPOINTS.CARDS.CREATE, {
+            ...data,
+            list_id: listId
+        });
         return response.data;
     },
 
@@ -34,9 +37,9 @@ export const cardService = {
         await api.delete(API_ENDPOINTS.CARDS.DELETE(cardId));
     },
 
-    async moveCard(listId: number, cardId: number, targetListId: number, newPosition: number): Promise<Card> {
+    async moveCard(cardId: number, targetListId: number, newPosition: number): Promise<Card> {
         const response = await api.post<Card>(
-            API_ENDPOINTS.CARDS.MOVE(listId, cardId),
+            API_ENDPOINTS.CARDS.MOVE(cardId),
             {
                 target_list_id: targetListId,
                 new_position: newPosition

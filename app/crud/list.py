@@ -113,4 +113,8 @@ async def reorder_list(
     list_obj.position = new_position
     await db.commit()
     await db.refresh(list_obj)
-    return list_obj 
+    return BoardListCreate(
+        title=list_obj.title,
+        position=list_obj.position,
+        board_id=list_obj.board_id,
+    ) 

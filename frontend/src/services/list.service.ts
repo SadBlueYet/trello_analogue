@@ -14,28 +14,22 @@ interface UpdateListData {
 }
 
 export const listService = {
-    async getList(id: number): Promise<BoardList> {
-        const response = await api.get<any>(`/lists/${id}`);
-        return {
-            ...response.data,
-            cards: response.data.cards || []
-        };
+    async getBoardLists(boardId: number): Promise<BoardList[]> {
+        const response = await api.get<BoardList[]>(API_ENDPOINTS.LISTS.LIST(boardId));
+        return response.data;
     },
 
     async createList(boardId: number, data: CreateListData): Promise<BoardList> {
-        const response = await api.post<any>(API_ENDPOINTS.LISTS.CREATE(boardId), data);
-        return {
-            ...response.data,
-            cards: []
-        };
+        const response = await api.post<BoardList>(API_ENDPOINTS.LISTS.CREATE, {
+            ...data,
+            board_id: boardId
+        });
+        return response.data;
     },
 
     async updateList(id: number, data: UpdateListData): Promise<BoardList> {
-        const response = await api.patch<any>(API_ENDPOINTS.LISTS.UPDATE(id), data);
-        return {
-            ...response.data,
-            cards: response.data.cards || []
-        };
+        const response = await api.put<BoardList>(API_ENDPOINTS.LISTS.UPDATE(id), data);
+        return response.data;
     },
 
     async deleteList(id: number): Promise<void> {
@@ -43,9 +37,10 @@ export const listService = {
     },
 
     async reorderList(id: number, newPosition: number): Promise<BoardList> {
-        const response = await api.post<BoardList>(`/lists/${id}/reorder`, {
-            new_position: newPosition
-        });
+        const response = await api.post<BoardList>(
+            API_ENDPOINTS.LISTS.REORDER(id),
+            { new_position: newPosition }
+        );
         return response.data;
     }
 }; 

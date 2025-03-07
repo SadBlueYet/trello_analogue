@@ -1,5 +1,5 @@
 from typing import List, Optional
-from sqlalchemy import select
+from sqlalchemy import select, text
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.models.card import Card
 from app.schemas.card import CardCreate, CardUpdate
@@ -34,6 +34,7 @@ async def create_card(db: AsyncSession, card_in: CardCreate) -> Card:
         select(Card)
         .where(Card.list_id == card_in.list_id)
         .order_by(Card.position.desc())
+        .limit(1)
     )
     last_card = result.scalar_one_or_none()
     new_position = (last_card.position + 1) if last_card else 0
@@ -84,23 +85,23 @@ async def move_card(db: AsyncSession, card_id: int, target_list_id: int, new_pos
     if card.list_id != target_list_id:
         # Update positions in the old list
         await db.execute(
-            """
-            UPDATE cards 
+            text("""
+            UPDATE card
             SET position = position - 1 
             WHERE list_id = :list_id 
             AND position > :old_position
-            """,
+            """),
             {"list_id": card.list_id, "old_position": card.position}
         )
 
         # Update positions in the new list
         await db.execute(
-            """
-            UPDATE cards 
+            text("""
+            UPDATE card
             SET position = position + 1 
             WHERE list_id = :list_id 
             AND position >= :new_position
-            """,
+            """),
             {"list_id": target_list_id, "new_position": new_position}
         )
 
@@ -112,13 +113,13 @@ async def move_card(db: AsyncSession, card_id: int, target_list_id: int, new_pos
         if card.position < new_position:
             # Moving forward
             await db.execute(
-                """
-                UPDATE cards 
+                text("""
+                UPDATE card
                 SET position = position - 1 
                 WHERE list_id = :list_id 
                 AND position > :old_position 
                 AND position <= :new_position
-                """,
+                """),
                 {
                     "list_id": card.list_id,
                     "old_position": card.position,
@@ -128,13 +129,13 @@ async def move_card(db: AsyncSession, card_id: int, target_list_id: int, new_pos
         else:
             # Moving backward
             await db.execute(
-                """
-                UPDATE cards 
+                text("""
+                UPDATE card
                 SET position = position + 1 
                 WHERE list_id = :list_id 
                 AND position >= :new_position 
                 AND position < :old_position
-                """,
+                """),
                 {
                     "list_id": card.list_id,
                     "old_position": card.position,

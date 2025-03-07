@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from app.api.v1 import auth, boards, lists, cards
+from app.api.v1.api import api_router
 from app.core.config import settings
 
 app = FastAPI(
@@ -17,24 +17,8 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Include routers
-app.include_router(
-    auth.router,
-    prefix=f"{settings.API_V1_STR}/auth",
-    tags=["auth"]
-)
-app.include_router(
-    boards.router,
-    prefix=f"{settings.API_V1_STR}/boards",
-    tags=["boards"]
-)
-app.include_router(
-    lists.router,
-    prefix=f"{settings.API_V1_STR}/boards",
-    tags=["lists"]
-)
-app.include_router(
-    cards.router,
-    prefix=f"{settings.API_V1_STR}",
-    tags=["cards"]
-)
+app.include_router(api_router, prefix=settings.API_V1_STR)
+
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run(app, host="0.0.0.0", port=8000)

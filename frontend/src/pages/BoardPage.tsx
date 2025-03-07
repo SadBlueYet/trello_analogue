@@ -232,8 +232,7 @@ const BoardPage: React.FC = () => {
 
       const updatedLists = lists.map((list, index) => ({
         ...list,
-        position: index,
-        board_id: currentBoard.id
+        position: index
       }));
 
       const updatedBoard: Board = {
@@ -243,13 +242,7 @@ const BoardPage: React.FC = () => {
       dispatch(setCurrentBoard(updatedBoard));
 
       try {
-        await api.patch(
-          `/lists/${removed.id}`,
-          { 
-            position: destination.index,
-            board_id: currentBoard.id
-          }
-        );
+        await listService.reorderList(removed.id, destination.index);
       } catch (err) {
         console.error('Failed to update list position', err);
       }
@@ -269,14 +262,12 @@ const BoardPage: React.FC = () => {
 
       const updatedSourceCards = sourceCards.map((card, index) => ({
         ...card,
-        position: index,
-        list_id: parseInt(source.droppableId)
+        position: index
       }));
 
       const updatedDestCards = destCards.map((card, index) => ({
         ...card,
-        position: index,
-        list_id: parseInt(destination.droppableId)
+        position: index
       }));
 
       const updatedBoard: Board = {
@@ -294,12 +285,10 @@ const BoardPage: React.FC = () => {
       dispatch(setCurrentBoard(updatedBoard));
 
       try {
-        await api.patch(
-          `/cards/${removed.id}`,
-          {
-            list_id: parseInt(destination.droppableId),
-            position: destination.index
-          }
+        await cardService.moveCard(
+          removed.id,
+          parseInt(destination.droppableId),
+          destination.index
         );
       } catch (err) {
         console.error('Failed to update card position', err);
