@@ -85,6 +85,7 @@ async def update_list(
     if board.owner_id != current_user.id:
         raise HTTPException(status_code=403, detail="Not enough permissions")
     list_obj = await crud_list.update_list(db, list_obj, list_in)
+
     return list_obj
 
 @router.delete("/{list_id}")

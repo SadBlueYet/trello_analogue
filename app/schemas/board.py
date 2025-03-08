@@ -1,4 +1,4 @@
-from typing import Optional, List
+from typing import Optional, List, ForwardRef
 from pydantic import BaseModel
 
 
@@ -12,35 +12,26 @@ class BoardCreate(BoardBase):
     pass
 
 
-class BoardUpdate(BoardBase):
+class BoardUpdate(BaseModel):
     title: Optional[str] = None
     description: Optional[str] = None
     background_color: Optional[str] = None
 
 
-class BoardInDBBase(BoardBase):
-    id: int
-    owner_id: int
-
-    class Config:
-        from_attributes = True
-
-
-class Board(BoardInDBBase):
-    pass
-
-
 class BoardListBase(BaseModel):
     title: str
     position: int
+    list_color: Optional[str] = None
 
 
 class BoardListCreate(BoardListBase):
     board_id: int
 
 
-class BoardListUpdate(BoardListBase):
-    pass
+class BoardListUpdate(BaseModel):
+    title: Optional[str] = None
+    position: Optional[int] = None
+    list_color: Optional[str] = None
 
 
 class BoardListInDBBase(BoardListBase):
@@ -53,6 +44,30 @@ class BoardListInDBBase(BoardListBase):
 
 class BoardList(BoardListInDBBase):
     pass
+
+
+class BoardInDBBase(BoardBase):
+    id: int
+    owner_id: int
+
+    class Config:
+        from_attributes = True
+
+
+# Используем ForwardRef для решения проблемы циклических импортов
+BoardListRef = ForwardRef('BoardList')
+
+
+class Board(BoardInDBBase):
+    lists: List[BoardListRef] = []
+
+
+class BoardInDB(BoardInDBBase):
+    pass
+
+
+# Разрешаем ForwardRef после определения всех классов
+Board.model_rebuild()
 
 
 # Add Board with lists

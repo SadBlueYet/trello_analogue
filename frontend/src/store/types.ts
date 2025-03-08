@@ -20,6 +20,7 @@ export interface BoardList {
     position: number;
     board_id: number;
     cards: Card[];
+    list_color?: string;
 }
 
 export interface Card {
@@ -29,6 +30,9 @@ export interface Card {
     position: number;
     list_id: number;
     task_number?: string;
+    created_at?: string;
+    updated_at?: string;
+    card_color?: string;
 }
 
 export interface AuthState {

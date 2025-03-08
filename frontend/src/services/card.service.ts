@@ -12,6 +12,7 @@ interface CreateCardData {
 interface UpdateCardData {
     title?: string;
     description?: string;
+    card_color?: string;
 }
 
 export const cardService = {

@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { useParams, Navigate } from 'react-router-dom';
+import { useParams, Navigate, useNavigate } from 'react-router-dom';
 import { DragDropContext, Droppable, Draggable, DroppableProvided, DraggableProvided } from '@hello-pangea/dnd';
 import { RootState, AppDispatch } from '../store';
 import { fetchBoard, setCurrentBoard, clearBoardCache, updateBoard } from '../store/board.slice';
@@ -21,33 +21,45 @@ import {
 import BoardSettingsForm from '../components/BoardSettingsForm';
 import CardModal from '../components/CardModal';
 
+// Список предустановленных цветов для списков
+const listColors = [
+  { name: 'Blue', value: 'from-blue-600 to-indigo-700' },
+  { name: 'Green', value: 'from-green-500 to-teal-600' },
+  { name: 'Purple', value: 'from-purple-600 to-indigo-800' },
+  { name: 'Red', value: 'from-red-500 to-pink-600' },
+  { name: 'Orange', value: 'from-orange-500 to-amber-600' },
+  { name: 'Gray', value: 'from-gray-600 to-gray-800' },
+];
+
 // New components for the board page
 const ListCard: React.FC<{
+  id: number;
   title: string;
   children: React.ReactNode;
   onAddCard: () => void;
   dragHandleProps?: any;
-  backgroundColor?: string;
-}> = ({ title, children, onAddCard, dragHandleProps, backgroundColor }) => {
-  // Определяем цвет градиента в зависимости от цвета доски или используем дефолтный
-  const gradientClass = backgroundColor || 'from-blue-600 to-indigo-700';
+  listColor?: string;
+  onEditColor?: () => void;
+}> = ({ id, title, children, onAddCard, dragHandleProps, listColor, onEditColor }) => {
+  // Определяем цвет градиента, используя собственный цвет списка или дефолтный
+  const gradientClass = listColor || 'from-blue-600 to-indigo-700';
   
   // Определяем класс тени в зависимости от основного цвета
   let shadowClass = 'shadow-md';
-  if (backgroundColor) {
-    if (backgroundColor.includes('blue') || backgroundColor.includes('indigo')) {
+  if (listColor) {
+    if (listColor.includes('blue') || listColor.includes('indigo')) {
       shadowClass = 'shadow-blue-100';
-    } else if (backgroundColor.includes('green') || backgroundColor.includes('teal') || backgroundColor.includes('emerald')) {
+    } else if (listColor.includes('green') || listColor.includes('teal') || listColor.includes('emerald')) {
       shadowClass = 'shadow-green-100';
-    } else if (backgroundColor.includes('purple') || backgroundColor.includes('violet')) {
+    } else if (listColor.includes('purple') || listColor.includes('violet')) {
       shadowClass = 'shadow-purple-100';
-    } else if (backgroundColor.includes('red') || backgroundColor.includes('pink') || backgroundColor.includes('rose')) {
+    } else if (listColor.includes('red') || listColor.includes('pink') || listColor.includes('rose')) {
       shadowClass = 'shadow-red-100';
-    } else if (backgroundColor.includes('orange') || backgroundColor.includes('amber') || backgroundColor.includes('yellow')) {
+    } else if (listColor.includes('orange') || listColor.includes('amber') || listColor.includes('yellow')) {
       shadowClass = 'shadow-orange-100';
-    } else if (backgroundColor.includes('gray')) {
+    } else if (listColor.includes('gray')) {
       shadowClass = 'shadow-gray-200';
-    } else if (backgroundColor.includes('cyan') || backgroundColor.includes('sky')) {
+    } else if (listColor.includes('cyan') || listColor.includes('sky')) {
       shadowClass = 'shadow-blue-100';
     }
   }
@@ -59,6 +71,15 @@ const ListCard: React.FC<{
         className={`p-3 font-semibold bg-gradient-to-r ${gradientClass} text-white rounded-t-lg flex justify-between items-center transition-colors duration-300`}
       >
         <span>{title}</span>
+        <button 
+          onClick={onEditColor} 
+          className="text-white opacity-80 hover:opacity-100 p-1 rounded hover:bg-white/10"
+          title="Изменить цвет списка"
+        >
+          <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01" />
+          </svg>
+        </button>
       </div>
       <div className="max-h-[60vh] overflow-y-auto p-2 space-y-2">
         {children}
@@ -85,46 +106,71 @@ const TaskCard: React.FC<{
   dragHandleProps?: any;
   onClick: () => void;
   task_number?: string;
-}> = ({ id, title, description, dragHandleProps, onClick, task_number }) => (
-  <div 
-    className="bg-white rounded-md shadow-sm border border-gray-200 hover:shadow-md transition-shadow duration-200 cursor-pointer"
-    onClick={onClick}
-  >
-    <div
-      {...dragHandleProps}
-      className="p-3"
+  created_at?: string;
+  card_color?: string;
+}> = ({ id, title, description, dragHandleProps, onClick, task_number, created_at, card_color }) => {
+  // Форматируем дату создания, если она есть
+  const formattedDate = created_at ? new Date(created_at).toLocaleDateString('ru-RU', {
+    day: '2-digit',
+    month: '2-digit',
+    year: '2-digit'
+  }) : '';
+
+  // Используем один цвет по умолчанию для всех карточек
+  const defaultColor = 'from-blue-400 to-indigo-500';
+  const accentColor = card_color || defaultColor;
+
+  return (
+    <div 
+      className="bg-white rounded-md shadow-sm border border-gray-200 hover:shadow-md transition-shadow duration-200 cursor-pointer overflow-hidden"
+      onClick={onClick}
     >
-      <div className="flex justify-between items-start mb-2">
-        <h4 className="font-medium text-gray-800">{title}</h4>
-        <span className="text-xs font-mono bg-blue-100 text-blue-800 rounded px-2 py-1">
-          {task_number || `TA-${String(id).padStart(3, '0')}`}
-        </span>
-      </div>
+      {/* Тонкая цветная полоса сверху */}
+      <div className={`h-1 bg-gradient-to-r ${accentColor}`}></div>
       
-      {description && (
-        <p className="mt-1 text-sm text-gray-600 line-clamp-2">{description}</p>
-      )}
-      
-      <div className="mt-3 flex items-center justify-between">
-        <span className="flex items-center text-xs text-gray-500">
-          <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+      <div
+        {...dragHandleProps}
+        className="p-3 relative"
+      >
+        {/* Декоративный фоновый элемент */}
+        <div className="absolute top-0 right-0 w-32 h-32 opacity-[0.03] pointer-events-none">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-full h-full text-gray-800">
+            <path fillRule="evenodd" d="M5.625 1.5c-1.036 0-1.875.84-1.875 1.875v17.25c0 1.035.84 1.875 1.875 1.875h12.75c1.035 0 1.875-.84 1.875-1.875V12.75A3.75 3.75 0 0016.5 9h-1.875a1.875 1.875 0 01-1.875-1.875V5.25A3.75 3.75 0 009 1.5H5.625zM7.5 15a.75.75 0 01.75-.75h7.5a.75.75 0 010 1.5h-7.5A.75.75 0 017.5 15zm.75 2.25a.75.75 0 000 1.5H12a.75.75 0 000-1.5H8.25z" clipRule="evenodd" />
           </svg>
-          Создано
-        </span>
-        <div className="flex space-x-1">
-          {description && (
-            <span className="inline-flex items-center text-xs text-gray-500">
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h7" />
-              </svg>
-            </span>
-          )}
+        </div>
+        
+        <div className="flex justify-between items-start mb-2">
+          <h4 className="font-medium text-gray-800">{title}</h4>
+          <span className="text-xs font-mono bg-blue-100 text-blue-800 rounded px-2 py-1">
+            {task_number || `TA-${String(id).padStart(3, '0')}`}
+          </span>
+        </div>
+        
+        {description && (
+          <p className="mt-1 text-sm text-gray-600 line-clamp-2">{description}</p>
+        )}
+        
+        <div className="mt-3 flex items-center justify-between">
+          <span className="flex items-center text-xs text-gray-500">
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            {formattedDate ? `Создано ${formattedDate}` : 'Создано'}
+          </span>
+          <div className="flex space-x-1">
+            {description && (
+              <span className="inline-flex items-center text-xs text-gray-500">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h7" />
+                </svg>
+              </span>
+            )}
+          </div>
         </div>
       </div>
     </div>
-  </div>
-);
+  );
+};
 
 const AddItemForm: React.FC<{
   placeholder: string;
@@ -230,6 +276,7 @@ export function clearListCardsCache(listId: number) {
 const BoardPage: React.FC = () => {
   const { boardId } = useParams<{ boardId: string }>();
   const dispatch = useDispatch<AppDispatch>();
+  const navigate = useNavigate();
   const { user } = useSelector((state: RootState) => state.auth);
   const { currentBoard, isLoading, error } = useSelector((state: RootState) => state.board);
   
@@ -249,6 +296,8 @@ const BoardPage: React.FC = () => {
   const [selectedCard, setSelectedCard] = useState<Card | null>(null);
   const [selectedListTitle, setSelectedListTitle] = useState<string>('');
   const [isCardModalOpen, setIsCardModalOpen] = useState(false);
+  const [editingListId, setEditingListId] = useState<number | null>(null);
+  const [selectedListColor, setSelectedListColor] = useState('');
 
   useEffect(() => {
     if (!boardId || boardLoadedRef.current) return;
@@ -685,46 +734,83 @@ const BoardPage: React.FC = () => {
   
   // Add a function to handle card update
   const handleUpdateCard = async (updatedCard: Partial<Card>) => {
-    if (!selectedCard || !currentBoard) return;
+    if (!selectedCard) return;
     
     try {
-      // Call API to update card
+      // Обновляем карточку на сервере
       const response = await cardService.updateCard(selectedCard.id, {
         title: updatedCard.title,
-        description: updatedCard.description
+        description: updatedCard.description,
+        card_color: updatedCard.card_color
       });
       
-      // Find the list containing the card
-      const updatedBoard: Board = {
-        ...currentBoard,
-        lists: currentBoard.lists.map(list => {
-          // Check if this list contains the card
-          const cardIndex = list.cards.findIndex(card => card.id === selectedCard.id);
-          if (cardIndex >= 0) {
-            // Update the card in this list
-            const updatedCards = [...list.cards];
-            updatedCards[cardIndex] = {
-              ...updatedCards[cardIndex],
-              ...response
+      // Если запрос успешен, обновляем карточку в стейте
+      if (currentBoard) {
+        const updatedLists = currentBoard.lists.map(list => {
+          if (list.id === response.list_id) {
+            return {
+              ...list,
+              cards: list.cards.map(card => 
+                card.id === response.id ? { ...card, ...response } : card
+              )
             };
-            return { ...list, cards: updatedCards };
           }
           return list;
-        })
-      };
-      
-      // Update board in state
-      dispatch(setCurrentBoard(updatedBoard));
-      
-      // Update selected card with new data
-      setSelectedCard(response);
-      
-      // Clear cache for this card's list
-      clearListCardsCache(selectedCard.list_id);
-      
+        });
+        
+        dispatch(setCurrentBoard({
+          ...currentBoard,
+          lists: updatedLists
+        }));
+        
+        // Очищаем кеш карточек этого списка
+        clearListCardsCache(response.list_id);
+        
+        // Обновляем выбранную карточку
+        setSelectedCard(response);
+      }
     } catch (error) {
       console.error('Failed to update card:', error);
-      throw error;
+    }
+  };
+
+  // Функция для открытия модального окна редактирования цвета списка
+  const handleListColorEdit = (listId: number, currentColor?: string) => {
+    setEditingListId(listId);
+    setSelectedListColor(currentColor || listColors[0].value);
+  };
+
+  // Функция для сохранения цвета списка
+  const handleListColorSave = async () => {
+    if (editingListId === null || !currentBoard) return;
+
+    try {
+      // Находим список по ID
+      const listToUpdate = currentBoard.lists.find(list => list.id === editingListId);
+      if (!listToUpdate) {
+        console.error('List not found:', editingListId);
+        return;
+      }
+
+      // Обновляем список на сервере
+      await listService.updateList(editingListId, {
+        list_color: selectedListColor
+      });
+
+      // Обновляем локальный стейт
+      const updatedLists = currentBoard.lists.map(list => 
+        list.id === editingListId ? { ...list, list_color: selectedListColor } : list
+      );
+
+      dispatch(setCurrentBoard({
+        ...currentBoard,
+        lists: updatedLists
+      }));
+
+      // Закрываем модальное окно
+      setEditingListId(null);
+    } catch (error) {
+      console.error('Failed to update list color:', error);
     }
   };
 
@@ -802,6 +888,49 @@ const BoardPage: React.FC = () => {
         listTitle={selectedListTitle}
       />
 
+      {/* Модальное окно для редактирования цвета списка */}
+      <Modal
+        isOpen={editingListId !== null}
+        onClose={() => setEditingListId(null)}
+        title="Изменить цвет списка"
+        size="small"
+      >
+        <div className="p-4">
+          <div className="mb-4">
+            <div className="grid grid-cols-3 gap-2">
+              {listColors.map((color) => (
+                <button
+                  key={color.value}
+                  type="button"
+                  className={`h-12 rounded-md cursor-pointer bg-gradient-to-r ${color.value} flex items-center justify-center ${
+                    selectedListColor === color.value ? 'ring-2 ring-indigo-500 ring-offset-2' : 'hover:opacity-90'
+                  }`}
+                  onClick={() => setSelectedListColor(color.value)}
+                >
+                  {selectedListColor === color.value && (
+                    <svg className="h-5 w-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
+                    </svg>
+                  )}
+                </button>
+              ))}
+            </div>
+          </div>
+          
+          <div className="flex justify-end space-x-2">
+            <Button 
+              variant="secondary" 
+              onClick={() => setEditingListId(null)}
+            >
+              Отмена
+            </Button>
+            <Button onClick={handleListColorSave}>
+              Сохранить
+            </Button>
+          </div>
+        </div>
+      </Modal>
+
       {!currentBoard || !Array.isArray(currentBoard.lists) ? (
         <div className="flex justify-center items-center h-64">
           <div className="text-gray-500">Loading board data...</div>
@@ -828,10 +957,12 @@ const BoardPage: React.FC = () => {
                           {...provided.draggableProps}
                         >
                           <ListCard
+                            id={list.id}
                             title={list.title || 'Untitled List'}
                             dragHandleProps={provided.dragHandleProps}
                             onAddCard={() => setAddingCardToList(list.id)}
-                            backgroundColor={currentBoard.background_color}
+                            listColor={list.list_color}
+                            onEditColor={() => handleListColorEdit(list.id, list.list_color)}
                           >
                             <Droppable droppableId={`list-${list.id}`} type="CARD">
                               {(provided: DroppableProvided) => (
@@ -859,6 +990,8 @@ const BoardPage: React.FC = () => {
                                               dragHandleProps={provided.dragHandleProps}
                                               onClick={() => handleCardClick(card, list.title)}
                                               task_number={card.task_number}
+                                              created_at={card.created_at}
+                                              card_color={card.card_color}
                                             />
                                           </div>
                                         )}

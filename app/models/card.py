@@ -9,5 +9,6 @@ class Card(Base):
     position = Column(Integer, nullable=False)
     list_id = Column(Integer, ForeignKey("list.id"), nullable=False)
     task_number = Column(String, nullable=True)  # Формат TA-XXX, уникальный в пределах доски
+    card_color = Column(String, nullable=True)  # Цвет карточки в формате CSS-градиента
     
     list = relationship("BoardList", back_populates="cards") 

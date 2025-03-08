@@ -11,6 +11,7 @@ interface CreateListData {
 interface UpdateListData {
     title?: string;
     position?: number;
+    list_color?: string;
 }
 
 export const listService = {

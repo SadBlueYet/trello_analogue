@@ -1,4 +1,5 @@
-from typing import Optional
+from typing import Optional, List, ForwardRef
+from datetime import datetime
 from pydantic import BaseModel
 
 
@@ -17,12 +18,16 @@ class CardUpdate(BaseModel):
     description: Optional[str] = None
     position: Optional[int] = None
     list_id: Optional[int] = None
+    card_color: Optional[str] = None
 
 
 class CardInDBBase(CardBase):
     id: int
     list_id: int
     task_number: Optional[str] = None
+    created_at: datetime
+    updated_at: datetime
+    card_color: Optional[str] = None
 
     class Config:
         from_attributes = True
@@ -35,8 +40,10 @@ class MoveCard(BaseModel):
     new_position: int
     target_list_id: int
 
-# Update List schema to include cards
+
+# Отложенный импорт, чтобы избежать циклических зависимостей
 from app.schemas.board import BoardListInDBBase
 
+
 class ListWithCards(BoardListInDBBase):
-    cards: list[Card] = [] 
+    cards: List[Card] = [] 

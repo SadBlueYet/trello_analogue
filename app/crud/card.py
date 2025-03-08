@@ -3,7 +3,7 @@ from sqlalchemy import select, text, func
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.models.card import Card
 from app.schemas.card import CardCreate, CardUpdate
-from app.models.board import BoardList
+from app.models.board_list import BoardList
 
 
 async def get_card(db: AsyncSession, card_id: int) -> Optional[Card]:

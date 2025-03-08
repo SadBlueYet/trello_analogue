@@ -14,7 +14,7 @@ class BoardListUpdate(BaseModel):
     title: Optional[str] = None
     position: Optional[int] = None
     board_id: Optional[int] = None
-
+    list_color: Optional[str] = None
 class BoardListInDBBase(BoardListBase):
     id: int
 
@@ -25,6 +25,6 @@ class ResponseBoardList(BoardListInDBBase):
     position: int
     board_id: int
     title: str
-    
+    list_color: Optional[str] = None
 class NewBoardListPosition(BaseModel):
     new_position: int
