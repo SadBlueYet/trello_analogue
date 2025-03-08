@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { AppDispatch, RootState } from '../store';
 import { login } from '../store/auth.slice';
+import AuthBackground from '../components/ui/AuthBackground';
 import { 
   Button, 
   Input, 
@@ -75,52 +76,83 @@ const LoginPage = () => {
   };
 
   return (
-    <PageContainer>
-      <Card>
-        <PageHeader 
-          title="Sign in to your account"
-          subtitle="Welcome back! Please enter your details"
-        />
-        
-        <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
-          <ErrorMessage message={error} />
-          
-          <div className="space-y-4">
-            <Input
-              id="username"
-              name="username"
-              type="text"
-              label="Username"
-              required
-              placeholder="Enter your username"
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
+    <div className="relative min-h-screen">
+      <AuthBackground />
+      
+      <div className="min-h-screen flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8 relative z-10">
+        <div className="max-w-md w-full space-y-8">
+          <Card className="p-8 backdrop-blur-sm bg-white/80 shadow-xl">
+            <div className="flex justify-center">
+              <div className="h-20 w-20 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-lg mb-2">
+                <svg 
+                  xmlns="http://www.w3.org/2000/svg" 
+                  className="h-10 w-10 text-white" 
+                  fill="none" 
+                  viewBox="0 0 24 24" 
+                  stroke="currentColor"
+                  strokeWidth={1.5}
+                >
+                  <path 
+                    strokeLinecap="round" 
+                    strokeLinejoin="round" 
+                    d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" 
+                  />
+                </svg>
+              </div>
+            </div>
+            
+            <PageHeader 
+              title="Welcome Back"
+              subtitle="Sign in to your account to continue"
             />
             
-            <Input
-              id="password"
-              name="password"
-              type="password"
-              label="Password"
-              required
-              placeholder="••••••••"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-            />
-          </div>
+            <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
+              <ErrorMessage message={error} />
+              
+              <div className="space-y-4">
+                <Input
+                  id="username"
+                  name="username"
+                  type="text"
+                  label="Username"
+                  required
+                  placeholder="Enter your username"
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value)}
+                  className="bg-white/90"
+                />
+                
+                <Input
+                  id="password"
+                  name="password"
+                  type="password"
+                  label="Password"
+                  required
+                  placeholder="••••••••"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="bg-white/90"
+                />
+              </div>
 
-          <Button type="submit" isLoading={isSubmitting || authLoading}>
-            Sign in
-          </Button>
-        </form>
+              <Button 
+                type="submit" 
+                isLoading={isSubmitting || authLoading}
+                className="bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700"
+              >
+                Sign in
+              </Button>
+            </form>
 
-        <div className="text-center mt-6">
-          <Link to="/register">
-            Don't have an account? Sign up
-          </Link>
+            <div className="text-center mt-6">
+              <Link to="/register" className="text-indigo-600 hover:text-indigo-500">
+                Don't have an account? <span className="font-semibold">Sign up</span>
+              </Link>
+            </div>
+          </Card>
         </div>
-      </Card>
-    </PageContainer>
+      </div>
+    </div>
   );
 };
 
