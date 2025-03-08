@@ -20,6 +20,7 @@ import {
 } from '../components/ui';
 import BoardSettingsForm from '../components/BoardSettingsForm';
 import CardModal from '../components/CardModal';
+import ShareBoardModal from '../components/ShareBoardModal';
 
 // Список предустановленных цветов для списков
 const listColors = [
@@ -298,6 +299,7 @@ const BoardPage: React.FC = () => {
   const [isCardModalOpen, setIsCardModalOpen] = useState(false);
   const [editingListId, setEditingListId] = useState<number | null>(null);
   const [selectedListColor, setSelectedListColor] = useState('');
+  const [shareModalOpen, setShareModalOpen] = useState(false);
 
   useEffect(() => {
     if (!boardId || boardLoadedRef.current) return;
@@ -846,9 +848,7 @@ const BoardPage: React.FC = () => {
               <Button
                 variant="secondary"
                 className="text-sm px-3 py-1 bg-white/10 hover:bg-white/20 border-transparent text-white"
-                onClick={() => {
-                  // Можно добавить функциональность поделиться доской
-                }}
+                onClick={() => setShareModalOpen(true)}
               >
                 <span className="flex items-center">
                   <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -930,6 +930,15 @@ const BoardPage: React.FC = () => {
           </div>
         </div>
       </Modal>
+
+      {/* Модальное окно для шаринга доски */}
+      {currentBoard && (
+        <ShareBoardModal
+          isOpen={shareModalOpen}
+          onClose={() => setShareModalOpen(false)}
+          boardId={currentBoard.id}
+        />
+      )}
 
       {!currentBoard || !Array.isArray(currentBoard.lists) ? (
         <div className="flex justify-center items-center h-64">

@@ -72,4 +72,44 @@ Board.model_rebuild()
 
 # Add Board with lists
 class BoardWithLists(BoardInDBBase):
-    lists: List[BoardList] = [] 
+    lists: List[BoardList] = []
+
+
+# Добавим в конец файла новые схемы для представления информации о шаринге
+
+from app.schemas.user import User
+
+class BoardShareBase(BaseModel):
+    board_id: int
+    user_id: int
+    access_type: str = "read"
+    
+    class Config:
+        from_attributes = True
+
+class BoardShareCreate(BoardShareBase):
+    pass
+
+class BoardShareUpdate(BaseModel):
+    access_type: str
+
+class BoardShare(BoardShareBase):
+    id: int
+    
+    class Config:
+        from_attributes = True
+
+class BoardShareInfo(BaseModel):
+    id: int
+    access_type: str
+    user: User
+    
+    class Config:
+        from_attributes = True
+
+# Добавим схему для расширенной информации о доске, включая шаринг
+class BoardWithSharing(BoardInDB):
+    shared_with: List[BoardShareInfo] = []
+    
+    class Config:
+        from_attributes = True 

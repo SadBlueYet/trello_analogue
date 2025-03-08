@@ -11,3 +11,4 @@ class Board(Base):
     
     owner = relationship("User", backref="boards")
     lists = relationship("BoardList", back_populates="board", cascade="all, delete-orphan")
+    shared_with = relationship("BoardShare", back_populates="board", cascade="all, delete-orphan")

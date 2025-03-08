@@ -1,5 +1,5 @@
 import api from '../api/axios';
-import { Board } from '../store/types';
+import { Board, BoardShare, User } from '../store/types';
 import { API_ENDPOINTS } from '../config';
 
 interface CreateBoardData {
@@ -12,6 +12,16 @@ interface UpdateBoardData {
     title?: string;
     description?: string;
     background_color?: string;
+}
+
+interface ShareBoardData {
+    board_id: number;
+    user_id: number;
+    access_type: string;
+}
+
+interface UpdateShareData {
+    access_type: string;
 }
 
 export const boardService = {
@@ -75,5 +85,36 @@ export const boardService = {
 
     async deleteBoard(id: number): Promise<void> {
         await api.delete(API_ENDPOINTS.BOARDS.DELETE(id));
+    },
+
+    // Методы для управления доступом к доскам
+    async getBoardShares(boardId: number): Promise<BoardShare[]> {
+        const response = await api.get<BoardShare[]>(API_ENDPOINTS.BOARDS.SHARES.LIST(boardId));
+        return response.data;
+    },
+
+    async shareBoard(boardId: number, userId: number, accessType: string = 'read'): Promise<BoardShare> {
+        const data: ShareBoardData = {
+            board_id: boardId,
+            user_id: userId,
+            access_type: accessType
+        };
+        const response = await api.post<BoardShare>(API_ENDPOINTS.BOARDS.SHARES.CREATE(boardId), data);
+        return response.data;
+    },
+
+    async updateBoardShare(boardId: number, userId: number, accessType: string): Promise<BoardShare> {
+        const data: UpdateShareData = {
+            access_type: accessType
+        };
+        const response = await api.put<BoardShare>(
+            API_ENDPOINTS.BOARDS.SHARES.UPDATE(boardId, userId),
+            data
+        );
+        return response.data;
+    },
+
+    async removeBoardShare(boardId: number, userId: number): Promise<void> {
+        await api.delete(API_ENDPOINTS.BOARDS.SHARES.DELETE(boardId, userId));
     }
 }; 

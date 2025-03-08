@@ -12,6 +12,13 @@ export interface Board {
     background_color?: string;
     owner_id: number;
     lists: BoardList[];
+    shared_with?: BoardShare[];
+}
+
+export interface BoardShare {
+    id: number;
+    access_type: string;
+    user: User;
 }
 
 export interface BoardList {
