@@ -22,6 +22,7 @@ class CardUpdate(BaseModel):
 class CardInDBBase(CardBase):
     id: int
     list_id: int
+    task_number: Optional[str] = None
 
     class Config:
         from_attributes = True

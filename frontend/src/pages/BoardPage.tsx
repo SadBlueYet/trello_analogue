@@ -19,6 +19,7 @@ import {
   Modal
 } from '../components/ui';
 import BoardSettingsForm from '../components/BoardSettingsForm';
+import CardModal from '../components/CardModal';
 
 // New components for the board page
 const ListCard: React.FC<{
@@ -26,43 +27,78 @@ const ListCard: React.FC<{
   children: React.ReactNode;
   onAddCard: () => void;
   dragHandleProps?: any;
-}> = ({ title, children, onAddCard, dragHandleProps }) => (
-  <div className="w-80 flex-shrink-0 bg-gray-100 rounded-lg shadow-md border border-gray-200 overflow-hidden">
-    <div
-      {...dragHandleProps}
-      className="p-3 font-semibold bg-gradient-to-r from-blue-500 to-indigo-600 text-white rounded-t-lg flex justify-between items-center"
-    >
-      <span>{title}</span>
-    </div>
-    <div className="max-h-[60vh] overflow-y-auto p-2 space-y-2">
-      {children}
-    </div>
-    <div className="p-3 bg-gray-50 border-t border-gray-200">
-      <Button
-        onClick={onAddCard}
-        variant="secondary"
-        className="w-full text-left hover:bg-blue-50 transition-colors duration-200"
+  backgroundColor?: string;
+}> = ({ title, children, onAddCard, dragHandleProps, backgroundColor }) => {
+  // Определяем цвет градиента в зависимости от цвета доски или используем дефолтный
+  const gradientClass = backgroundColor || 'from-blue-600 to-indigo-700';
+  
+  // Определяем класс тени в зависимости от основного цвета
+  let shadowClass = 'shadow-md';
+  if (backgroundColor) {
+    if (backgroundColor.includes('blue') || backgroundColor.includes('indigo')) {
+      shadowClass = 'shadow-blue-100';
+    } else if (backgroundColor.includes('green') || backgroundColor.includes('teal') || backgroundColor.includes('emerald')) {
+      shadowClass = 'shadow-green-100';
+    } else if (backgroundColor.includes('purple') || backgroundColor.includes('violet')) {
+      shadowClass = 'shadow-purple-100';
+    } else if (backgroundColor.includes('red') || backgroundColor.includes('pink') || backgroundColor.includes('rose')) {
+      shadowClass = 'shadow-red-100';
+    } else if (backgroundColor.includes('orange') || backgroundColor.includes('amber') || backgroundColor.includes('yellow')) {
+      shadowClass = 'shadow-orange-100';
+    } else if (backgroundColor.includes('gray')) {
+      shadowClass = 'shadow-gray-200';
+    } else if (backgroundColor.includes('cyan') || backgroundColor.includes('sky')) {
+      shadowClass = 'shadow-blue-100';
+    }
+  }
+  
+  return (
+    <div className={`w-80 flex-shrink-0 bg-gray-100 rounded-lg ${shadowClass} border border-gray-200 overflow-hidden`}>
+      <div
+        {...dragHandleProps}
+        className={`p-3 font-semibold bg-gradient-to-r ${gradientClass} text-white rounded-t-lg flex justify-between items-center transition-colors duration-300`}
       >
-        + Add a card
-      </Button>
+        <span>{title}</span>
+      </div>
+      <div className="max-h-[60vh] overflow-y-auto p-2 space-y-2">
+        {children}
+      </div>
+      <div className="p-3 bg-gray-50 border-t border-gray-200">
+        <button
+          onClick={onAddCard}
+          className="w-full px-3 py-1.5 text-sm text-gray-600 hover:text-gray-900 bg-white rounded border border-gray-300 hover:bg-gray-50 flex items-center justify-center transition duration-150 ease-in-out"
+        >
+          <svg className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+          </svg>
+          Add a card
+        </button>
+      </div>
     </div>
-  </div>
-);
+  );
+};
 
 const TaskCard: React.FC<{
   id: number;
   title: string;
   description?: string;
   dragHandleProps?: any;
-}> = ({ id, title, description, dragHandleProps }) => (
-  <div className="bg-white rounded-md shadow-sm border border-gray-200 hover:shadow-md transition-shadow duration-200">
+  onClick: () => void;
+  task_number?: string;
+}> = ({ id, title, description, dragHandleProps, onClick, task_number }) => (
+  <div 
+    className="bg-white rounded-md shadow-sm border border-gray-200 hover:shadow-md transition-shadow duration-200 cursor-pointer"
+    onClick={onClick}
+  >
     <div
       {...dragHandleProps}
-      className="p-3 cursor-pointer"
+      className="p-3"
     >
       <div className="flex justify-between items-start mb-2">
         <h4 className="font-medium text-gray-800">{title}</h4>
-        <span className="text-xs font-mono bg-blue-100 text-blue-800 rounded px-2 py-1">TA-{String(id).padStart(3, '0')}</span>
+        <span className="text-xs font-mono bg-blue-100 text-blue-800 rounded px-2 py-1">
+          {task_number || `TA-${String(id).padStart(3, '0')}`}
+        </span>
       </div>
       
       {description && (
@@ -74,7 +110,7 @@ const TaskCard: React.FC<{
           <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
           </svg>
-          Created recently
+          Создано
         </span>
         <div className="flex space-x-1">
           {description && (
@@ -184,12 +220,11 @@ function clearAllCardsCache() {
   pendingCardRequests.clear();
 }
 
-// Функция для очистки кеша карточек для конкретного списка
-function clearListCardsCache(listId: number) {
-  if (listId && !isNaN(listId)) {
-    cardsCache.delete(listId);
-    pendingCardRequests.delete(listId);
-  }
+// Функция для очистки кеша списка карточек
+export function clearListCardsCache(listId: number) {
+  console.log(`Clearing cache for list ${listId}`);
+  cardsCache.delete(listId);
+  pendingCardRequests.delete(listId);
 }
 
 const BoardPage: React.FC = () => {
@@ -209,6 +244,11 @@ const BoardPage: React.FC = () => {
   
   // Избегаем повторной загрузки
   const boardLoadedRef = useRef(false);
+
+  // Add new state variables for card modal
+  const [selectedCard, setSelectedCard] = useState<Card | null>(null);
+  const [selectedListTitle, setSelectedListTitle] = useState<string>('');
+  const [isCardModalOpen, setIsCardModalOpen] = useState(false);
 
   useEffect(() => {
     if (!boardId || boardLoadedRef.current) return;
@@ -477,17 +517,17 @@ const BoardPage: React.FC = () => {
         }
         
         // Получаем ID карточки из draggableId
-        const cardIdMatch = draggableId.match(/card-(\d+)/);
+        let cardId: number;
         
-        if (!cardIdMatch) {
-          console.error("Invalid card ID format in draggableId");
-          return;
+        // Поддерживаем оба формата ID: либо "card-123", либо просто "123"
+        if (draggableId.startsWith('card-')) {
+          cardId = parseInt(draggableId.replace('card-', ''));
+        } else {
+          cardId = parseInt(draggableId);
         }
         
-        const cardId = parseInt(cardIdMatch[1]);
-        
         if (isNaN(cardId)) {
-          console.error("Invalid card ID:", cardId);
+          console.error("Invalid card ID:", draggableId);
           return;
         }
         
@@ -569,9 +609,10 @@ const BoardPage: React.FC = () => {
         }
         
         try {
+          console.log(`Moving card ${cardId} to list ${destListId} at position ${destination.index}`);
           // Отправляем запрос на сервер
           await cardService.moveCard(
-            movedCard.id,
+            cardId,
             destListId,
             destination.index
           );
@@ -632,6 +673,58 @@ const BoardPage: React.FC = () => {
       console.error('Failed to update board settings:', error);
     } finally {
       setIsSavingSettings(false);
+    }
+  };
+
+  // Add a function to handle card click
+  const handleCardClick = (card: Card, listTitle: string) => {
+    setSelectedCard(card);
+    setSelectedListTitle(listTitle);
+    setIsCardModalOpen(true);
+  };
+  
+  // Add a function to handle card update
+  const handleUpdateCard = async (updatedCard: Partial<Card>) => {
+    if (!selectedCard || !currentBoard) return;
+    
+    try {
+      // Call API to update card
+      const response = await cardService.updateCard(selectedCard.id, {
+        title: updatedCard.title,
+        description: updatedCard.description
+      });
+      
+      // Find the list containing the card
+      const updatedBoard: Board = {
+        ...currentBoard,
+        lists: currentBoard.lists.map(list => {
+          // Check if this list contains the card
+          const cardIndex = list.cards.findIndex(card => card.id === selectedCard.id);
+          if (cardIndex >= 0) {
+            // Update the card in this list
+            const updatedCards = [...list.cards];
+            updatedCards[cardIndex] = {
+              ...updatedCards[cardIndex],
+              ...response
+            };
+            return { ...list, cards: updatedCards };
+          }
+          return list;
+        })
+      };
+      
+      // Update board in state
+      dispatch(setCurrentBoard(updatedBoard));
+      
+      // Update selected card with new data
+      setSelectedCard(response);
+      
+      // Clear cache for this card's list
+      clearListCardsCache(selectedCard.list_id);
+      
+    } catch (error) {
+      console.error('Failed to update card:', error);
+      throw error;
     }
   };
 
@@ -700,6 +793,15 @@ const BoardPage: React.FC = () => {
         </Modal>
       )}
 
+      {/* Add CardModal component */}
+      <CardModal
+        isOpen={isCardModalOpen}
+        onClose={() => setIsCardModalOpen(false)}
+        card={selectedCard}
+        onSave={handleUpdateCard}
+        listTitle={selectedListTitle}
+      />
+
       {!currentBoard || !Array.isArray(currentBoard.lists) ? (
         <div className="flex justify-center items-center h-64">
           <div className="text-gray-500">Loading board data...</div>
@@ -729,36 +831,43 @@ const BoardPage: React.FC = () => {
                             title={list.title || 'Untitled List'}
                             dragHandleProps={provided.dragHandleProps}
                             onAddCard={() => setAddingCardToList(list.id)}
+                            backgroundColor={currentBoard.background_color}
                           >
                             <Droppable droppableId={`list-${list.id}`} type="CARD">
                               {(provided: DroppableProvided) => (
                                 <div
                                   ref={provided.innerRef}
                                   {...provided.droppableProps}
-                                  className="space-y-2"
+                                  className="space-y-2 min-h-[80px]"
                                 >
-                                  {Array.isArray(list.cards) ? list.cards.map((card, index) => (
-                                    <Draggable
-                                      key={card.id}
-                                      draggableId={`card-${card.id}`}
-                                      index={index}
-                                    >
-                                      {(provided) => (
-                                        <div
-                                          ref={provided.innerRef}
-                                          {...provided.draggableProps}
-                                        >
-                                          <TaskCard
-                                            id={card.id}
-                                            title={card.title || 'Untitled Card'}
-                                            description={card.description}
-                                            dragHandleProps={provided.dragHandleProps}
-                                          />
-                                        </div>
-                                      )}
-                                    </Draggable>
-                                  )) : (
-                                    <div className="p-2 text-gray-500 text-sm">No cards in this list</div>
+                                  {Array.isArray(list.cards) && list.cards.length > 0 ? (
+                                    list.cards.map((card, cardIndex) => (
+                                      <Draggable
+                                        key={String(card.id)}
+                                        draggableId={String(card.id)}
+                                        index={cardIndex}
+                                      >
+                                        {(provided) => (
+                                          <div
+                                            ref={provided.innerRef}
+                                            {...provided.draggableProps}
+                                          >
+                                            <TaskCard
+                                              id={card.id}
+                                              title={card.title}
+                                              description={card.description}
+                                              dragHandleProps={provided.dragHandleProps}
+                                              onClick={() => handleCardClick(card, list.title)}
+                                              task_number={card.task_number}
+                                            />
+                                          </div>
+                                        )}
+                                      </Draggable>
+                                    ))
+                                  ) : (
+                                    <div className="p-3 text-gray-400 text-sm h-20 flex items-center justify-center border-2 border-dashed border-gray-200 rounded-md bg-gray-50">
+                                      Перетащите карточку сюда
+                                    </div>
                                   )}
                                   {provided.placeholder}
 

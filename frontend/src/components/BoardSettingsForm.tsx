@@ -16,7 +16,13 @@ const boardColors = [
   { name: 'Purple', value: 'from-purple-600 to-indigo-800' },
   { name: 'Red', value: 'from-red-500 to-pink-600' },
   { name: 'Orange', value: 'from-orange-500 to-amber-600' },
-  { name: 'Gray', value: 'from-gray-600 to-gray-800' }
+  { name: 'Gray', value: 'from-gray-600 to-gray-800' },
+  { name: 'Teal', value: 'from-teal-500 to-emerald-700' },
+  { name: 'Pink', value: 'from-pink-500 to-rose-700' },
+  { name: 'Amber', value: 'from-amber-500 to-yellow-600' },
+  { name: 'Cyan', value: 'from-cyan-500 to-blue-600' },
+  { name: 'Sky', value: 'from-sky-500 to-blue-700' },
+  { name: 'Violet', value: 'from-violet-500 to-purple-700' }
 ];
 
 const BoardSettingsForm: React.FC<BoardSettingsFormProps> = ({
@@ -27,12 +33,20 @@ const BoardSettingsForm: React.FC<BoardSettingsFormProps> = ({
 }) => {
   const [title, setTitle] = useState(board.title || '');
   const [description, setDescription] = useState(board.description || '');
-  const [selectedColor, setSelectedColor] = useState(boardColors[0].value);
+  const [selectedColor, setSelectedColor] = useState(board.background_color || boardColors[0].value);
   const [error, setError] = useState('');
 
   useEffect(() => {
-    // Можно добавить логику для определения текущего цвета доски
-    // и установки соответствующего значения в selectedColor
+    // Устанавливаем цвет доски из текущих настроек или используем дефолтный
+    if (board.background_color) {
+      setSelectedColor(board.background_color);
+    } else {
+      setSelectedColor(boardColors[0].value);
+    }
+    
+    // Обновляем заголовок и описание при изменении доски
+    setTitle(board.title || '');
+    setDescription(board.description || '');
   }, [board]);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -53,6 +67,14 @@ const BoardSettingsForm: React.FC<BoardSettingsFormProps> = ({
       setError('Failed to update board settings');
       console.error('Error updating board:', err);
     }
+  };
+
+  // Функция для предпросмотра цвета
+  const getPreviewStyle = (color: string) => {
+    return {
+      backgroundImage: `linear-gradient(to right, var(--tw-gradient-stops))`,
+      backgroundColor: color.includes('from-') ? undefined : color,
+    };
   };
 
   return (
@@ -89,19 +111,32 @@ const BoardSettingsForm: React.FC<BoardSettingsFormProps> = ({
           <label className="block text-sm font-medium text-gray-700 mb-2">
             Board Color
           </label>
-          <div className="grid grid-cols-3 gap-2">
+          <div className="grid grid-cols-4 gap-2">
             {boardColors.map((color) => (
               <button
                 key={color.value}
                 type="button"
-                className={`h-10 rounded-md cursor-pointer bg-gradient-to-r ${color.value} flex items-center justify-center ${
+                className={`h-12 rounded-md cursor-pointer bg-gradient-to-r ${color.value} flex items-center justify-center ${
                   selectedColor === color.value ? 'ring-2 ring-indigo-500 ring-offset-2' : 'hover:opacity-90'
                 }`}
                 onClick={() => setSelectedColor(color.value)}
               >
-                <span className="text-xs text-white font-medium">{color.name}</span>
+                {selectedColor === color.value && (
+                  <svg className="h-5 w-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
+                  </svg>
+                )}
               </button>
             ))}
+          </div>
+          
+          {/* Предпросмотр доски */}
+          <div className="mt-4">
+            <div 
+              className={`h-16 rounded-md bg-gradient-to-r ${selectedColor} p-3 flex items-center justify-center shadow-md`}
+            >
+              <span className="text-white font-medium">Предпросмотр цвета доски</span>
+            </div>
           </div>
         </div>
         

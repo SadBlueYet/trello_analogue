@@ -1,32 +1,39 @@
 import React, { useState } from 'react';
-import { useDispatch } from 'react-redux';
 import { Draggable } from 'react-beautiful-dnd';
 import { Card as CardType } from '../../store/types';
-import { updateCard, deleteCard } from '../../store/board.slice';
-import { AppDispatch } from '../../store/store';
+import { cardService } from '../../services/card.service';
 
 interface CardProps {
     card: CardType;
     index: number;
     listId: number;
+    onCardUpdate?: () => void;  // Добавляем колбэк для обновления списка
 }
 
-const Card: React.FC<CardProps> = ({ card, index, listId }) => {
+const Card: React.FC<CardProps> = ({ card, index, listId, onCardUpdate }) => {
     const [isEditing, setIsEditing] = useState(false);
     const [title, setTitle] = useState(card.title);
     const [description, setDescription] = useState(card.description || '');
-    const dispatch = useDispatch<AppDispatch>();
+    const [isSubmitting, setIsSubmitting] = useState(false);
 
     const handleUpdate = async () => {
         if (title !== card.title || description !== card.description) {
             try {
-                await dispatch(updateCard({
-                    id: card.id,
-                    data: { title, description }
-                })).unwrap();
+                setIsSubmitting(true);
+                await cardService.updateCard(card.id, { 
+                    title, 
+                    description: description || undefined 
+                });
+                // Уведомляем родительский компонент об изменении
+                if (onCardUpdate) {
+                    onCardUpdate();
+                }
             } catch (err) {
+                console.error('Failed to update card:', err);
                 setTitle(card.title);
                 setDescription(card.description || '');
+            } finally {
+                setIsSubmitting(false);
             }
         }
         setIsEditing(false);
@@ -35,15 +42,22 @@ const Card: React.FC<CardProps> = ({ card, index, listId }) => {
     const handleDelete = async () => {
         if (window.confirm('Are you sure you want to delete this card?')) {
             try {
-                await dispatch(deleteCard(card.id)).unwrap();
+                setIsSubmitting(true);
+                await cardService.deleteCard(card.id);
+                // Уведомляем родительский компонент об изменении
+                if (onCardUpdate) {
+                    onCardUpdate();
+                }
             } catch (err) {
-                // Error is handled by the board slice
+                console.error('Failed to delete card:', err);
+            } finally {
+                setIsSubmitting(false);
             }
         }
     };
 
     return (
-        <Draggable draggableId={`card-${card.id}`} index={index}>
+        <Draggable draggableId={String(card.id)} index={index}>
             {(provided) => (
                 <div
                     ref={provided.innerRef}
@@ -76,14 +90,16 @@ const Card: React.FC<CardProps> = ({ card, index, listId }) => {
                                         setIsEditing(false);
                                     }}
                                     className="px-2 py-1 text-sm text-gray-600 hover:text-gray-900"
+                                    disabled={isSubmitting}
                                 >
                                     Cancel
                                 </button>
                                 <button
                                     onClick={handleUpdate}
-                                    className="px-2 py-1 text-sm text-white bg-indigo-600 rounded hover:bg-indigo-700"
+                                    className="px-2 py-1 text-sm text-white bg-indigo-600 rounded hover:bg-indigo-700 disabled:bg-indigo-300"
+                                    disabled={isSubmitting}
                                 >
-                                    Save
+                                    {isSubmitting ? 'Saving...' : 'Save'}
                                 </button>
                             </div>
                         </div>
@@ -99,6 +115,7 @@ const Card: React.FC<CardProps> = ({ card, index, listId }) => {
                                     handleDelete();
                                 }}
                                 className="absolute top-2 right-2 text-gray-400 hover:text-red-500 focus:outline-none"
+                                disabled={isSubmitting}
                             >
                                 <svg
                                     className="h-4 w-4"

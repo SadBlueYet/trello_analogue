@@ -6,6 +6,7 @@ import { updateList, deleteList } from '../../store/board.slice';
 import { AppDispatch } from '../../store/store';
 import CardComponent from '../card/Card';
 import CreateCardForm from '../card/CreateCardForm';
+import { clearListCardsCache } from '../../pages/BoardPage';
 
 interface ListProps {
     list: BoardList;
@@ -36,6 +37,12 @@ const List: React.FC<ListProps> = ({ list, index }) => {
                 // Error is handled by the board slice
             }
         }
+    };
+
+    // Функция для обновления карточек в списке
+    const handleCardUpdate = () => {
+        // Очищаем кеш карточек для этого списка
+        clearListCardsCache(list.id);
     };
 
     return (
@@ -86,21 +93,28 @@ const List: React.FC<ListProps> = ({ list, index }) => {
                         </button>
                     </div>
 
-                    <Droppable droppableId={`list-${list.id}`} type="card">
+                    <Droppable droppableId={`list-${list.id}`} type="CARD">
                         {(provided) => (
                             <div
                                 ref={provided.innerRef}
                                 {...provided.droppableProps}
-                                className="flex-grow overflow-y-auto space-y-2"
+                                className="flex-grow overflow-y-auto space-y-2 min-h-[120px]"
                             >
-                                {list.cards.map((card: Card, index: number) => (
-                                    <CardComponent
-                                        key={card.id}
-                                        card={card}
-                                        index={index}
-                                        listId={list.id}
-                                    />
-                                ))}
+                                {Array.isArray(list.cards) && list.cards.length > 0 ? (
+                                    list.cards.map((card: Card, index: number) => (
+                                        <CardComponent
+                                            key={card.id}
+                                            card={card}
+                                            index={index}
+                                            listId={list.id}
+                                            onCardUpdate={handleCardUpdate}
+                                        />
+                                    ))
+                                ) : (
+                                    <div className="p-3 text-gray-400 text-sm h-20 flex items-center justify-center border-2 border-dashed border-gray-200 rounded-md bg-gray-50">
+                                        Перетащите карточку сюда
+                                    </div>
+                                )}
                                 {provided.placeholder}
                             </div>
                         )}

@@ -28,6 +28,7 @@ export interface Card {
     description?: string;
     position: number;
     list_id: number;
+    task_number?: string;
 }
 
 export interface AuthState {
