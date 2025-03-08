@@ -8,33 +8,124 @@ const initialState: BoardState = {
     currentBoard: null,
     isLoading: false,
     error: null,
+    lastBoardFetch: null,
+};
+
+// Кэширование запросов доски
+let boardsRequestPromise: Promise<Board[]> | null = null;
+const boardRequestPromises = new Map<number, Promise<Board>>();
+const BOARD_CACHE_TIME = 10000; // 10 секунд - уменьшаем время кеширования для более частого обновления
+
+// Функция для очистки кеша досок
+export const clearBoardCache = (boardId?: number) => {
+    if (boardId) {
+        // Очищаем кеш для конкретной доски
+        boardRequestPromises.delete(boardId);
+    } else {
+        // Очищаем весь кеш
+        boardsRequestPromise = null;
+        boardRequestPromises.clear();
+    }
 };
 
 export const fetchBoards = createAsyncThunk(
     'board/fetchBoards',
-    async () => {
-        return await boardService.getBoards();
+    async (_, { getState }) => {
+        // Используем текущие доски, если они уже загружены
+        const state = getState() as { board: BoardState };
+        if (state.board.boards.length > 0) {
+            return state.board.boards;
+        }
+
+        // Повторно используем запрос, если он уже выполняется
+        if (boardsRequestPromise) {
+            return boardsRequestPromise;
+        }
+
+        // Создаем новый запрос и кэшируем его
+        boardsRequestPromise = boardService.getBoards()
+            .then(boards => {
+                // Сбрасываем промис после выполнения
+                setTimeout(() => {
+                    boardsRequestPromise = null;
+                }, 0);
+                return boards;
+            })
+            .catch(error => {
+                // Сбрасываем промис после ошибки
+                setTimeout(() => {
+                    boardsRequestPromise = null;
+                }, 0);
+                throw error;
+            });
+
+        return boardsRequestPromise;
     }
 );
 
 export const fetchBoard = createAsyncThunk(
     'board/fetchBoard',
-    async (id: number) => {
-        return await boardService.getBoard(id);
+    async (id: number, { getState }) => {
+        // Проверяем, есть ли доска уже в state и свежая ли она
+        const state = getState() as { board: BoardState };
+        const currentBoard = state.board.currentBoard;
+        const lastFetch = state.board.lastBoardFetch;
+        const now = Date.now();
+        
+        // Если доска уже загружена, она та же самая, и прошло меньше BOARD_CACHE_TIME с момента загрузки
+        if (currentBoard && 
+            currentBoard.id === id && 
+            lastFetch && 
+            now - lastFetch < BOARD_CACHE_TIME) {
+            return currentBoard;
+        }
+        
+        // Проверяем, есть ли уже запрос для этой доски
+        if (boardRequestPromises.has(id)) {
+            return boardRequestPromises.get(id)!;
+        }
+        
+        // Создаем новый запрос
+        const boardPromise = boardService.getBoard(id)
+            .then(board => {
+                // Сбрасываем промис после выполнения
+                setTimeout(() => {
+                    boardRequestPromises.delete(id);
+                }, 0);
+                return board;
+            })
+            .catch(error => {
+                // Сбрасываем промис после ошибки
+                setTimeout(() => {
+                    boardRequestPromises.delete(id);
+                }, 0);
+                throw error;
+            });
+        
+        // Сохраняем промис
+        boardRequestPromises.set(id, boardPromise);
+        
+        return boardPromise;
     }
 );
 
 export const createBoard = createAsyncThunk(
     'board/createBoard',
     async (data: { title: string; description?: string }) => {
-        return await boardService.createBoard(data);
+        const newBoard = await boardService.createBoard(data);
+        // Очищаем кеш досок после создания новой доски
+        boardsRequestPromise = null;
+        return newBoard;
     }
 );
 
 export const updateBoard = createAsyncThunk(
     'board/updateBoard',
     async ({ id, data }: { id: number; data: { title?: string; description?: string } }) => {
-        return await boardService.updateBoard(id, data);
+        const updatedBoard = await boardService.updateBoard(id, data);
+        // Очищаем кеш обновленной доски
+        boardRequestPromises.delete(id);
+        return updatedBoard;
     }
 );
 
@@ -42,6 +133,9 @@ export const deleteBoard = createAsyncThunk(
     'board/deleteBoard',
     async (id: number) => {
         await boardService.deleteBoard(id);
+        // Очищаем кеш досок после удаления
+        boardsRequestPromise = null;
+        boardRequestPromises.delete(id);
         return id;
     }
 );
@@ -67,13 +161,20 @@ const boardSlice = createSlice({
     reducers: {
         clearCurrentBoard: (state) => {
             state.currentBoard = null;
+            state.lastBoardFetch = null;
         },
         clearError: (state) => {
             state.error = null;
         },
         setCurrentBoard: (state, action) => {
             state.currentBoard = action.payload;
+            state.lastBoardFetch = Date.now();
         },
+        clearBoardCacheAction: (state) => {
+            // Дополнительная возможность очистки кеша через action
+            clearBoardCache();
+            state.lastBoardFetch = null;
+        }
     },
     extraReducers: (builder) => {
         builder
@@ -83,10 +184,8 @@ const boardSlice = createSlice({
                 state.error = null;
             })
             .addCase(fetchBoards.fulfilled, (state, action) => {
-                console.log('Reducer: Setting boards with payload:', action.payload);
                 state.isLoading = false;
                 state.boards = action.payload;
-                console.log('Reducer: New state boards:', state.boards);
             })
             .addCase(fetchBoards.rejected, (state, action) => {
                 state.isLoading = false;
@@ -98,15 +197,11 @@ const boardSlice = createSlice({
                 state.error = null;
             })
             .addCase(fetchBoard.fulfilled, (state, action) => {
-                console.log('Board Reducer: Setting current board with payload:', action.payload);
-                console.log('Board Reducer: Payload lists:', action.payload.lists);
                 state.isLoading = false;
                 state.currentBoard = action.payload;
-                console.log('Board Reducer: New current board state:', state.currentBoard);
-                console.log('Board Reducer: New current board lists:', state.currentBoard?.lists);
+                state.lastBoardFetch = Date.now();
             })
             .addCase(fetchBoard.rejected, (state, action) => {
-                console.error('Board Reducer: Error fetching board:', action.error);
                 state.isLoading = false;
                 state.error = action.error.message || 'Failed to fetch board';
             })
@@ -136,6 +231,7 @@ const boardSlice = createSlice({
                 }
                 if (state.currentBoard?.id === action.payload.id) {
                     state.currentBoard = action.payload;
+                    state.lastBoardFetch = Date.now();
                 }
             })
             .addCase(updateBoard.rejected, (state, action) => {
@@ -152,6 +248,7 @@ const boardSlice = createSlice({
                 state.boards = state.boards.filter(board => board.id !== action.payload);
                 if (state.currentBoard?.id === action.payload) {
                     state.currentBoard = null;
+                    state.lastBoardFetch = null;
                 }
             })
             .addCase(deleteBoard.rejected, (state, action) => {
@@ -161,5 +258,5 @@ const boardSlice = createSlice({
     },
 });
 
-export const { clearCurrentBoard, clearError, setCurrentBoard } = boardSlice.actions;
+export const { clearCurrentBoard, clearError, setCurrentBoard, clearBoardCacheAction } = boardSlice.actions;
 export default boardSlice.reducer; 

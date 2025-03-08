@@ -13,6 +13,12 @@ class Settings(BaseSettings):
     SECRET_KEY: str
     ALGORITHM: str
     ACCESS_TOKEN_EXPIRE_MINUTES: int
+    REFRESH_TOKEN_EXPIRE_DAYS: int = 7
+    
+    # Cookie settings
+    COOKIE_DOMAIN: str = "localhost"
+    COOKIE_SECURE: bool = False  # Set to True in production with HTTPS
+    COOKIE_SAMESITE: str = "lax"  # Options: lax, strict, none
 
     # CORS
     BACKEND_CORS_ORIGINS: List[AnyHttpUrl] = []

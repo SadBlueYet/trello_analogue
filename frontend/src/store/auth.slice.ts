@@ -1,58 +1,111 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import { AuthState, LoginResponse, RegisterResponse } from './types';
 import { authService } from '../services/auth.service';
-import { setToken, removeToken, getToken } from '../utils/token';
 import api from '../api/axios';
+import { API_ENDPOINTS } from '../config';
 
 const initialState: AuthState = {
     user: null,
-    token: null,
-    tokenType: null,
     isLoading: false,
     error: null,
+    isAuthenticated: false,
+    lastAuthCheck: null,
 };
 
-export const restoreSession = createAsyncThunk(
-    'auth/restoreSession',
-    async () => {
-        const { token, type } = getToken();
-        if (token && type) {
-            api.defaults.headers.common['Authorization'] = `${type} ${token}`;
-            // Create a minimal user object with required fields
-            return { 
-                token, 
-                tokenType: type, 
-                user: { 
-                    id: 1,
-                    username: 'user' // Add required username field
-                } 
-            };
-        }
-        throw new Error('No token found');
-    }
-);
+// Кэширование проверки аутентификации
+let authCheckPromise: Promise<any> | null = null;
+const AUTH_CACHE_TIME = 30000; // 30 секунд
 
 export const login = createAsyncThunk(
     'auth/login',
-    async (credentials: { username: string; password: string }) => {
-        const response = await authService.login(credentials);
-        setToken(response.access_token, response.token_type);
-        api.defaults.headers.common['Authorization'] = `${response.token_type} ${response.access_token}`;
-        return { token: response.access_token, tokenType: response.token_type, user: { username: credentials.username } };
+    async (credentials: { username: string; password: string }, { dispatch }) => {
+        // 1. Perform login to get auth cookies
+        await authService.login(credentials);
+        
+        // 2. Immediately fetch user data to confirm login was successful
+        const userResponse = await api.get(API_ENDPOINTS.AUTH.ME);
+        
+        return { user: userResponse.data };
     }
 );
 
 export const register = createAsyncThunk(
     'auth/register',
-    async (data: { email: string; username: string; password: string; full_name?: string }) => {
+    async (data: { email: string; username: string; password: string; full_name?: string }, { dispatch }) => {
+        // 1. Register user
         const response = await authService.register(data);
-        const loginResponse = await authService.login({
+        
+        // 2. Login to get auth cookies
+        await authService.login({
             username: data.username,
             password: data.password,
         });
-        setToken(loginResponse.access_token, loginResponse.token_type);
-        api.defaults.headers.common['Authorization'] = `${loginResponse.token_type} ${loginResponse.access_token}`;
-        return { token: loginResponse.access_token, tokenType: loginResponse.token_type, user: response };
+        
+        // 3. Fetch user data to confirm
+        const userResponse = await api.get(API_ENDPOINTS.AUTH.ME);
+        
+        return { user: userResponse.data };
+    }
+);
+
+// Async thunk for logout
+export const logoutAsync = createAsyncThunk(
+    'auth/logoutAsync',
+    async () => {
+        await authService.logout();
+        // Сбрасываем кэш при выходе
+        authCheckPromise = null;
+        return {};
+    }
+);
+
+// Check authentication thunk
+export const checkAuth = createAsyncThunk(
+    'auth/checkAuth',
+    async (_, { getState, rejectWithValue }) => {
+        const state = getState() as { auth: AuthState };
+        const lastCheck = state.auth.lastAuthCheck;
+        const now = Date.now();
+        
+        // Если аутентификация уже проверена и проверка была недавно, используем кэш
+        if (
+            state.auth.isAuthenticated && 
+            lastCheck && 
+            now - lastCheck < AUTH_CACHE_TIME
+        ) {
+            return { user: state.auth.user };
+        }
+        
+        // Если запрос уже выполняется, возвращаем его
+        if (authCheckPromise) {
+            try {
+                return await authCheckPromise;
+            } catch (error) {
+                return rejectWithValue('Not authenticated');
+            }
+        }
+        
+        try {
+            // Создаем новый запрос и кэшируем его
+            authCheckPromise = api.get(API_ENDPOINTS.AUTH.ME).then(response => ({ user: response.data }));
+            
+            // Выполняем запрос
+            const result = await authCheckPromise;
+            
+            // После выполнения запроса сбрасываем промис
+            setTimeout(() => {
+                authCheckPromise = null;
+            }, 0);
+            
+            return result;
+        } catch (error) {
+            // После выполнения запроса сбрасываем промис
+            setTimeout(() => {
+                authCheckPromise = null;
+            }, 0);
+            
+            return rejectWithValue('Not authenticated');
+        }
     }
 );
 
@@ -62,11 +115,9 @@ const authSlice = createSlice({
     reducers: {
         logout: (state) => {
             state.user = null;
-            state.token = null;
-            state.tokenType = null;
-            state.error = null;
-            removeToken();
-            delete api.defaults.headers.common['Authorization'];
+            state.isAuthenticated = false;
+            state.lastAuthCheck = null;
+            // Call the logout API in an effect, not here
         },
         clearError: (state) => {
             state.error = null;
@@ -74,22 +125,22 @@ const authSlice = createSlice({
     },
     extraReducers: (builder) => {
         builder
-            // Restore Session
-            .addCase(restoreSession.pending, (state) => {
+            // CheckAuth
+            .addCase(checkAuth.pending, (state) => {
                 state.isLoading = true;
                 state.error = null;
             })
-            .addCase(restoreSession.fulfilled, (state, action) => {
+            .addCase(checkAuth.fulfilled, (state, action) => {
                 state.isLoading = false;
                 state.user = action.payload.user;
-                state.token = action.payload.token;
-                state.tokenType = action.payload.tokenType;
+                state.isAuthenticated = true;
+                state.lastAuthCheck = Date.now();
             })
-            .addCase(restoreSession.rejected, (state) => {
+            .addCase(checkAuth.rejected, (state) => {
                 state.isLoading = false;
                 state.user = null;
-                state.token = null;
-                state.tokenType = null;
+                state.isAuthenticated = false;
+                state.lastAuthCheck = Date.now();
             })
             // Login
             .addCase(login.pending, (state) => {
@@ -99,8 +150,8 @@ const authSlice = createSlice({
             .addCase(login.fulfilled, (state, action) => {
                 state.isLoading = false;
                 state.user = action.payload.user;
-                state.token = action.payload.token;
-                state.tokenType = action.payload.tokenType;
+                state.isAuthenticated = true;
+                state.lastAuthCheck = Date.now();
             })
             .addCase(login.rejected, (state, action) => {
                 state.isLoading = false;
@@ -114,12 +165,18 @@ const authSlice = createSlice({
             .addCase(register.fulfilled, (state, action) => {
                 state.isLoading = false;
                 state.user = action.payload.user;
-                state.token = action.payload.token;
-                state.tokenType = action.payload.tokenType;
+                state.isAuthenticated = true;
+                state.lastAuthCheck = Date.now();
             })
             .addCase(register.rejected, (state, action) => {
                 state.isLoading = false;
                 state.error = action.error.message || 'Failed to register';
+            })
+            // Async Logout
+            .addCase(logoutAsync.fulfilled, (state) => {
+                state.user = null;
+                state.isAuthenticated = false;
+                state.lastAuthCheck = null;
             });
     },
 });

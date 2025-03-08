@@ -9,15 +9,16 @@ from app.schemas.board import Board, BoardCreate, BoardUpdate, BoardWithLists
 router = APIRouter()
 
 
-@router.get("/", response_model=List[Board])
+@router.get("/", response_model=List[BoardWithLists])
 async def get_boards(
+    *,
     db: AsyncSession = Depends(deps.get_db),
     current_user: User = Depends(deps.get_current_active_user),
 ) -> Any:
     """
-    Retrieve all boards for the current user.
+    Get all boards for the current user.
     """
-    boards = await crud_board.get_user_boards(db, current_user.id)
+    boards = await crud_board.get_boards(db, current_user.id)
     return boards
 
 
@@ -45,7 +46,7 @@ async def get_board(
     """
     Get a specific board by id.
     """
-    board = await crud_board.get_board(db, board_id, include_lists=True)
+    board = await crud_board.get_board(db, board_id)
     if not board:
         raise HTTPException(status_code=404, detail="Board not found")
     if board.owner_id != current_user.id:

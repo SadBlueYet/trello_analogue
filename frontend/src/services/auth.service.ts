@@ -26,11 +26,21 @@ export const authService = {
                 'Content-Type': 'application/x-www-form-urlencoded'
             }
         });
+        
         return response.data;
     },
 
     async register(data: RegisterData): Promise<RegisterResponse> {
         const response = await api.post<RegisterResponse>(API_ENDPOINTS.AUTH.REGISTER, data);
+        return response.data;
+    },
+    
+    async logout(): Promise<void> {
+        await api.post(API_ENDPOINTS.AUTH.LOGOUT);
+    },
+    
+    async refreshToken(): Promise<LoginResponse> {
+        const response = await api.post<LoginResponse>(API_ENDPOINTS.AUTH.REFRESH);
         return response.data;
     }
 }; 

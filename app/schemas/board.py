@@ -5,6 +5,7 @@ from pydantic import BaseModel
 class BoardBase(BaseModel):
     title: str
     description: Optional[str] = None
+    background_color: Optional[str] = None
 
 
 class BoardCreate(BoardBase):
@@ -12,7 +13,9 @@ class BoardCreate(BoardBase):
 
 
 class BoardUpdate(BoardBase):
-    pass
+    title: Optional[str] = None
+    description: Optional[str] = None
+    background_color: Optional[str] = None
 
 
 class BoardInDBBase(BoardBase):

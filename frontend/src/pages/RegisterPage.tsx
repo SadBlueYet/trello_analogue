@@ -1,9 +1,9 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useDispatch } from 'react-redux';
-import { setCredentials } from '../store/slices/authSlice';
+import { useDispatch, useSelector } from 'react-redux';
+import { AppDispatch, RootState } from '../store';
+import { register } from '../store/auth.slice';
 import axios, { AxiosError } from 'axios';
-import { authService } from '../services/auth.service';
 import { 
   Button, 
   Input, 
@@ -20,9 +20,26 @@ const RegisterPage = () => {
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [error, setError] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
+  const { isAuthenticated, isLoading: authLoading, error: authError } = useSelector(
+    (state: RootState) => state.auth
+  );
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const navigate = useNavigate();
-  const dispatch = useDispatch();
+  const dispatch = useDispatch<AppDispatch>();
+
+  // Update error message if authentication fails
+  useEffect(() => {
+    if (authError) {
+      setError(authError);
+    }
+  }, [authError]);
+
+  // Redirect if already logged in
+  useEffect(() => {
+    if (isAuthenticated) {
+      navigate('/home');
+    }
+  }, [isAuthenticated, navigate]);
 
   const validateForm = () => {
     if (!email || !username || !password || !confirmPassword) {
@@ -56,25 +73,16 @@ const RegisterPage = () => {
       return;
     }
 
-    setIsLoading(true);
+    setIsSubmitting(true);
 
     try {
-      const response = await authService.register({
+      await dispatch(register({
         email,
         username,
         password,
-      });
-
-      const loginResponse = await authService.login({
-        username,
-        password,
-      });
-
-      dispatch(setCredentials({
-        token: loginResponse.access_token,
-        user: response
-      }));
-
+      })).unwrap();
+      
+      // Прямое перенаправление после успешной регистрации
       navigate('/home');
     } catch (err) {
       console.error('Registration error:', err);
@@ -103,7 +111,7 @@ const RegisterPage = () => {
         setError('An unexpected error occurred. Please try again.');
       }
     } finally {
-      setIsLoading(false);
+      setIsSubmitting(false);
     }
   };
 
@@ -164,7 +172,7 @@ const RegisterPage = () => {
             />
           </div>
 
-          <Button type="submit" isLoading={isLoading}>
+          <Button type="submit" isLoading={isSubmitting || authLoading}>
             Create account
           </Button>
         </form>

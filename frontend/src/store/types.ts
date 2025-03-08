@@ -9,6 +9,7 @@ export interface Board {
     id: number;
     title: string;
     description?: string;
+    background_color?: string;
     owner_id: number;
     lists: BoardList[];
 }
@@ -31,10 +32,10 @@ export interface Card {
 
 export interface AuthState {
     user: User | null;
-    token: string | null;
-    tokenType: string | null;
     isLoading: boolean;
     error: string | null;
+    isAuthenticated?: boolean;
+    lastAuthCheck: number | null;
 }
 
 export interface BoardState {
@@ -42,12 +43,14 @@ export interface BoardState {
     currentBoard: Board | null;
     isLoading: boolean;
     error: string | null;
+    lastBoardFetch: number | null;
 }
 
 // API response types
 export interface LoginResponse {
     access_token: string;
     token_type: string;
+    refresh_token?: string;
 }
 
 export interface RegisterResponse {

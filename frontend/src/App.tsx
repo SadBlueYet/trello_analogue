@@ -4,9 +4,10 @@ import { store } from './store';
 import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
 import HomePage from './pages/HomePage';
-import BoardPage from './pages/BoardPage';
+import BoardWrapper from './components/BoardWrapper';
 import PrivateRoute from './components/PrivateRoute';
 import SessionProvider from './components/SessionProvider';
+import Navbar from './components/Navbar';
 
 function App() {
   return (
@@ -21,7 +22,12 @@ function App() {
                 path="/boards/:boardId"
                 element={
                   <PrivateRoute>
-                    <BoardPage />
+                    <>
+                      <Navbar />
+                      <div className="pt-4">
+                        <BoardWrapper />
+                      </div>
+                    </>
                   </PrivateRoute>
                 }
               />
@@ -29,7 +35,12 @@ function App() {
                 path="/home"
                 element={
                   <PrivateRoute>
-                    <HomePage />
+                    <>
+                      <Navbar />
+                      <div className="pt-4">
+                        <HomePage />
+                      </div>
+                    </>
                   </PrivateRoute>
                 }
               />

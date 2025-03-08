@@ -6,33 +6,31 @@ from app.models.board import Board
 from app.schemas.board import BoardCreate, BoardUpdate
 
 
-async def get_board(
-    db: AsyncSession, board_id: int, include_lists: bool = False
-) -> Optional[Board]:
-    query = select(Board)
-    if include_lists:
-        query = query.options(selectinload(Board.lists))
-    query = query.where(Board.id == board_id)
-    result = await db.execute(query)
-    return result.scalar_one_or_none()
-
-
-async def get_user_boards(
-    db: AsyncSession, user_id: int, include_lists: bool = False
-) -> List[Board]:
-    query = select(Board).where(Board.owner_id == user_id)
-    if include_lists:
-        query = query.options(selectinload(Board.lists))
-    result = await db.execute(query)
+async def get_boards(db: AsyncSession, user_id: int) -> List[Board]:
+    result = await db.execute(
+        select(Board)
+        .where(Board.owner_id == user_id)
+        .options(selectinload(Board.lists))
+    )
     return result.scalars().all()
+
+
+async def get_board(db: AsyncSession, board_id: int) -> Optional[Board]:
+    result = await db.execute(
+        select(Board)
+        .where(Board.id == board_id)
+        .options(selectinload(Board.lists))
+    )
+    return result.scalars().first()
 
 
 async def create_board(
     db: AsyncSession, board_in: BoardCreate, user_id: int
 ) -> Board:
     db_board = Board(
-        **board_in.model_dump(),
-        owner_id=user_id
+        title=board_in.title,
+        description=board_in.description,
+        owner_id=user_id,
     )
     db.add(db_board)
     await db.commit()
@@ -53,10 +51,8 @@ async def update_board(
     return db_board
 
 
-async def delete_board(db: AsyncSession, board_id: int) -> bool:
-    board = await get_board(db, board_id)
-    if not board:
-        return False
-    await db.delete(board)
-    await db.commit()
-    return True 
+async def delete_board(db: AsyncSession, board_id: int) -> None:
+    db_board = await get_board(db, board_id)
+    if db_board:
+        await db.delete(db_board)
+        await db.commit() 

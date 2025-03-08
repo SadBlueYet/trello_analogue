@@ -1,5 +1,6 @@
 import React from 'react';
 import { Link as RouterLink } from 'react-router-dom';
+import Modal from './Modal';
 
 interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   isLoading?: boolean;
@@ -134,4 +135,6 @@ export const PageHeader: React.FC<{ title: string; subtitle?: string }> = ({ tit
       )}
     </div>
   );
-}; 
+};
+
+export { Modal }; 

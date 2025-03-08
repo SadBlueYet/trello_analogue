@@ -5,11 +5,13 @@ import { API_ENDPOINTS } from '../config';
 interface CreateBoardData {
     title: string;
     description?: string;
+    background_color?: string;
 }
 
 interface UpdateBoardData {
     title?: string;
     description?: string;
+    background_color?: string;
 }
 
 export const boardService = {
@@ -37,18 +39,18 @@ export const boardService = {
     },
 
     async getBoard(id: number): Promise<Board> {
-        console.log('Getting board with ID:', id);
         const response = await api.get<any>(API_ENDPOINTS.BOARDS.GET(id));
-        console.log('Raw board response:', JSON.stringify(response.data, null, 2));
-        console.log('Response data type:', typeof response.data);
-        console.log('Response data keys:', Object.keys(response.data));
-        
+
         const board = {
             ...response.data,
-            lists: Array.isArray(response.data.lists) ? response.data.lists.map((list: any) => ({
-                ...list,
-                cards: list.cards || []
-            })) : []
+            lists: Array.isArray(response.data.lists) 
+                ? response.data.lists
+                    .map((list: any) => ({
+                        ...list,
+                        cards: list.cards || []
+                    }))
+                    .sort((a: any, b: any) => a.position - b.position)
+                : []
         };
         
         console.log('Processed board data:', JSON.stringify(board, null, 2));

@@ -1,6 +1,5 @@
-import axios from 'axios';
-import { API_BASE_URL } from '../config';
-import { getToken, removeToken } from '../utils/token';
+import axios, { AxiosError, AxiosResponse } from 'axios';
+import { API_BASE_URL, API_ENDPOINTS } from '../config';
 
 const axiosInstance = axios.create({
   baseURL: API_BASE_URL,
@@ -8,6 +7,7 @@ const axiosInstance = axios.create({
     'Content-Type': 'application/json',
     'Accept': 'application/json',
   },
+  withCredentials: true, // Important for cookies
 });
 
 // Remove default headers for OPTIONS request
@@ -17,11 +17,6 @@ axiosInstance.interceptors.request.use(
     if (config.method?.toUpperCase() === 'OPTIONS') {
       return config;
     }
-
-    const { token, type } = getToken();
-    if (token && type) {
-      config.headers.Authorization = `${type} ${token}`;
-    }
     return config;
   },
   (error) => {
@@ -29,21 +24,98 @@ axiosInstance.interceptors.request.use(
   }
 );
 
+// Keep track of whether a refresh request is already in progress
+let isRefreshing = false;
+// Store pending requests
+let failedQueue: { resolve: (value: unknown) => void; reject: (reason?: any) => void }[] = [];
+
+// Process the queue of failed requests
+const processQueue = (error: any, token: string | null = null) => {
+  failedQueue.forEach(({ resolve, reject }) => {
+    if (error) {
+      reject(error);
+    } else {
+      resolve(token);
+    }
+  });
+  failedQueue = [];
+};
+
 // Response interceptor
 axiosInstance.interceptors.response.use(
   (response) => response,
-  (error) => {
-    // Only handle 401 errors for non-auth requests and when we're not already on the login page
-    if (error.response?.status === 401 && 
-        !error.config.url.includes('/auth/') && 
-        window.location.pathname !== '/login') {
-      // Clear the token
-      removeToken();
-      // Store the current URL to redirect back after login
-      sessionStorage.setItem('redirectUrl', window.location.pathname);
-      // Redirect to login
-      window.location.href = '/login';
+  async (error: AxiosError) => {
+    const originalRequest = error.config;
+    
+    if (!originalRequest) {
+      return Promise.reject(error);
     }
+    
+    // Check if it's a 401 error and not a refresh token request
+    // and not already retrying this request
+    if (
+      error.response?.status === 401 &&
+      !originalRequest.url?.includes('/auth/refresh') &&
+      !originalRequest.url?.includes('/auth/login') &&
+      !(originalRequest as any).__isRetryRequest
+    ) {
+      if (isRefreshing) {
+        // If a refresh is already in progress, add this request to the queue
+        return new Promise((resolve, reject) => {
+          failedQueue.push({ resolve, reject });
+        })
+          .then(() => {
+            return axiosInstance(originalRequest);
+          })
+          .catch((err) => {
+            return Promise.reject(err);
+          });
+      }
+
+      isRefreshing = true;
+      (originalRequest as any).__isRetryRequest = true;
+      
+      try {
+        // Send token refresh request
+        const response = await axiosInstance.post(
+          API_ENDPOINTS.AUTH.REFRESH
+        );
+        
+        // If refresh successful, retry original request
+        if (response.status === 200) {
+          // Process any pending requests
+          processQueue(null);
+          // Retry the original request
+          return axiosInstance(originalRequest);
+        }
+      } catch (refreshError) {
+        // If refresh fails, reject all pending requests
+        processQueue(refreshError);
+        
+        // Store the current URL to redirect back after login
+        sessionStorage.setItem('redirectUrl', window.location.pathname);
+        
+        // Only redirect to login page if not already there
+        if (window.location.pathname !== '/login') {
+          console.log('Refresh token failed, redirecting to login');
+          window.location.href = '/login';
+        }
+      } finally {
+        isRefreshing = false;
+      }
+    }
+    
+    // Convert backend error responses to a more usable format
+    if (error.response?.data) {
+      const backendError = error.response.data as Record<string, any>;
+      const enhancedError: any = new Error(
+        backendError.detail || backendError.message || 'An error occurred'
+      );
+      enhancedError.status = error.response.status;
+      enhancedError.data = backendError;
+      return Promise.reject(enhancedError);
+    }
+    
     return Promise.reject(error);
   }
 );

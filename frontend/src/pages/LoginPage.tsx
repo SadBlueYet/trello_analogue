@@ -1,9 +1,8 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useDispatch } from 'react-redux';
-import { AppDispatch } from '../store';
+import { useDispatch, useSelector } from 'react-redux';
+import { AppDispatch, RootState } from '../store';
 import { login } from '../store/auth.slice';
-import { getToken } from '../utils/token';
 import { 
   Button, 
   Input, 
@@ -18,19 +17,28 @@ const LoginPage = () => {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
+  const { isAuthenticated, isLoading: authLoading, error: authError } = useSelector(
+    (state: RootState) => state.auth
+  );
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const navigate = useNavigate();
   const dispatch = useDispatch<AppDispatch>();
 
+  // Update error message if authentication fails
+  useEffect(() => {
+    if (authError) {
+      setError(authError);
+    }
+  }, [authError]);
+
   // Redirect if already logged in
   useEffect(() => {
-    const { token } = getToken();
-    if (token) {
-      const redirectUrl = sessionStorage.getItem('redirectUrl') || '/';
+    if (isAuthenticated) {
+      const redirectUrl = sessionStorage.getItem('redirectUrl') || '/home';
       sessionStorage.removeItem('redirectUrl');
       navigate(redirectUrl);
     }
-  }, [navigate]);
+  }, [isAuthenticated, navigate]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -41,11 +49,14 @@ const LoginPage = () => {
       return;
     }
 
-    setIsLoading(true);
+    setIsSubmitting(true);
 
     try {
       await dispatch(login({ username, password })).unwrap();
-      const redirectUrl = sessionStorage.getItem('redirectUrl') || '/';
+      
+      // Прямое перенаправление после успешного входа,
+      // не дожидаясь обновления Redux состояния
+      const redirectUrl = sessionStorage.getItem('redirectUrl') || '/home';
       sessionStorage.removeItem('redirectUrl');
       navigate(redirectUrl);
     } catch (err: any) {
@@ -59,7 +70,7 @@ const LoginPage = () => {
         setError(err.message || 'An unexpected error occurred. Please try again.');
       }
     } finally {
-      setIsLoading(false);
+      setIsSubmitting(false);
     }
   };
 
@@ -98,7 +109,7 @@ const LoginPage = () => {
             />
           </div>
 
-          <Button type="submit" isLoading={isLoading}>
+          <Button type="submit" isLoading={isSubmitting || authLoading}>
             Sign in
           </Button>
         </form>
