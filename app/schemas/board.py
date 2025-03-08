@@ -55,11 +55,11 @@ class BoardInDBBase(BoardBase):
 
 
 # Используем ForwardRef для решения проблемы циклических импортов
-BoardListRef = ForwardRef('BoardList')
 
 
 class Board(BoardInDBBase):
-    lists: List[BoardListRef] = []
+    # lists: List[BoardList] = []
+    pass
 
 
 class BoardInDB(BoardInDBBase):
