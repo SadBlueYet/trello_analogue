@@ -1,5 +1,5 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
-import { AuthState, LoginResponse, RegisterResponse } from './types';
+import { AuthState, LoginResponse, RegisterResponse, User } from './types';
 import { authService } from '../services/auth.service';
 import api from '../api/axios';
 import { API_ENDPOINTS } from '../config';
@@ -109,6 +109,38 @@ export const checkAuth = createAsyncThunk(
     }
 );
 
+// Load user profile
+export const loadUserProfile = createAsyncThunk(
+    'auth/loadUserProfile',
+    async (_, { rejectWithValue }) => {
+        try {
+            const response = await api.get(API_ENDPOINTS.AUTH.ME);
+            return { user: response.data };
+        } catch (error) {
+            return rejectWithValue('Failed to load user profile');
+        }
+    }
+);
+
+// Update user profile
+export const updateProfile = createAsyncThunk(
+    'auth/updateProfile',
+    async (userData: Partial<User & { 
+        current_password?: string;
+        new_password?: string;
+    }>, { rejectWithValue }) => {
+        try {
+            const response = await api.put(API_ENDPOINTS.AUTH.UPDATE_PROFILE, userData);
+            return { user: response.data };
+        } catch (error: any) {
+            if (error.response?.data?.detail) {
+                return rejectWithValue(error.response.data.detail);
+            }
+            return rejectWithValue('Failed to update profile');
+        }
+    }
+);
+
 const authSlice = createSlice({
     name: 'auth',
     initialState,
@@ -177,6 +209,34 @@ const authSlice = createSlice({
                 state.user = null;
                 state.isAuthenticated = false;
                 state.lastAuthCheck = null;
+            })
+            // Load User Profile
+            .addCase(loadUserProfile.pending, (state) => {
+                state.isLoading = true;
+            })
+            .addCase(loadUserProfile.fulfilled, (state, action) => {
+                state.isLoading = false;
+                state.user = action.payload.user;
+                state.isAuthenticated = true;
+                state.lastAuthCheck = Date.now();
+            })
+            .addCase(loadUserProfile.rejected, (state, action) => {
+                state.isLoading = false;
+                state.error = action.error.message || 'Failed to load profile';
+            })
+            // Update Profile
+            .addCase(updateProfile.pending, (state) => {
+                state.isLoading = true;
+                state.error = null;
+            })
+            .addCase(updateProfile.fulfilled, (state, action) => {
+                state.isLoading = false;
+                state.user = action.payload.user;
+                state.lastAuthCheck = Date.now();
+            })
+            .addCase(updateProfile.rejected, (state, action) => {
+                state.isLoading = false;
+                state.error = action.payload as string || 'Failed to update profile';
             });
     },
 });

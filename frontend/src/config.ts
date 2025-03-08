@@ -8,6 +8,7 @@ export const API_ENDPOINTS = {
     REFRESH: `${API_BASE_URL}/auth/refresh`,
     LOGOUT: `${API_BASE_URL}/auth/logout`,
     ME: `${API_BASE_URL}/auth/me`,
+    UPDATE_PROFILE: `${API_BASE_URL}/auth/update-profile`,
   },
   BOARDS: {
     LIST: `${API_BASE_URL}/boards`,

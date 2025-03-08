@@ -5,6 +5,7 @@ import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
 import HomePage from './pages/HomePage';
 import BoardWrapper from './components/BoardWrapper';
+import ProfilePage from './pages/ProfilePage';
 import PrivateRoute from './components/PrivateRoute';
 import SessionProvider from './components/SessionProvider';
 import Navbar from './components/Navbar';
@@ -39,6 +40,19 @@ function App() {
                       <Navbar />
                       <div className="pt-4">
                         <HomePage />
+                      </div>
+                    </>
+                  </PrivateRoute>
+                }
+              />
+              <Route
+                path="/profile"
+                element={
+                  <PrivateRoute>
+                    <>
+                      <Navbar />
+                      <div className="pt-4">
+                        <ProfilePage />
                       </div>
                     </>
                   </PrivateRoute>

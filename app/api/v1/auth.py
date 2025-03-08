@@ -15,7 +15,7 @@ from app.crud import user as crud_user
 from app.db.session import get_db
 from app.models.user import User
 from app.schemas.token import Token
-from app.schemas.user import User as UserSchema, UserCreate
+from app.schemas.user import User as UserSchema, UserCreate, UserProfileUpdate
 
 router = APIRouter()
 
@@ -136,4 +136,30 @@ async def get_current_user_info(
     """
     Get current user information.
     """
-    return current_user 
+    return current_user
+
+
+@router.put("/update-profile", response_model=UserSchema)
+async def update_profile(
+    *,
+    db: AsyncSession = Depends(get_db),
+    profile_update: UserProfileUpdate,
+    current_user: User = Depends(get_current_active_user),
+) -> Any:
+    """
+    Update current user profile.
+    """
+    try:
+        updated_user = await crud_user.update_user_profile(
+            db=db, 
+            current_user=current_user, 
+            profile_update=profile_update
+        )
+        return updated_user
+    except HTTPException as e:
+        raise e
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to update profile: {str(e)}"
+        ) 
