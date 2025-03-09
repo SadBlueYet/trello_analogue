@@ -1,6 +1,6 @@
 from typing import Optional, List, ForwardRef
 from pydantic import BaseModel
-
+from datetime import datetime
 
 class BoardBase(BaseModel):
     title: str
@@ -11,6 +11,14 @@ class BoardBase(BaseModel):
 class BoardCreate(BoardBase):
     pass
 
+class GetBoards(BaseModel):
+    title: Optional[str] = None
+    description: Optional[str] = None
+    background_color: Optional[str] = None
+    created_at: Optional[datetime] = None
+    updated_at: Optional[datetime] = None
+    owner_id: Optional[int] = None
+    id: Optional[int] = None
 
 class BoardUpdate(BaseModel):
     title: Optional[str] = None
@@ -37,6 +45,8 @@ class BoardListUpdate(BaseModel):
 class BoardListInDBBase(BoardListBase):
     id: int
     board_id: int
+    created_at: Optional[datetime] = None
+    updated_at: Optional[datetime] = None
 
     class Config:
         from_attributes = True
@@ -49,9 +59,14 @@ class BoardList(BoardListInDBBase):
 class BoardInDBBase(BoardBase):
     id: int
     owner_id: int
+    created_at: Optional[datetime] = None
+    updated_at: Optional[datetime] = None
 
     class Config:
         from_attributes = True
+        json_encoders = {
+            datetime: lambda v: v.isoformat() if v else None
+        }
 
 
 # Используем ForwardRef для решения проблемы циклических импортов

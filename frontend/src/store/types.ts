@@ -11,6 +11,7 @@ export interface Board {
     description?: string;
     background_color?: string;
     owner_id: number;
+    created_at?: string;
     lists: BoardList[];
     shared_with?: BoardShare[];
 }

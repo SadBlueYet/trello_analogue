@@ -7,6 +7,7 @@ interface BoardCardProps {
   boardId: number;
   description?: string;
   onClick: () => void;
+  created_at?: string;
 }
 
 // Яркие цветовые градиенты для карточек досок
@@ -35,7 +36,8 @@ const BoardCard: React.FC<BoardCardProps> = ({
   background, 
   boardId, 
   description, 
-  onClick 
+  onClick,
+  created_at
 }) => {
   // Состояние для отслеживания, можно ли прокручивать описание
   const [isScrollable, setIsScrollable] = useState(false);
@@ -48,12 +50,16 @@ const BoardCard: React.FC<BoardCardProps> = ({
   // Иначе считаем, что это обычный цвет (HEX, RGB и т.д.)
   const gradient = isGradient ? background : getGradientByBoardId(boardId);
   
-  // Создаем случайную дату для демо
-  const randomDate = () => {
-    const now = new Date();
-    const daysAgo = Math.floor(Math.random() * 30) + 1; // Случайное число от 1 до 30 дней
-    now.setDate(now.getDate() - daysAgo);
-    return now.toLocaleDateString();
+  // Format date from database if available, or show placeholder
+  const formatDate = () => {
+    if (created_at) {
+      return new Date(created_at).toLocaleDateString('ru-RU', {
+        day: '2-digit',
+        month: '2-digit',
+        year: '2-digit'
+      });
+    }
+    return 'Нет даты';
   };
   
   // Проверяем, можно ли прокручивать описание при монтировании и обновлении
@@ -114,9 +120,9 @@ const BoardCard: React.FC<BoardCardProps> = ({
               <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 mr-1 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
-              <span className="truncate max-w-[80px]">{randomDate()}</span>
+              <span className="truncate max-w-[80px]">{formatDate()}</span>
             </span>
-            
+
             <span className="text-xs flex items-center font-medium whitespace-nowrap ml-1">
               <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 mr-1 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />

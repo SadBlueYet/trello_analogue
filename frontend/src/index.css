@@ -130,6 +130,7 @@ body {
     50% {
       transform: translate(20px, -20px);
     }
+
   }
   
   .animate-blob-slow {
@@ -149,6 +150,7 @@ body {
     100% {
       transform: translate(0px, 0px) scale(1);
     }
+
   }
   
   .animate-blob {

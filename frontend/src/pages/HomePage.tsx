@@ -268,6 +268,7 @@ const HomePage = () => {
                       boardId={board.id}
                       description={board.description}
                       onClick={() => navigate(`/boards/${board.id}`)}
+                      created_at={board.created_at}
                     />
                   </div>
                 ))}
