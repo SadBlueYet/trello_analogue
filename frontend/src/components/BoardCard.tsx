@@ -71,7 +71,7 @@ const BoardCard: React.FC<BoardCardProps> = ({
   
   return (
     <div 
-      className="aspect-square rounded-xl overflow-hidden shadow-md hover:shadow-lg transition-all duration-200 cursor-pointer flex flex-col relative"
+      className="aspect-square rounded-xl overflow-hidden shadow-md hover:shadow-lg transition-all duration-200 cursor-pointer flex flex-col relative min-w-[180px] min-h-[180px]"
       onClick={onClick}
     >
       <div 
@@ -80,50 +80,48 @@ const BoardCard: React.FC<BoardCardProps> = ({
       >
         {/* Заголовок и количество списков */}
         <div className="flex items-start justify-between mb-2">
-          <h3 className="text-lg font-bold truncate max-w-[80%]">{title}</h3>
-          <div className="bg-white/20 text-xs px-2 py-1 rounded-md flex-shrink-0">
+          <h3 className="text-lg font-bold truncate max-w-[75%]">{title}</h3>
+          <div className="bg-white/20 text-xs px-2 py-1 rounded-md flex-shrink-0 ml-1">
             {listsCount}
           </div>
         </div>
         
         {/* Описание - с ограничением высоты и возможностью прокрутки */}
-        <div className="overflow-hidden mb-24 relative">
+        <div className="overflow-hidden mb-[5.5rem] relative">
           <div 
             ref={descriptionRef}
-            className="bg-black/10 rounded-md p-2 text-sm text-white/90 break-words overflow-y-auto max-h-[120px]"
-            onClick={handleDescriptionClick}
+            className="bg-black/10 rounded-md p-3 text-sm text-white/90 break-words overflow-y-auto"
             style={{ 
+              maxHeight: '100px',
               scrollbarWidth: 'thin',
               scrollbarColor: 'rgba(255,255,255,0.2) transparent',
             }}
+            onClick={handleDescriptionClick}
           >
             {description || <span className="italic text-white/70">No description</span>}
           </div>
           
-          {/* Индикатор прокрутки - показывается только если описание можно прокручивать */}
+          {/* Простой индикатор прокрутки */}
           {isScrollable && (
-            <div className="absolute bottom-0 left-0 right-0 flex flex-col items-center">
-              <div className="h-6 w-full bg-gradient-to-t from-black/30 to-transparent pointer-events-none"></div>
-              <div className="absolute bottom-1 w-6 h-1.5 rounded-full bg-white/30 animate-pulse"></div>
-            </div>
+            <div className="absolute bottom-0 right-1 w-1.5 h-1.5 rounded-full bg-white/40"></div>
           )}
         </div>
         
         {/* Нижняя информационная панель - абсолютно позиционированная для гарантированного отображения */}
-        <div className="absolute bottom-4 left-4 right-4">
-          <div className="flex items-center justify-between mb-2 bg-black/15 backdrop-blur-sm rounded-md px-2 py-1.5 border border-white/10">
-            <span className="text-xs flex items-center font-medium">
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <div className="absolute bottom-4 left-4 right-4 min-h-[4rem]">
+          <div className="flex items-center justify-between mb-2 bg-black/15 backdrop-blur-sm rounded-md px-2 py-1.5 border border-white/10 overflow-hidden">
+            <span className="text-xs flex items-center font-medium whitespace-nowrap mr-1">
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 mr-1 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
-              {randomDate()}
+              <span className="truncate">{randomDate()}</span>
             </span>
             
-            <span className="text-xs flex items-center font-medium">
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <span className="text-xs flex items-center font-medium whitespace-nowrap ml-1">
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 mr-1 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
               </svg>
-              {listsCount} {listsCount === 1 ? 'list' : 'lists'}
+              <span className="truncate">{listsCount} {listsCount === 1 ? 'list' : 'lists'}</span>
             </span>
           </div>
           
