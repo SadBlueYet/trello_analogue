@@ -821,42 +821,86 @@ const BoardPage: React.FC = () => {
       <div className={`bg-gradient-to-r ${currentBoard?.background_color || 'from-blue-600 to-indigo-700'} text-white shadow-lg`}>
         <div className="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-2xl font-bold tracking-tight">
-                {currentBoard?.title || 'Loading board...'}
-              </h1>
-              {currentBoard?.description && (
-                <p className="mt-1 text-sm text-blue-100 max-w-2xl">
-                  {currentBoard.description}
-                </p>
-              )}
+            <div className="flex items-start">
+              <div className="bg-white/10 backdrop-blur-sm rounded-xl p-3 mr-4 shadow-lg border border-white/10">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                </svg>
+              </div>
+              <div>
+                <h1 className="text-2xl font-bold tracking-tight">
+                  {currentBoard?.title || 'Loading board...'}
+                </h1>
+                {currentBoard?.description && (
+                  <div className="mt-2 bg-black/10 rounded-md p-2 text-sm text-white/90 max-w-2xl backdrop-blur-sm border border-white/10 max-h-[100px] overflow-y-auto" 
+                    style={{ 
+                      scrollbarWidth: 'thin',
+                      scrollbarColor: 'rgba(255,255,255,0.2) transparent',
+                    }}>
+                    {currentBoard.description}
+                  </div>
+                )}
+              </div>
             </div>
-            <div className="flex space-x-3">
-              <Button
-                variant="secondary"
-                className="text-sm px-3 py-1 bg-white/10 hover:bg-white/20 border-transparent text-white"
+            <div className="flex space-x-3 items-center">
+              <button
+                className="text-sm px-3 py-1.5 rounded-md text-white bg-white/10 backdrop-blur-sm shadow-md hover:bg-white/20 
+                          border border-white/20 transition-all font-medium flex items-center"
+                style={{ 
+                  backdropFilter: 'blur(4px)',
+                  WebkitBackdropFilter: 'blur(4px)'
+                }}
                 onClick={() => setSettingsModalOpen(true)}
               >
-                <span className="flex items-center">
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                  </svg>
-                  Settings
-                </span>
-              </Button>
-              <Button
-                variant="secondary"
-                className="text-sm px-3 py-1 bg-white/10 hover:bg-white/20 border-transparent text-white"
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                </svg>
+                Settings
+              </button>
+              
+              <button
+                className="text-sm px-3 py-1.5 rounded-md text-white bg-white/10 backdrop-blur-sm shadow-md hover:bg-white/20 
+                          border border-white/20 transition-all font-medium flex items-center"
+                style={{ 
+                  backdropFilter: 'blur(4px)',
+                  WebkitBackdropFilter: 'blur(4px)'
+                }}
                 onClick={() => setShareModalOpen(true)}
               >
-                <span className="flex items-center">
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
-                  </svg>
-                  Share
-                </span>
-              </Button>
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
+                </svg>
+                Share
+              </button>
+              
+              <button
+                className="text-sm px-3 py-1.5 rounded-md text-white bg-white/10 backdrop-blur-sm shadow-md hover:bg-white/20 
+                          border border-white/20 transition-all font-medium flex items-center"
+                style={{ 
+                  backdropFilter: 'blur(4px)',
+                  WebkitBackdropFilter: 'blur(4px)'
+                }}
+                onClick={() => navigate('/home')}
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+                </svg>
+                Home
+              </button>
+              
+              <div className="text-sm px-3 py-1.5 rounded-md text-white bg-white/10 backdrop-blur-sm shadow-md 
+                          border border-white/20 font-medium flex items-center"
+                style={{ 
+                  backdropFilter: 'blur(4px)',
+                  WebkitBackdropFilter: 'blur(4px)'
+                }}>
+                <svg className="h-4 w-4 mr-1.5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                </svg>
+                <span className="mr-1">{currentBoard?.lists?.length || 0}</span>
+                <span>{currentBoard?.lists?.length === 1 ? 'list' : 'lists'}</span>
+              </div>
             </div>
           </div>
         </div>
