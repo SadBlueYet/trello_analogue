@@ -5,8 +5,11 @@ from passlib.context import CryptContext
 from fastapi import Response
 from app.core.config import settings
 from app.schemas.token import TokenType
+import logging
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+
+logger = logging.getLogger(__name__)
 
 
 def create_token(
@@ -46,35 +49,31 @@ def create_refresh_token(
 
 
 def set_auth_cookies(
-    response: Response, 
-    access_token: str, 
-    refresh_token: str
+    response: Response,
+    access_token: str,
+    refresh_token: str,
 ) -> None:
-    access_max_age = settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60
-    refresh_max_age = settings.REFRESH_TOKEN_EXPIRE_DAYS * 24 * 60 * 60
+    logger.info(f"Setting cookies with domain={settings.COOKIE_DOMAIN}, secure={settings.COOKIE_SECURE}, samesite={settings.COOKIE_SAMESITE}")
     
-    # Set access token cookie
     response.set_cookie(
         key="access_token",
         value=access_token,
         httponly=True,
-        max_age=access_max_age,
+        max_age=settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60,
+        expires=settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60,
         domain=settings.COOKIE_DOMAIN,
         secure=settings.COOKIE_SECURE,
         samesite=settings.COOKIE_SAMESITE,
-        path="/"
     )
-    
-    # Set refresh token cookie
     response.set_cookie(
         key="refresh_token",
         value=refresh_token,
         httponly=True,
-        max_age=refresh_max_age,
+        max_age=settings.REFRESH_TOKEN_EXPIRE_DAYS * 24 * 60 * 60,
+        expires=settings.REFRESH_TOKEN_EXPIRE_DAYS * 24 * 60 * 60,
         domain=settings.COOKIE_DOMAIN,
         secure=settings.COOKIE_SECURE,
         samesite=settings.COOKIE_SAMESITE,
-        path="/"
     )
 
 

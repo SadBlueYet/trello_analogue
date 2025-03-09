@@ -10,9 +10,7 @@ import {
   Input, 
   Card, 
   Link, 
-  ErrorMessage,
-  PageContainer,
-  PageHeader
+  ErrorMessage
 } from '../components/ui';
 
 const RegisterPage = () => {
@@ -121,100 +119,131 @@ const RegisterPage = () => {
       <AuthBackground />
       
       <div className="min-h-screen flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8 relative z-10">
-        <div className="max-w-md w-full space-y-8">
-          <Card className="p-8 backdrop-blur-sm bg-white/80 shadow-xl">
+        <div className="max-w-md w-full space-y-6">
+          <div className="text-center mb-8">
             <div className="flex justify-center">
-              <div className="h-20 w-20 rounded-full bg-gradient-to-br from-purple-500 to-pink-600 flex items-center justify-center shadow-lg mb-2">
+              <div className="h-24 w-24 rounded-full bg-gradient-to-r from-pink-500 to-purple-500 flex items-center justify-center shadow-lg animate-pulse-soft">
                 <svg 
                   xmlns="http://www.w3.org/2000/svg" 
-                  className="h-10 w-10 text-white" 
+                  className="h-12 w-12 text-white" 
                   fill="none" 
                   viewBox="0 0 24 24" 
                   stroke="currentColor"
-                  strokeWidth={1.5}
                 >
                   <path 
                     strokeLinecap="round" 
                     strokeLinejoin="round" 
+                    strokeWidth={1.5} 
                     d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" 
                   />
                 </svg>
               </div>
             </div>
+            <h2 className="mt-4 text-3xl font-bold text-gray-900">
+              Join TaskFlow Today
+            </h2>
+            <p className="mt-2 text-sm text-gray-600">
+              Create your account to get started
+            </p>
+          </div>
+          
+          <Card className="p-8 shadow-xl" hover>
+            {error && <ErrorMessage message={error} />}
             
-            <PageHeader 
-              title="Join Us Today"
-              subtitle="Create your account to get started"
-            />
-            
-            <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
-              <ErrorMessage message={error} />
+            <form className="space-y-6" onSubmit={handleSubmit}>
+              <Input
+                id="email"
+                name="email"
+                type="email"
+                label="Email address"
+                required
+                placeholder="you@example.com"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                icon={
+                  <svg className="h-5 w-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                    <path d="M2.003 5.884L10 9.882l7.997-3.998A2 2 0 0016 4H4a2 2 0 00-1.997 1.884z" />
+                    <path d="M18 8.118l-8 4-8-4V14a2 2 0 002 2h12a2 2 0 002-2V8.118z" />
+                  </svg>
+                }
+              />
               
-              <div className="space-y-4">
-                <Input
-                  id="email"
-                  name="email"
-                  type="email"
-                  label="Email address"
-                  required
-                  placeholder="you@example.com"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  className="bg-white/90"
-                />
-                
-                <Input
-                  id="username"
-                  name="username"
-                  type="text"
-                  label="Username"
-                  required
-                  placeholder="Choose a username"
-                  value={username}
-                  onChange={(e) => setUsername(e.target.value)}
-                  className="bg-white/90"
-                />
-                
-                <Input
-                  id="password"
-                  name="password"
-                  type="password"
-                  label="Password"
-                  required
-                  placeholder="••••••••"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  className="bg-white/90"
-                />
-                
-                <Input
-                  id="confirm-password"
-                  name="confirmPassword"
-                  type="password"
-                  label="Confirm password"
-                  required
-                  placeholder="••••••••"
-                  value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
-                  className="bg-white/90"
-                />
+              <Input
+                id="username"
+                name="username"
+                type="text"
+                label="Username"
+                required
+                placeholder="Choose a username"
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+                icon={
+                  <svg className="h-5 w-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                    <path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd" />
+                  </svg>
+                }
+              />
+              
+              <Input
+                id="password"
+                name="password"
+                type="password"
+                label="Password"
+                required
+                placeholder="••••••••"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                icon={
+                  <svg className="h-5 w-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                    <path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clipRule="evenodd" />
+                  </svg>
+                }
+              />
+              
+              <Input
+                id="confirm-password"
+                name="confirmPassword"
+                type="password"
+                label="Confirm password"
+                required
+                placeholder="••••••••"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                icon={
+                  <svg className="h-5 w-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                    <path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clipRule="evenodd" />
+                  </svg>
+                }
+              />
+
+              <div className="pt-2">
+                <Button 
+                  type="submit" 
+                  isLoading={isSubmitting || authLoading}
+                  className="bg-gradient-to-r from-pink-500 to-purple-500 hover:from-pink-600 hover:to-purple-600"
+                >
+                  Create Account
+                </Button>
               </div>
-
-              <Button 
-                type="submit" 
-                isLoading={isSubmitting || authLoading}
-                className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700"
-              >
-                Create account
-              </Button>
+              
+              <div className="mt-4">
+                <div className="relative">
+                  <div className="absolute inset-0 flex items-center">
+                    <div className="w-full border-t border-gray-300"></div>
+                  </div>
+                  <div className="relative flex justify-center text-sm">
+                    <span className="px-2 bg-white text-gray-500">By signing up, you agree to our Terms & Conditions</span>
+                  </div>
+                </div>
+              </div>
             </form>
-
-            <div className="text-center mt-6">
-              <Link to="/login" className="text-indigo-600 hover:text-indigo-500">
-                Already have an account? <span className="font-semibold">Sign in</span>
-              </Link>
-            </div>
           </Card>
+
+          <div className="text-center">
+            <Link to="/login" className="font-medium text-indigo-600 hover:text-indigo-500">
+              Already have an account? <span className="font-semibold">Sign in now</span>
+            </Link>
+          </div>
         </div>
       </div>
     </div>

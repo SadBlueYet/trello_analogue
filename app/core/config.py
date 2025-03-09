@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Optional, Union
 from dotenv import load_dotenv
 from pydantic_settings import BaseSettings
 from pydantic import AnyHttpUrl
@@ -16,9 +16,9 @@ class Settings(BaseSettings):
     REFRESH_TOKEN_EXPIRE_DAYS: int = 7
     
     # Cookie settings
-    COOKIE_DOMAIN: str = "localhost"
-    COOKIE_SECURE: bool = False  # Set to True in production with HTTPS
-    COOKIE_SAMESITE: str = "lax"  # Options: lax, strict, none
+    COOKIE_DOMAIN: Optional[str] = None  # None позволяет использовать куки на localhost
+    COOKIE_SECURE: bool = True  # True обязательно при использовании SameSite=none
+    COOKIE_SAMESITE: str = "none"  # None разрешает cross-site requests для локальной разработки
 
     # CORS
     BACKEND_CORS_ORIGINS: List[AnyHttpUrl] = []

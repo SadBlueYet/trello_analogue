@@ -3,13 +3,26 @@
 @tailwind utilities;
 
 :root {
-  font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
+  --primary: #6366f1;
+  --primary-dark: #4f46e5;
+  --secondary: #ec4899;
+  --secondary-dark: #db2777;
+  --accent: #8b5cf6;
+  --accent-dark: #7c3aed;
+  --success: #10b981;
+  --danger: #ef4444;
+  --warning: #f59e0b;
+  --info: #3b82f6;
+  --surface: #ffffff;
+  --background: #f3f4f6;
+  
+  font-family: 'Poppins', system-ui, Avenir, Helvetica, Arial, sans-serif;
   line-height: 1.5;
   font-weight: 400;
 
-  color-scheme: light dark;
-  color: #213547;
-  background-color: #ffffff;
+  color-scheme: light;
+  color: #374151;
+  background-color: var(--background);
 
   font-synthesis: none;
   text-rendering: optimizeLegibility;
@@ -21,7 +34,7 @@ body {
   margin: 0;
   min-width: 320px;
   min-height: 100vh;
-  background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+  background: linear-gradient(135deg, #f9fafb 0%, #e5edff 100%);
   background-size: cover;
   background-attachment: fixed;
 }
@@ -32,19 +45,55 @@ body {
 
 @layer components {
   .btn-primary {
-    @apply px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition duration-200;
+    @apply px-4 py-2 bg-gradient-to-r from-indigo-500 to-purple-500 hover:from-indigo-600 hover:to-purple-600 text-white rounded-lg shadow-md hover:shadow-lg transform hover:-translate-y-0.5 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-all duration-200;
   }
 
   .btn-secondary {
-    @apply px-4 py-2 bg-white text-gray-700 border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition duration-200;
+    @apply px-4 py-2 bg-gradient-to-r from-pink-500 to-rose-500 hover:from-pink-600 hover:to-rose-600 text-white rounded-lg shadow-md hover:shadow-lg transform hover:-translate-y-0.5 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-pink-500 transition-all duration-200;
+  }
+
+  .btn-outline {
+    @apply px-4 py-2 bg-white text-indigo-600 border border-indigo-300 rounded-lg shadow-sm hover:bg-indigo-50 transform hover:-translate-y-0.5 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-all duration-200;
   }
 
   .input-primary {
-    @apply block w-full px-3 py-2 bg-white/90 border border-gray-300 rounded-md placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition duration-200;
+    @apply block w-full px-4 py-3 bg-white border border-gray-200 rounded-lg shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all duration-200;
   }
   
   .card {
-    @apply bg-white/90 rounded-lg hover:bg-white/95 transition-all duration-300;
+    @apply bg-white rounded-xl shadow-md hover:shadow-lg border border-gray-100 transition-all duration-300;
+  }
+
+  .card-hover {
+    @apply transform hover:-translate-y-1;
+  }
+
+  .tag {
+    @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-indigo-100 text-indigo-800;
+  }
+
+  .tag-purple {
+    @apply bg-purple-100 text-purple-800;
+  }
+
+  .tag-pink {
+    @apply bg-pink-100 text-pink-800;
+  }
+
+  .tag-blue {
+    @apply bg-blue-100 text-blue-800;
+  }
+
+  .tag-green {
+    @apply bg-green-100 text-green-800;
+  }
+
+  .tag-yellow {
+    @apply bg-yellow-100 text-yellow-800;
+  }
+
+  .tag-red {
+    @apply bg-red-100 text-red-800;
   }
 }
 
@@ -59,6 +108,32 @@ body {
   
   .animation-delay-4000 {
     animation-delay: 4s;
+  }
+  
+  @keyframes pulse-soft {
+    0%, 100% {
+      opacity: 1;
+    }
+    50% {
+      opacity: 0.8;
+    }
+  }
+  
+  .animate-pulse-soft {
+    animation: pulse-soft 4s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  }
+  
+  @keyframes blob-slow {
+    0%, 100% {
+      transform: translate(0px, 0px);
+    }
+    50% {
+      transform: translate(20px, -20px);
+    }
+  }
+  
+  .animate-blob-slow {
+    animation: blob-slow 7s ease-in-out infinite alternate;
   }
   
   @keyframes blob {
@@ -78,6 +153,10 @@ body {
   
   .animate-blob {
     animation: blob 10s infinite;
+  }
+
+  .glass {
+    @apply bg-white bg-opacity-20 backdrop-filter backdrop-blur-lg;
   }
   
   .bg-grid-white {
