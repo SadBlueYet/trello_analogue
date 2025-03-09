@@ -71,28 +71,28 @@ const BoardCard: React.FC<BoardCardProps> = ({
   
   return (
     <div 
-      className="aspect-square rounded-xl overflow-hidden shadow-md hover:shadow-lg transition-all duration-200 cursor-pointer flex flex-col relative min-w-[180px] min-h-[180px]"
+      className="aspect-square rounded-xl overflow-hidden shadow-md hover:shadow-lg transition-all duration-200 cursor-pointer flex flex-col relative"
       onClick={onClick}
+      style={{ minWidth: 'calc(100% - 1rem)', minHeight: '150px', maxHeight: '250px' }}
     >
       <div 
-        className={`w-full h-full p-4 text-white flex flex-col ${isGradient || !background ? 'bg-gradient-to-r' : ''} ${isGradient || !background ? gradient : ''}`}
+        className={`w-full h-full p-3 text-white flex flex-col ${isGradient || !background ? 'bg-gradient-to-r' : ''} ${isGradient || !background ? gradient : ''}`}
         style={background && !isGradient ? { backgroundColor: background } : {}}
       >
         {/* Заголовок и количество списков */}
-        <div className="flex items-start justify-between mb-2">
-          <h3 className="text-lg font-bold truncate max-w-[75%]">{title}</h3>
-          <div className="bg-white/20 text-xs px-2 py-1 rounded-md flex-shrink-0 ml-1">
+        <div className="flex items-start justify-between mb-1.5">
+          <h3 className="text-base font-bold truncate max-w-[75%]">{title}</h3>
+          <div className="bg-white/20 text-xs px-1.5 py-0.5 rounded-md flex-shrink-0 ml-1">
             {listsCount}
           </div>
         </div>
         
         {/* Описание - с ограничением высоты и возможностью прокрутки */}
-        <div className="overflow-hidden mb-[5.5rem] relative">
+        <div className="overflow-hidden mb-16 flex-grow">
           <div 
             ref={descriptionRef}
-            className="bg-black/10 rounded-md p-3 text-sm text-white/90 break-words overflow-y-auto"
+            className="bg-black/10 rounded-md p-2 text-sm text-white/90 break-words overflow-y-auto h-full"
             style={{ 
-              maxHeight: '100px',
               scrollbarWidth: 'thin',
               scrollbarColor: 'rgba(255,255,255,0.2) transparent',
             }}
@@ -103,18 +103,18 @@ const BoardCard: React.FC<BoardCardProps> = ({
           
           {/* Простой индикатор прокрутки */}
           {isScrollable && (
-            <div className="absolute bottom-0 right-1 w-1.5 h-1.5 rounded-full bg-white/40"></div>
+            <div className="absolute bottom-20 right-1 w-1.5 h-1.5 rounded-full bg-white/40"></div>
           )}
         </div>
         
         {/* Нижняя информационная панель - абсолютно позиционированная для гарантированного отображения */}
-        <div className="absolute bottom-4 left-4 right-4 min-h-[4rem]">
-          <div className="flex items-center justify-between mb-2 bg-black/15 backdrop-blur-sm rounded-md px-2 py-1.5 border border-white/10 overflow-hidden">
+        <div className="absolute left-3 right-3 bottom-3">
+          <div className="flex items-center justify-between mb-1.5 bg-black/15 backdrop-blur-sm rounded-md px-2 py-1 border border-white/10 overflow-hidden">
             <span className="text-xs flex items-center font-medium whitespace-nowrap mr-1">
               <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 mr-1 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
-              <span className="truncate">{randomDate()}</span>
+              <span className="truncate max-w-[80px]">{randomDate()}</span>
             </span>
             
             <span className="text-xs flex items-center font-medium whitespace-nowrap ml-1">
@@ -126,7 +126,7 @@ const BoardCard: React.FC<BoardCardProps> = ({
           </div>
           
           <div className="flex justify-end">
-            <span className="bg-black/15 hover:bg-black/25 backdrop-blur-sm px-3 py-1.5 rounded-full text-xs flex items-center transition-colors cursor-pointer border border-white/10 font-medium">
+            <span className="bg-black/15 hover:bg-black/25 px-2 py-1 rounded-full text-xs flex items-center transition-colors cursor-pointer border border-white/10 font-medium">
               <span className="mr-1">Open</span>
               <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />

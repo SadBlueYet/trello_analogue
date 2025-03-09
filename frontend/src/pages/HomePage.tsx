@@ -258,17 +258,18 @@ const HomePage = () => {
             )}
 
             {boards.length > 0 ? (
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-5">
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
                 {boards.map((board) => (
-                  <BoardCard
-                    key={board.id}
-                    title={board.title}
-                    listsCount={board.lists?.length || 0}
-                    background={board.background_color}
-                    boardId={board.id}
-                    description={board.description}
-                    onClick={() => navigate(`/boards/${board.id}`)}
-                  />
+                  <div className="w-full" key={board.id}>
+                    <BoardCard
+                      title={board.title}
+                      listsCount={board.lists?.length || 0}
+                      background={board.background_color}
+                      boardId={board.id}
+                      description={board.description}
+                      onClick={() => navigate(`/boards/${board.id}`)}
+                    />
+                  </div>
                 ))}
               </div>
             ) : (
