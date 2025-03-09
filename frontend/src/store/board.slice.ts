@@ -111,7 +111,7 @@ export const fetchBoard = createAsyncThunk(
 
 export const createBoard = createAsyncThunk(
     'board/createBoard',
-    async (data: { title: string; description?: string }) => {
+    async (data: { title: string; description?: string; background_color?: string }) => {
         const newBoard = await boardService.createBoard(data);
         // Очищаем кеш досок после создания новой доски
         boardsRequestPromise = null;
