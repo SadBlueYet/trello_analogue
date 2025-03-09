@@ -24,7 +24,7 @@ class CardUpdate(BaseModel):
 class CardInDBBase(CardBase):
     id: int
     list_id: int
-    task_number: Optional[str] = None
+    card_id: int
     created_at: datetime
     updated_at: datetime
     card_color: Optional[str] = None

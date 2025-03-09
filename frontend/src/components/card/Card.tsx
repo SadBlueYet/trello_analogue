@@ -1,7 +1,10 @@
 import React, { useState } from 'react';
 import { Draggable } from 'react-beautiful-dnd';
-import { Card as CardType } from '../../store/types';
+import { useDispatch, useSelector } from 'react-redux';
+import { Card as CardType, BoardList } from '../../store/types';
 import { cardService } from '../../services/card.service';
+import { RootState } from '../../store';
+import { setCurrentBoard } from '../../store/board.slice';
 
 interface CardProps {
     card: CardType;
@@ -15,6 +18,9 @@ const Card: React.FC<CardProps> = ({ card, index, listId, onCardUpdate }) => {
     const [title, setTitle] = useState(card.title);
     const [description, setDescription] = useState(card.description || '');
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const dispatch = useDispatch();
+    // Get the current board directly from the store
+    const currentBoard = useSelector((state: RootState) => state.board.currentBoard);
 
     const handleUpdate = async () => {
         if (title !== card.title || description !== card.description) {
@@ -44,7 +50,27 @@ const Card: React.FC<CardProps> = ({ card, index, listId, onCardUpdate }) => {
             try {
                 setIsSubmitting(true);
                 await cardService.deleteCard(card.id);
-                // Уведомляем родительский компонент об изменении
+                
+                // Update the Redux state directly
+                if (currentBoard) {
+                    const updatedBoard = {
+                        ...currentBoard,
+                        lists: currentBoard.lists.map((list: BoardList) => {
+                            if (list.id === listId) {
+                                return {
+                                    ...list,
+                                    cards: list.cards.filter((c: CardType) => c.id !== card.id)
+                                };
+                            }
+                            return list;
+                        })
+                    };
+                    
+                    // Update Redux state with the modified board
+                    dispatch(setCurrentBoard(updatedBoard));
+                }
+                
+                // Also notify parent if callback exists
                 if (onCardUpdate) {
                     onCardUpdate();
                 }

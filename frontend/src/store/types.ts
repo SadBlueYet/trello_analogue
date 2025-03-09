@@ -37,7 +37,7 @@ export interface Card {
     description?: string;
     position: number;
     list_id: number;
-    task_number?: string;
+    card_id: number;
     created_at?: string;
     updated_at?: string;
     card_color?: string;

@@ -4,11 +4,11 @@ from app.models.base import Base
 
 
 class Card(Base):
+    card_id = Column(Integer, nullable=False, unique=False, autoincrement=False)
     title = Column(String, nullable=False)
     description = Column(Text)
     position = Column(Integer, nullable=False)
     list_id = Column(Integer, ForeignKey("list.id"), nullable=False)
-    task_number = Column(String, nullable=True)  # Формат TA-XXX, уникальный в пределах доски
     card_color = Column(String, nullable=True)  # Цвет карточки в формате CSS-градиента
     
     list = relationship("BoardList", back_populates="cards") 

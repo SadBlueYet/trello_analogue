@@ -106,10 +106,11 @@ const TaskCard: React.FC<{
   description?: string;
   dragHandleProps?: any;
   onClick: () => void;
-  task_number?: string;
+  card_id?: number;
   created_at?: string;
   card_color?: string;
-}> = ({ id, title, description, dragHandleProps, onClick, task_number, created_at, card_color }) => {
+  boardPrefix?: string;
+}> = ({ id, title, description, dragHandleProps, onClick, card_id, created_at, card_color, boardPrefix }) => {
   // Форматируем дату создания, если она есть
   const formattedDate = created_at ? new Date(created_at).toLocaleDateString('ru-RU', {
     day: '2-digit',
@@ -119,7 +120,25 @@ const TaskCard: React.FC<{
 
   // Используем один цвет по умолчанию для всех карточек
   const defaultColor = 'from-blue-400 to-indigo-500';
-  const accentColor = card_color || defaultColor;
+  
+  // Determine the color - if card_color is a Tailwind color class, use it directly
+  // Otherwise, create a custom background color style
+  let colorStyle = {};
+  let colorClass = 'bg-gradient-to-r';
+  
+  if (card_color) {
+    // If it's a hex color, use it as a background style
+    if (card_color.startsWith('#')) {
+      colorStyle = { backgroundColor: card_color };
+      colorClass = '';  // No gradient for custom colors
+    } else {
+      // Must be a Tailwind class
+      colorClass = `bg-gradient-to-r ${card_color}`;
+    }
+  } else {
+    // Default gradient
+    colorClass = `bg-gradient-to-r ${defaultColor}`;
+  }
 
   return (
     <div 
@@ -127,7 +146,10 @@ const TaskCard: React.FC<{
       onClick={onClick}
     >
       {/* Тонкая цветная полоса сверху */}
-      <div className={`h-1 bg-gradient-to-r ${accentColor}`}></div>
+      <div 
+        className={`h-1 ${colorClass}`}
+        style={colorStyle}
+      ></div>
       
     <div
       {...dragHandleProps}
@@ -143,7 +165,7 @@ const TaskCard: React.FC<{
       <div className="flex justify-between items-start mb-2">
         <h4 className="font-medium text-gray-800">{title}</h4>
           <span className="text-xs font-mono bg-blue-100 text-blue-800 rounded px-2 py-1">
-            {task_number || `TA-${String(id).padStart(3, '0')}`}
+            {`${boardPrefix || 'TA'}-${card_id}`}
           </span>
       </div>
       
@@ -273,6 +295,17 @@ export function clearListCardsCache(listId: number) {
   cardsCache.delete(listId);
   pendingCardRequests.delete(listId);
 }
+
+// Добавляем нашу функцию перед определением функции BoardPage
+const generateBoardPrefix = (boardTitle: string): string => {
+  // Аналогично логике на бэкенде: берем первые буквы каждого слова
+  if (!boardTitle) return 'TA';
+  
+  const words = boardTitle.match(/\b\w/g);
+  if (!words || words.length === 0) return 'TA';
+  
+  return words.join('').toUpperCase();
+};
 
 const BoardPage: React.FC = () => {
   const { boardId } = useParams<{ boardId: string }>();
@@ -928,8 +961,10 @@ const BoardPage: React.FC = () => {
         isOpen={isCardModalOpen}
         onClose={() => setIsCardModalOpen(false)}
         card={selectedCard}
-        onSave={handleUpdateCard}
         listTitle={selectedListTitle}
+        onSave={handleUpdateCard}
+        boardId={currentBoard?.id || 0}
+        boardTitle={currentBoard?.title || ''}
       />
 
       {/* Модальное окно для редактирования цвета списка */}
@@ -1039,12 +1074,13 @@ const BoardPage: React.FC = () => {
                                         <TaskCard
                                           id={card.id}
                                           title={card.title}
+                                          card_id={card.card_id}
                                           description={card.description}
                                           dragHandleProps={provided.dragHandleProps}
                                               onClick={() => handleCardClick(card, list.title)}
-                                              task_number={card.task_number}
                                               created_at={card.created_at}
                                               card_color={card.card_color}
+                                              boardPrefix={generateBoardPrefix(currentBoard?.title || '')}
                                         />
                                       </div>
                                     )}
