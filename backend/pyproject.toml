@@ -10,6 +10,19 @@ requires-python = "==3.13.*"
 readme = "README.md"
 license = {text = "MIT"}
 
+[project.optional-dependencies]
+test = [
+    "pytest>=7.4.3",
+    "pytest-asyncio>=0.21.1",
+    "httpx>=0.25.1",
+    "aiosqlite>=0.19.0",
+    "pytest-cov>=4.1.0"
+]
 
 [tool.pdm]
 distribution = false
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]
+python_files = ["test_*.py"]

@@ -34,7 +34,13 @@ const CardModal: React.FC<CardModalProps> = ({ isOpen, onClose, card, onSave, li
   const [error, setError] = useState('');
   const [selectedColor, setSelectedColor] = useState('');
   const [isDeleting, setIsDeleting] = useState(false);
+  const [selectedListId, setSelectedListId] = useState<number | null>(null);
+  
   const dispatch = useDispatch<AppDispatch>();
+  const currentBoard = useSelector((state: RootState) => state.board.currentBoard);
+  
+  // Get all available lists from the current board
+  const availableLists = currentBoard?.lists || [];
 
   // Reset form when card changes or modal opens
   useEffect(() => {
@@ -42,6 +48,7 @@ const CardModal: React.FC<CardModalProps> = ({ isOpen, onClose, card, onSave, li
       setTitle(card.title || '');
       setDescription(card.description || '');
       setSelectedColor(card.card_color || '');
+      setSelectedListId(card.list_id);
     }
   }, [card, isOpen]);
 
@@ -60,9 +67,10 @@ const CardModal: React.FC<CardModalProps> = ({ isOpen, onClose, card, onSave, li
         title: title.trim(),
         description: description.trim() || undefined,
         card_color: selectedColor,
+        list_id: selectedListId || card?.list_id, // Include changed list_id if it was modified
       };
       
-      console.log('Saving card with color:', selectedColor);
+      console.log('Saving card with color:', selectedColor, 'and list_id:', selectedListId);
       
       // First save to backend
       await onSave(updatedCard);
@@ -72,30 +80,70 @@ const CardModal: React.FC<CardModalProps> = ({ isOpen, onClose, card, onSave, li
         // For debugging, log the card before update
         console.log('Current card before update:', card);
         
-        const updatedBoard = {
-          ...currentBoard,
-          lists: currentBoard.lists.map((list: BoardList) => {
-            if (list.id === card.list_id) {
-              return {
-                ...list,
-                cards: list.cards.map((c: Card) => {
-                  if (c.id === card.id) {
-                    const updatedCardObj = {
-                      ...c,
-                      title: updatedCard.title,
-                      description: updatedCard.description,
-                      card_color: updatedCard.card_color,
-                    };
-                    console.log('Updated card object:', updatedCardObj);
-                    return updatedCardObj;
-                  }
-                  return c;
-                }),
-              };
-            }
-            return list;
-          }),
-        };
+        const oldListId = card.list_id;
+        const newListId = selectedListId || oldListId;
+        const isMovingLists = oldListId !== newListId;
+        
+        let updatedBoard;
+        
+        if (isMovingLists) {
+          // If the card is moving to a different list
+          updatedBoard = {
+            ...currentBoard,
+            lists: currentBoard.lists.map((list: BoardList) => {
+              if (list.id === oldListId) {
+                // Remove card from old list
+                return {
+                  ...list,
+                  cards: list.cards.filter((c: Card) => c.id !== card.id)
+                };
+              }
+              if (list.id === newListId) {
+                // Add card to new list
+                const updatedCardObj = {
+                  ...card,
+                  title: updatedCard.title,
+                  description: updatedCard.description,
+                  card_color: updatedCard.card_color,
+                  list_id: newListId,
+                  position: list.cards.length // Add to the end of the list
+                };
+                
+                return {
+                  ...list,
+                  cards: [...list.cards, updatedCardObj]
+                };
+              }
+              return list;
+            })
+          };
+        } else {
+          // If the card is just being updated without changing lists
+          updatedBoard = {
+            ...currentBoard,
+            lists: currentBoard.lists.map((list: BoardList) => {
+              if (list.id === card.list_id) {
+                return {
+                  ...list,
+                  cards: list.cards.map((c: Card) => {
+                    if (c.id === card.id) {
+                      const updatedCardObj = {
+                        ...c,
+                        title: updatedCard.title,
+                        description: updatedCard.description,
+                        card_color: updatedCard.card_color,
+                      };
+                      console.log('Updated card object:', updatedCardObj);
+                      return updatedCardObj;
+                    }
+                    return c;
+                  }),
+                };
+              }
+              return list;
+            }),
+          };
+        }
         
         console.log('Dispatching updated board to Redux');
         dispatch(setCurrentBoard(updatedBoard));
@@ -124,9 +172,6 @@ const CardModal: React.FC<CardModalProps> = ({ isOpen, onClose, card, onSave, li
     
     return words.join('').toUpperCase();
   };
-
-  // Get the current board directly from the store
-  const currentBoard = useSelector((state: RootState) => state.board.currentBoard);
   
   // Delete card function
   const handleDeleteCard = async () => {
@@ -174,54 +219,80 @@ const CardModal: React.FC<CardModalProps> = ({ isOpen, onClose, card, onSave, li
       })
     : undefined;
 
+  // Find the current list name
+  const currentListName = availableLists.find(list => list.id === selectedListId)?.title || listTitle;
+
   return (
     <Modal isOpen={isOpen} onClose={onClose} title="" size="medium">
       <div className="relative">
-        {/* Removed blue gradient stripe */}
-        
-        {/* Card identifier badge */}
-        <div className="flex items-center justify-between mb-6">
-          <div className="flex items-center">
-            <span className="bg-indigo-100 text-indigo-800 font-medium px-3 py-1 rounded-md text-sm">
-              {cardNumber}
-            </span>
+        {/* Enhanced header section with gradient - with less negative margin to avoid overlapping close button */}
+        <div className="bg-gradient-to-r from-indigo-50 via-blue-50 to-indigo-50 -mx-6 -mt-2 mb-6 p-6 border-b border-indigo-100 rounded-t-lg">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            {/* Card identifier with icon */}
+            <div className="flex items-center">
+              <div className="bg-gradient-to-r from-indigo-600 to-blue-600 text-white p-2 rounded-md mr-3 shadow-sm">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                </svg>
+              </div>
+              <div>
+                <div className="text-xs text-gray-500 mb-0.5">Card Reference</div>
+                <div className="flex space-x-2 items-center">
+                  <span className="text-lg font-bold text-indigo-700">
+                    {cardNumber}
+                  </span>
+                  
+                  {/* List selector as a badge */}
+                  <div className="relative inline-block">
+                    <select
+                      value={selectedListId || ''}
+                      onChange={(e) => setSelectedListId(Number(e.target.value))}
+                      className="appearance-none pl-3 pr-8 py-1 bg-blue-100 text-blue-800 font-medium rounded-md text-sm cursor-pointer border border-blue-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    >
+                      {availableLists.map((list) => (
+                        <option key={list.id} value={list.id}>
+                          {list.title}
+                        </option>
+                      ))}
+                    </select>
+                    <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-blue-700">
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                      </svg>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            {/* Card metadata in header */}
+            <div className="flex flex-wrap gap-3">
+              {/* Created date badge */}
+              {formattedCreatedDate && (
+                <div className="flex items-center px-3 py-1.5 bg-white rounded-md border border-indigo-100 shadow-sm">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                  </svg>
+                  <span className="text-gray-600">{formattedCreatedDate}</span>
+                </div>
+              )}
+              
+              {/* Delete button in header */}
+              <button
+                onClick={handleDeleteCard}
+                disabled={isDeleting}
+                className="px-3 py-1.5 text-sm rounded-md border border-red-200 bg-white text-red-600 hover:bg-red-50 transition-colors duration-200 flex items-center shadow-sm"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                </svg>
+                {isDeleting ? 'Deleting...' : 'Delete'}
+              </button>
+            </div>
           </div>
-          
-          {/* Delete button */}
-          <button
-            onClick={handleDeleteCard}
-            disabled={isDeleting}
-            className="px-3 py-1 text-sm rounded-md border border-red-200 text-red-600 hover:bg-red-50 transition-colors duration-200 flex items-center"
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-            </svg>
-            {isDeleting ? 'Deleting...' : 'Delete'}
-          </button>
         </div>
 
         <form onSubmit={handleSubmit}>
-          {/* Card metadata */}
-          <div className="flex items-center mb-4 text-sm text-gray-500 flex-wrap gap-2">
-            {listTitle && (
-              <div className="flex items-center px-3 py-1 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-md border border-indigo-100">
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-                </svg>
-                <span>In: <span className="font-medium text-indigo-700">{listTitle}</span></span>
-              </div>
-            )}
-            
-            {formattedCreatedDate && (
-              <div className="flex items-center">
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                </svg>
-                <span>Created: {formattedCreatedDate}</span>
-              </div>
-            )}
-          </div>
-
           {/* Title input */}
           <div className="mb-5">
             <Input
@@ -232,7 +303,7 @@ const CardModal: React.FC<CardModalProps> = ({ isOpen, onClose, card, onSave, li
               className="font-medium text-gray-900"
             />
           </div>
-
+          
           {/* Description textarea */}
           <div className="mb-5">
             <label className="block mb-2 text-sm font-medium text-gray-700">
@@ -249,10 +320,13 @@ const CardModal: React.FC<CardModalProps> = ({ isOpen, onClose, card, onSave, li
 
           {/* Color selector */}
           <div className="mb-5">
-            <label className="block mb-2 text-sm font-medium text-gray-700">
+            <label className="block mb-2 text-sm font-medium text-gray-700 flex items-center">
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01" />
+              </svg>
               Card Color
             </label>
-            <div className="flex space-x-3">
+            <div className="flex space-x-3 bg-gray-50 p-3 rounded-md border border-gray-100">
               {CARD_COLORS.map((colorOption) => (
                 <div
                   key={colorOption.value}
