@@ -53,27 +53,19 @@ def set_auth_cookies(
     access_token: str,
     refresh_token: str,
 ) -> None:
-    logger.info(f"Setting cookies with domain={settings.COOKIE_DOMAIN}, secure={settings.COOKIE_SECURE}, samesite={settings.COOKIE_SAMESITE}")
-    
     response.set_cookie(
         key="access_token",
         value=access_token,
-        httponly=True,
         max_age=settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60,
         expires=settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60,
         domain=settings.COOKIE_DOMAIN,
-        secure=settings.COOKIE_SECURE,
-        samesite=settings.COOKIE_SAMESITE,
     )
     response.set_cookie(
         key="refresh_token",
         value=refresh_token,
-        httponly=True,
         max_age=settings.REFRESH_TOKEN_EXPIRE_DAYS * 24 * 60 * 60,
         expires=settings.REFRESH_TOKEN_EXPIRE_DAYS * 24 * 60 * 60,
         domain=settings.COOKIE_DOMAIN,
-        secure=settings.COOKIE_SECURE,
-        samesite=settings.COOKIE_SAMESITE,
     )
 
 

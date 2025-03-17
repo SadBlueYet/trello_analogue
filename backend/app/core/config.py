@@ -18,7 +18,6 @@ class Settings(BaseSettings):
     # Cookie settings
     COOKIE_DOMAIN: Optional[str] = None  # None позволяет использовать куки на localhost
     COOKIE_SECURE: bool = True  # True обязательно при использовании SameSite=none
-    COOKIE_SAMESITE: str = "none"  # None разрешает cross-site requests для локальной разработки
 
     # CORS
     BACKEND_CORS_ORIGINS: List[AnyHttpUrl] = []
