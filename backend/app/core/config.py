@@ -17,7 +17,9 @@ class Settings(BaseSettings):
     
     # Cookie settings
     COOKIE_DOMAIN: Optional[str] = None  # None позволяет использовать куки на localhost
-    COOKIE_SECURE: bool = True  # True обязательно при использовании SameSite=none
+    COOKIE_SECURE: bool = False  # Set to False for HTTP connections
+    COOKIE_SAMESITE: str = "lax"  # Use "lax" for better browser compatibility
+    COOKIE_HTTP_ONLY: bool = True  # Recommended for security
 
     # CORS
     BACKEND_CORS_ORIGINS: List[AnyHttpUrl] = []

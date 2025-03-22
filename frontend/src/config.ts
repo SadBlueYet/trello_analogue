@@ -1,45 +1,51 @@
-export const API_BASE_URL = 'http://192.168.0.29:8000/api/v1';
+// Use window.location.hostname to dynamically determine the API server
+// This will allow the frontend to work whether accessed via localhost or IP address
+const hostname = window.location.hostname; 
+
+// Use same origin to avoid CORS issues with Safari
+// This assumes that backend and frontend are served from the same domain (but different ports)
+export const API_BASE_URL = `${window.location.protocol}//${hostname}:8000/api/v1`;
 
 export const API_ENDPOINTS = {
   AUTH: {
-    LOGIN: `${API_BASE_URL}/auth/login`,
-    REGISTER: `${API_BASE_URL}/auth/register`,
-    CURRENT_USER: `${API_BASE_URL}/auth/me`,
-    REFRESH: `${API_BASE_URL}/auth/refresh`,
-    LOGOUT: `${API_BASE_URL}/auth/logout`,
-    ME: `${API_BASE_URL}/auth/me`,
-    UPDATE_PROFILE: `${API_BASE_URL}/auth/update-profile`,
+    LOGIN: `/auth/login`,
+    REGISTER: `/auth/register`,
+    CURRENT_USER: `/auth/me`,
+    REFRESH: `/auth/refresh`,
+    LOGOUT: `/auth/logout`,
+    ME: `/auth/me`,
+    UPDATE_PROFILE: `/auth/update-profile`,
   },
   BOARDS: {
-    LIST: `${API_BASE_URL}/boards`,
-    GET: (id: number) => `${API_BASE_URL}/boards/${id}`,
-    CREATE: `${API_BASE_URL}/boards`,
-    UPDATE: (id: number) => `${API_BASE_URL}/boards/${id}`,
-    DELETE: (id: number) => `${API_BASE_URL}/boards/${id}`,
+    LIST: `/boards`,
+    GET: (id: number) => `/boards/${id}`,
+    CREATE: `/boards`,
+    UPDATE: (id: number) => `/boards/${id}`,
+    DELETE: (id: number) => `/boards/${id}`,
     SHARES: {
-      LIST: (boardId: number) => `${API_BASE_URL}/boards/${boardId}/share`,
-      CREATE: (boardId: number) => `${API_BASE_URL}/boards/${boardId}/share`,
-      UPDATE: (boardId: number, userId: number) => `${API_BASE_URL}/boards/${boardId}/share/${userId}`,
-      DELETE: (boardId: number, userId: number) => `${API_BASE_URL}/boards/${boardId}/share/${userId}`,
+      LIST: (boardId: number) => `/boards/${boardId}/share`,
+      CREATE: (boardId: number) => `/boards/${boardId}/share`,
+      UPDATE: (boardId: number, userId: number) => `/boards/${boardId}/share/${userId}`,
+      DELETE: (boardId: number, userId: number) => `/boards/${boardId}/share/${userId}`,
     }
   },
   LISTS: {
-    LIST: (boardId: number) => `${API_BASE_URL}/lists?board_id=${boardId}`,
-    CREATE: `${API_BASE_URL}/lists`,
-    GET: (id: number) => `${API_BASE_URL}/lists/${id}`,
-    UPDATE: (id: number) => `${API_BASE_URL}/lists/${id}`,
-    DELETE: (id: number) => `${API_BASE_URL}/lists/${id}`,
-    REORDER: (id: number) => `${API_BASE_URL}/lists/${id}/reorder`,
+    LIST: (boardId: number) => `/lists?board_id=${boardId}`,
+    CREATE: `/lists`,
+    GET: (id: number) => `/lists/${id}`,
+    UPDATE: (id: number) => `/lists/${id}`,
+    DELETE: (id: number) => `/lists/${id}`,
+    REORDER: (id: number) => `/lists/${id}/reorder`,
   },
   CARDS: {
-    LIST: (listId: number) => `${API_BASE_URL}/cards?list_id=${listId}`,
-    CREATE: `${API_BASE_URL}/cards`,
-    GET: (id: number) => `${API_BASE_URL}/cards/${id}`,
-    UPDATE: (id: number) => `${API_BASE_URL}/cards/${id}`,
-    DELETE: (id: number) => `${API_BASE_URL}/cards/${id}`,
-    MOVE: (id: number) => `${API_BASE_URL}/cards/${id}/move`,
+    LIST: (listId: number) => `/cards?list_id=${listId}`,
+    CREATE: `/cards`,
+    GET: (id: number) => `/cards/${id}`,
+    UPDATE: (id: number) => `/cards/${id}`,
+    DELETE: (id: number) => `/cards/${id}`,
+    MOVE: (id: number) => `/cards/${id}/move`,
   },
   USERS: {
-    SEARCH: `${API_BASE_URL}/users/search`
+    SEARCH: `/users/search`
   }
 }; 

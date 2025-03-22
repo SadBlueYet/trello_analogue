@@ -1,18 +1,32 @@
-import axios, { AxiosError, AxiosResponse } from 'axios';
+import axios, { AxiosError, AxiosResponse, InternalAxiosRequestConfig } from 'axios';
 import { API_BASE_URL, API_ENDPOINTS } from '../config';
+
+console.log('Configuring API with base URL:', API_BASE_URL);
+
+// Track if this is a first request to enable retry logic for Safari
+let isFirstRequest = true;
 
 const axiosInstance = axios.create({
   baseURL: API_BASE_URL,
   headers: {
     'Content-Type': 'application/json',
     'Accept': 'application/json',
+    'X-Requested-With': 'XMLHttpRequest',
   },
-  withCredentials: true, // Important for cookies
+  // Enable credentials to allow cookies to be sent and received
+  withCredentials: true,
+  timeout: 10000, // 10 seconds
 });
 
-// Remove default headers for OPTIONS request
+// Add request logging
 axiosInstance.interceptors.request.use(
   (config) => {
+    // Log all requests except OPTIONS
+    if (config.method?.toUpperCase() !== 'OPTIONS') {
+      console.log(`Request: ${config.method?.toUpperCase()} ${config.url}`, 
+                 { withCredentials: config.withCredentials });
+    }
+    
     // Don't add headers for OPTIONS requests
     if (config.method?.toUpperCase() === 'OPTIONS') {
       return config;
@@ -20,6 +34,40 @@ axiosInstance.interceptors.request.use(
     return config;
   },
   (error) => {
+    console.error('Request error:', error);
+    return Promise.reject(error);
+  }
+);
+
+// Add response logging and retry for Safari CORS issues
+axiosInstance.interceptors.response.use(
+  (response) => {
+    console.log(`Response: ${response.status} from ${response.config.url}`);
+    isFirstRequest = false; // Mark that we've had a successful request
+    return response;
+  },
+  async (error: AxiosError) => {
+    const config = error.config as InternalAxiosRequestConfig & { _retry?: boolean };
+    
+    // Only retry for first request with network error (typical Safari CORS issue)
+    if (isFirstRequest && !error.response && config && !config._retry) {
+      console.log('First request failed with network error, retrying after delay...');
+      config._retry = true;
+      isFirstRequest = false; // Don't retry more than once
+      
+      // Wait a brief moment before retrying
+      await new Promise(resolve => setTimeout(resolve, 100));
+      return axiosInstance(config);
+    }
+    
+    if (error.response) {
+      console.error(`Error response: ${error.response.status} from ${error.config?.url}`, 
+                   error.response.data);
+    } else if (error.request) {
+      console.error('Error with request (no response):', error.message);
+    } else {
+      console.error('Error:', error.message);
+    }
     return Promise.reject(error);
   }
 );
