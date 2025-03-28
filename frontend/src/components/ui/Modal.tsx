@@ -56,7 +56,7 @@ const Modal: React.FC<ModalProps> = ({
   const sizeClasses = {
     small: 'max-w-md',
     medium: 'max-w-lg',
-    large: 'max-w-2xl'
+    large: 'max-w-4xl'
   };
 
   return (

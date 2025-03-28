@@ -223,9 +223,9 @@ const CardModal: React.FC<CardModalProps> = ({ isOpen, onClose, card, onSave, li
   const currentListName = availableLists.find(list => list.id === selectedListId)?.title || listTitle;
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title="" size="medium">
+    <Modal isOpen={isOpen} onClose={onClose} title="" size="large">
       <div className="relative">
-        {/* Enhanced header section with gradient - with less negative margin to avoid overlapping close button */}
+        {/* Enhanced header section with gradient */}
         <div className="bg-gradient-to-r from-indigo-50 via-blue-50 to-indigo-50 -mx-6 -mt-2 mb-6 p-6 border-b border-indigo-100 rounded-t-lg">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             {/* Card identifier with icon */}
@@ -292,71 +292,105 @@ const CardModal: React.FC<CardModalProps> = ({ isOpen, onClose, card, onSave, li
           </div>
         </div>
 
-        <form onSubmit={handleSubmit}>
-          {/* Title input */}
-          <div className="mb-5">
-            <Input
-              label="Title"
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              required
-              className="font-medium text-gray-900"
-            />
-          </div>
-          
-          {/* Description textarea */}
-          <div className="mb-5">
-            <label className="block mb-2 text-sm font-medium text-gray-700">
-              Description
-            </label>
-            <textarea
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all duration-200"
-              rows={4}
-              placeholder="Add a more detailed description..."
-            />
-          </div>
-
-          {/* Color selector */}
-          <div className="mb-5">
-            <label className="block mb-2 text-sm font-medium text-gray-700 flex items-center">
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01" />
-              </svg>
-              Card Color
-            </label>
-            <div className="flex space-x-3 bg-gray-50 p-3 rounded-md border border-gray-100">
-              {CARD_COLORS.map((colorOption) => (
-                <div
-                  key={colorOption.value}
-                  className={`w-8 h-8 rounded-md cursor-pointer border shadow-sm transform transition-transform duration-200 ${
-                    selectedColor === colorOption.value ? 'ring-2 ring-indigo-500 scale-110' : 'hover:scale-105'
-                  }`}
-                  style={{ backgroundColor: colorOption.color }}
-                  onClick={() => setSelectedColor(colorOption.value)}
-                  title={colorOption.label}
-                />
-              ))}
+        <form onSubmit={handleSubmit} className="flex flex-col md:flex-row gap-6">
+          {/* Left column - Main content */}
+          <div className="md:w-2/3">
+            {/* Title input */}
+            <div className="mb-5">
+              <Input
+                label="Title"
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+                required
+                className="font-medium text-gray-900"
+              />
+            </div>
+            
+            {/* Description textarea */}
+            <div className="mb-5">
+              <label className="block mb-2 text-sm font-medium text-gray-700">
+                Description
+              </label>
+              <textarea
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent max-h-[300px] overflow-y-auto resize-none"
+                rows={6}
+                placeholder="Add a more detailed description..."
+              />
             </div>
           </div>
 
-          {error && <ErrorMessage message={error} />}
+          {/* Right column - Properties and metadata */}
+          <div className="md:w-1/3 bg-gray-50 p-4 rounded-lg border border-gray-100">
+            <h3 className="text-sm font-medium text-gray-700 mb-3">Card Properties</h3>
 
-          {/* Action buttons */}
-          <div className="flex justify-end space-x-3 pt-3 border-t border-gray-100">
-            <Button type="button" variant="outline" onClick={onClose}>
-              Cancel
-            </Button>
-            <Button 
-              type="submit" 
-              isLoading={submitting}
-              className="bg-gradient-to-r from-blue-600 to-indigo-700 hover:from-blue-700 hover:to-indigo-800"
-            >
-              Save Changes
-            </Button>
+            {/* Color selector */}
+            <div className="mb-5">
+              <label className="block mb-2 text-sm font-medium text-gray-700 flex items-center">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01" />
+                </svg>
+                Card Color
+              </label>
+              <div className="flex flex-wrap gap-2 bg-white p-3 rounded-md border border-gray-100">
+                {CARD_COLORS.map((colorOption) => (
+                  <div
+                    key={colorOption.value}
+                    className={`w-8 h-8 rounded-md cursor-pointer border shadow-sm transform transition-transform duration-200 ${
+                      selectedColor === colorOption.value ? 'ring-2 ring-indigo-500 scale-110' : 'hover:scale-105'
+                    }`}
+                    style={{ backgroundColor: colorOption.color }}
+                    onClick={() => setSelectedColor(colorOption.value)}
+                    title={colorOption.label}
+                  />
+                ))}
+              </div>
+            </div>
+
+            {/* Additional information section */}
+            <div className="mb-5">
+              <label className="block mb-2 text-sm font-medium text-gray-700">Location</label>
+              <div className="bg-white p-3 rounded-md border border-gray-100 text-sm">
+                <div className="flex items-center">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-2 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                  </svg>
+                  <div>
+                    <div className="text-gray-500 text-xs">Board</div>
+                    <div className="font-medium">{boardTitle}</div>
+                  </div>
+                </div>
+                <div className="mt-2 pt-2 border-t border-gray-100 flex items-center">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-2 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 10h16M4 14h16M4 18h16" />
+                  </svg>
+                  <div>
+                    <div className="text-gray-500 text-xs">List</div>
+                    <div className="font-medium">{currentListName}</div>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
         </form>
+
+        {error && <ErrorMessage message={error} />}
+
+        {/* Action buttons */}
+        <div className="flex justify-end space-x-3 pt-3 mt-3 border-t border-gray-100">
+          <Button type="button" variant="outline" onClick={onClose}>
+            Cancel
+          </Button>
+          <Button 
+            type="button" 
+            onClick={handleSubmit}
+            isLoading={submitting}
+            className="bg-gradient-to-r from-blue-600 to-indigo-700 hover:from-blue-700 hover:to-indigo-800"
+          >
+            Save Changes
+          </Button>
+        </div>
       </div>
     </Modal>
   );
