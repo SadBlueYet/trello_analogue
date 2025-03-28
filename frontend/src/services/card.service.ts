@@ -13,6 +13,8 @@ interface UpdateCardData {
     title?: string;
     description?: string;
     card_color?: string;
+    list_id?: number;
+    assignee_id?: number | null;
 }
 
 export const cardService = {
@@ -30,7 +32,9 @@ export const cardService = {
     },
 
     async updateCard(cardId: number, data: UpdateCardData): Promise<Card> {
+        console.log(`Updating card ${cardId} with data:`, data);
         const response = await api.put<Card>(API_ENDPOINTS.CARDS.UPDATE(cardId), data);
+        console.log(`Card update response:`, response.data);
         return response.data;
     },
 

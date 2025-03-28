@@ -10,6 +10,7 @@ from backend.app.schemas.board import (
     BoardShareCreate, BoardShareUpdate, BoardShareInfo,
 )
 from backend.app.crud import user as crud_user
+from backend.app.crud import list as crud_list
 
 router = APIRouter()
 
@@ -60,6 +61,8 @@ async def get_board(
     """
     Get a specific board by id.
     """
+    # Load board with all related data
+    
     board = await crud_board.get_board(db, board_id)
     if not board:
         raise HTTPException(status_code=404, detail="Board not found")
@@ -70,6 +73,12 @@ async def get_board(
         board_share = await crud_board_share.get_board_share(db, board_id, current_user.id)
         if not board_share:
             raise HTTPException(status_code=403, detail="Not enough permissions")
+    
+    # Load lists with cards and assignees
+    lists = await crud_list.get_board_lists(db, board_id, include_cards=True)
+    
+    # Assign the loaded lists to the board
+    board.lists = lists
     
     return board
 
@@ -137,16 +146,44 @@ async def get_board_shares(
     if not board:
         raise HTTPException(status_code=404, detail="Board not found")
     
-    # Только владелец может видеть доступы
-    if board.owner_id != current_user.id:
+    # Allow both the owner and users with any access to see shared users
+    has_access = False
+    
+    # Check if current user is owner
+    if board.owner_id == current_user.id:
+        has_access = True
+    else:
+        # Check if user has any access to the board
+        board_share = await crud_board_share.get_board_share(db, board_id, current_user.id)
+        if board_share:
+            has_access = True
+    
+    if not has_access:
         raise HTTPException(status_code=403, detail="Not enough permissions")
     
     # Получаем записи о доступах с информацией о пользователях
     board_shares = await crud_board_share.get_board_shares_with_user_info(db, board_id)
     
+    # Add the owner to the response as well
+    owner_user = await crud_user.get_user(db, board.owner_id)
+    
     # Формируем ответ
     result = []
+    
+    # Add owner first with special access_type
+    if owner_user:
+        result.append({
+            "id": -1,  # Special ID for owner
+            "access_type": "owner",
+            "user": owner_user
+        })
+    
+    # Then add all shared users
     for share in board_shares:
+        # Skip adding the owner twice if they're in the shares for some reason
+        if share.user.id == board.owner_id:
+            continue
+            
         result.append({
             "id": share.id,
             "access_type": share.access_type,

@@ -3,6 +3,7 @@ from datetime import datetime
 from pydantic import BaseModel
 
 from backend.app.schemas.board import BoardListInDBBase
+from backend.app.schemas.user import UserInDBBase
 
 
 class CardBase(BaseModel):
@@ -13,6 +14,7 @@ class CardBase(BaseModel):
 
 class CardCreate(CardBase):
     list_id: int
+    assignee_id: Optional[int] = None
 
 
 class CardUpdate(BaseModel):
@@ -21,6 +23,7 @@ class CardUpdate(BaseModel):
     position: Optional[int] = None
     list_id: Optional[int] = None
     card_color: Optional[str] = None
+    assignee_id: Optional[int] = None
 
 
 class CardInDBBase(CardBase):
@@ -30,9 +33,14 @@ class CardInDBBase(CardBase):
     created_at: datetime
     updated_at: datetime
     card_color: Optional[str] = None
+    assignee_id: Optional[int] = None
 
     class Config:
         from_attributes = True
+
+
+class CardWithAssignee(CardInDBBase):
+    assignee: Optional[UserInDBBase] = None
 
 
 class MoveCard(BaseModel):

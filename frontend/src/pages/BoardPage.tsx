@@ -110,7 +110,8 @@ const TaskCard: React.FC<{
   created_at?: string;
   card_color?: string;
   boardPrefix?: string;
-}> = ({ id, title, description, dragHandleProps, onClick, card_id, created_at, card_color, boardPrefix }) => {
+  assignee?: any;
+}> = ({ id, title, description, dragHandleProps, onClick, card_id, created_at, card_color, boardPrefix, assignee }) => {
   // Форматируем дату создания, если она есть
   const formattedDate = created_at ? new Date(created_at).toLocaleDateString('ru-RU', {
     day: '2-digit',
@@ -186,6 +187,16 @@ const TaskCard: React.FC<{
               <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h7" />
               </svg>
+            </span>
+          )}
+          
+          {/* Show assignee if exists */}
+          {assignee && (
+            <span className="inline-flex items-center bg-indigo-50 text-indigo-700 text-xs px-1.5 py-0.5 rounded-full ml-2">
+              <span className="w-4 h-4 bg-indigo-100 text-indigo-700 rounded-full flex items-center justify-center mr-1 font-bold">
+                {assignee.username.substring(0, 1).toUpperCase()}
+              </span>
+              <span className="truncate max-w-[60px]">{assignee.username}</span>
             </span>
           )}
         </div>
@@ -772,12 +783,22 @@ const BoardPage: React.FC = () => {
     if (!selectedCard) return;
     
     try {
-      // Обновляем карточку на сервере
-      const response = await cardService.updateCard(selectedCard.id, {
+      console.log('Updating card with data:', JSON.stringify(updatedCard, null, 2));
+      
+      // Make sure we're sending all required fields
+      const cardData = {
         title: updatedCard.title,
-        description: updatedCard.description,
-        card_color: updatedCard.card_color
-      });
+        description: updatedCard.description, 
+        card_color: updatedCard.card_color,
+        list_id: updatedCard.list_id || selectedCard.list_id, // Include list_id
+        assignee_id: updatedCard.assignee_id
+      };
+      
+      console.log('Sending to API:', JSON.stringify(cardData, null, 2));
+      
+      // Обновляем карточку на сервере
+      const response = await cardService.updateCard(selectedCard.id, cardData);
+      console.log('API response:', JSON.stringify(response, null, 2));
       
       // Если запрос успешен, обновляем карточку в стейте
       if (currentBoard) {
@@ -1081,6 +1102,7 @@ const BoardPage: React.FC = () => {
                                               created_at={card.created_at}
                                               card_color={card.card_color}
                                               boardPrefix={generateBoardPrefix(currentBoard?.title || '')}
+                                              assignee={card.assignee}
                                         />
                                       </div>
                                     )}

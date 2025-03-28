@@ -89,8 +89,37 @@ export const boardService = {
 
     // Методы для управления доступом к доскам
     async getBoardShares(boardId: number): Promise<BoardShare[]> {
-        const response = await api.get<BoardShare[]>(API_ENDPOINTS.BOARDS.SHARES.LIST(boardId));
-        return response.data;
+        try {
+            console.log(`Fetching board shares from: ${API_ENDPOINTS.BOARDS.SHARES.LIST(boardId)}`);
+            const response = await api.get<BoardShare[]>(API_ENDPOINTS.BOARDS.SHARES.LIST(boardId));
+            console.log(`Board shares API response:`, response.data);
+            
+            // Validate response format
+            if (!Array.isArray(response.data)) {
+                console.error('API response is not an array:', response.data);
+                return [];
+            }
+            
+            // Check if each share has the correct format
+            const validShares = response.data.filter(share => {
+                if (!share || typeof share !== 'object') {
+                    console.error('Invalid share object:', share);
+                    return false;
+                }
+                
+                if (!share.id || !share.user || !share.access_type) {
+                    console.error('Share missing required properties:', share);
+                    return false;
+                }
+                
+                return true;
+            });
+            
+            return validShares;
+        } catch (error) {
+            console.error(`Error fetching board shares for board ${boardId}:`, error);
+            throw error;
+        }
     },
 
     async shareBoard(boardId: number, userId: number, accessType: string = 'read'): Promise<BoardShare> {

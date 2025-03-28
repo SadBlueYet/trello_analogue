@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { Modal, Button, Input, ErrorMessage } from './ui';
-import { Card, BoardList } from '../store/types';
+import { Card, BoardList, User, BoardShare } from '../store/types';
 import { cardService } from '../services/card.service';
+import { boardService } from '../services/board.service';
 import { useDispatch, useSelector } from 'react-redux';
 import { fetchBoard, setCurrentBoard } from '../store/board.slice';
 import { AppDispatch, RootState } from '../store';
@@ -35,9 +36,13 @@ const CardModal: React.FC<CardModalProps> = ({ isOpen, onClose, card, onSave, li
   const [selectedColor, setSelectedColor] = useState('');
   const [isDeleting, setIsDeleting] = useState(false);
   const [selectedListId, setSelectedListId] = useState<number | null>(null);
+  const [selectedAssigneeId, setSelectedAssigneeId] = useState<number | null>(null);
+  const [boardUsers, setBoardUsers] = useState<BoardShare[]>([]);
+  const [loadingUsers, setLoadingUsers] = useState(false);
   
   const dispatch = useDispatch<AppDispatch>();
   const currentBoard = useSelector((state: RootState) => state.board.currentBoard);
+  const currentUser = useSelector((state: RootState) => state.auth.user);
   
   // Get all available lists from the current board
   const availableLists = currentBoard?.lists || [];
@@ -49,8 +54,131 @@ const CardModal: React.FC<CardModalProps> = ({ isOpen, onClose, card, onSave, li
       setDescription(card.description || '');
       setSelectedColor(card.card_color || '');
       setSelectedListId(card.list_id);
+      setSelectedAssigneeId(card.assignee_id || null);
     }
   }, [card, isOpen]);
+
+  // Load users who have access to the board
+  useEffect(() => {
+    if (isOpen && boardId) {
+      loadBoardUsers();
+    }
+  }, [isOpen, boardId]);
+
+  const loadBoardUsers = async () => {
+    setLoadingUsers(true);
+    try {
+      console.log(`Fetching board shares for board ID: ${boardId}`);
+      const sharesData = await boardService.getBoardShares(boardId);
+      console.log("Loaded board shares data:", sharesData);
+      
+      // Check if we have a valid response with users
+      if (!sharesData || sharesData.length === 0) {
+        console.warn("No users returned from board shares API");
+        
+        // Try to load from localStorage first
+        try {
+          const cachedShares = localStorage.getItem(`boardShares_${boardId}`);
+          if (cachedShares) {
+            const parsedShares = JSON.parse(cachedShares);
+            console.log("Using cached board shares from localStorage:", parsedShares);
+            setBoardUsers(parsedShares);
+            return; // Exit early if we have cached data
+          }
+        } catch (localErr) {
+          console.error("Failed to load cached board shares:", localErr);
+        }
+        
+        // If the current user is available and current board is loaded, at least include them
+        if (currentUser && currentBoard) {
+          // Include owner separately if available
+          const usersToInclude = [];
+          
+          // Add the board owner if available 
+          if (currentBoard.owner && currentBoard.owner.id) {
+            usersToInclude.push({
+              id: -1, // Temporary ID for fallback
+              user: currentBoard.owner,
+              access_type: "owner", 
+              board_id: boardId
+            });
+          }
+          
+          // Add current user if they're not the owner
+          if (currentUser.id !== (currentBoard.owner?.id || null)) {
+            usersToInclude.push({
+              id: -2, // Temporary ID for fallback
+              user: currentUser,
+              access_type: "viewer", // Default to viewer when API fails
+              board_id: boardId
+            });
+          }
+          
+          console.log("Using fallback user list:", usersToInclude);
+          setBoardUsers(usersToInclude);
+        }
+      } else {
+        // Normal case - API returned valid users
+        setBoardUsers(sharesData);
+        
+        // Also store in localStorage as fallback for reloads
+        try {
+          localStorage.setItem(`boardShares_${boardId}`, JSON.stringify(sharesData));
+        } catch (err) {
+          console.warn("Failed to cache board shares in localStorage:", err);
+        }
+      }
+    } catch (error) {
+      console.error('Error loading board users:', error);
+      
+      // Try to load from localStorage as fallback
+      try {
+        const cachedShares = localStorage.getItem(`boardShares_${boardId}`);
+        if (cachedShares) {
+          const parsedShares = JSON.parse(cachedShares);
+          console.log("Using cached board shares from localStorage:", parsedShares);
+          setBoardUsers(parsedShares);
+        } else if (currentUser && currentBoard?.owner) {
+          // Minimal fallback with just owner and current user
+          const fallbackUsers = [];
+          
+          // Add owner
+          if (currentBoard.owner) {
+            fallbackUsers.push({
+              id: -1, // Temporary ID for fallback
+              user: currentBoard.owner,
+              access_type: "owner",
+              board_id: boardId
+            });
+          }
+          
+          // Add current user if not owner
+          if (currentUser.id !== currentBoard.owner?.id) {
+            fallbackUsers.push({
+              id: -2, // Temporary ID for fallback
+              user: currentUser,
+              access_type: "viewer",
+              board_id: boardId
+            });
+          }
+          
+          console.log("Using minimal fallback users:", fallbackUsers);
+          setBoardUsers(fallbackUsers);
+        }
+      } catch (localErr) {
+        console.error("Failed to load cached board shares:", localErr);
+      }
+    } finally {
+      setLoadingUsers(false);
+    }
+  };
+
+  // Refetch board shares whenever current board changes (if it has updated users)
+  useEffect(() => {
+    if (isOpen && boardId && currentBoard) {
+      loadBoardUsers();
+    }
+  }, [isOpen, currentBoard, boardId]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -68,9 +196,11 @@ const CardModal: React.FC<CardModalProps> = ({ isOpen, onClose, card, onSave, li
         description: description.trim() || undefined,
         card_color: selectedColor,
         list_id: selectedListId || card?.list_id, // Include changed list_id if it was modified
+        assignee_id: selectedAssigneeId === null ? undefined : selectedAssigneeId, // Convert null to undefined for API compatibility
       };
       
-      console.log('Saving card with color:', selectedColor, 'and list_id:', selectedListId);
+      console.log('Saving card with data:', JSON.stringify(updatedCard, null, 2));
+      console.log('Selected assignee ID:', selectedAssigneeId);
       
       // First save to backend
       await onSave(updatedCard);
@@ -106,7 +236,9 @@ const CardModal: React.FC<CardModalProps> = ({ isOpen, onClose, card, onSave, li
                   description: updatedCard.description,
                   card_color: updatedCard.card_color,
                   list_id: newListId,
-                  position: list.cards.length // Add to the end of the list
+                  position: list.cards.length, // Add to the end of the list
+                  assignee_id: selectedAssigneeId,
+                  assignee: selectedAssigneeId ? boardUsers.find(u => u.user.id === selectedAssigneeId)?.user : undefined,
                 };
                 
                 return {
@@ -132,6 +264,8 @@ const CardModal: React.FC<CardModalProps> = ({ isOpen, onClose, card, onSave, li
                         title: updatedCard.title,
                         description: updatedCard.description,
                         card_color: updatedCard.card_color,
+                        assignee_id: selectedAssigneeId,
+                        assignee: selectedAssigneeId ? boardUsers.find(u => u.user.id === selectedAssigneeId)?.user : undefined,
                       };
                       console.log('Updated card object:', updatedCardObj);
                       return updatedCardObj;
@@ -221,6 +355,11 @@ const CardModal: React.FC<CardModalProps> = ({ isOpen, onClose, card, onSave, li
 
   // Find the current list name
   const currentListName = availableLists.find(list => list.id === selectedListId)?.title || listTitle;
+
+  // Find the assignee user object
+  const assigneeUser = selectedAssigneeId ? 
+    boardUsers.find(share => share.user.id === selectedAssigneeId)?.user : 
+    undefined;
 
   return (
     <Modal isOpen={isOpen} onClose={onClose} title="" size="large">
@@ -324,6 +463,107 @@ const CardModal: React.FC<CardModalProps> = ({ isOpen, onClose, card, onSave, li
           {/* Right column - Properties and metadata */}
           <div className="md:w-1/3 bg-gray-50 p-4 rounded-lg border border-gray-100">
             <h3 className="text-sm font-medium text-gray-700 mb-3">Card Properties</h3>
+
+            {/* Assignee selector */}
+            <div className="mb-5">
+              <label className="block mb-2 text-sm font-medium text-gray-700 flex items-center">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                </svg>
+                Assignee
+              </label>
+              <div className="bg-white p-3 rounded-md border border-gray-200 shadow-sm">
+                {loadingUsers ? (
+                  <div className="text-sm text-gray-500 flex items-center justify-center py-2">
+                    <svg className="animate-spin h-4 w-4 mr-2 text-indigo-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    Loading users...
+                  </div>
+                ) : (
+                  <>
+                    <div className="text-xs text-gray-500 mb-2 flex justify-between">
+                      <span>Available users: {boardUsers.length > 0 ? boardUsers.length : 'None found'}</span>
+                      {boardUsers.length === 0 && (
+                        <button 
+                          type="button" 
+                          onClick={loadBoardUsers}
+                          className="text-indigo-600 hover:text-indigo-800"
+                        >
+                          Reload
+                        </button>
+                      )}
+                    </div>
+                    <select
+                      value={selectedAssigneeId || ''}
+                      onChange={(e) => setSelectedAssigneeId(e.target.value ? Number(e.target.value) : null)}
+                      className="w-full bg-white px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-gray-700 appearance-none"
+                      style={{ 
+                        backgroundImage: `url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e")`,
+                        backgroundPosition: 'right 0.5rem center',
+                        backgroundRepeat: 'no-repeat',
+                        backgroundSize: '1.5em 1.5em',
+                        paddingRight: '2.5rem'
+                      }}
+                    >
+                      <option value="">Not assigned</option>
+                      
+                      {/* Board owner */}
+                      {currentBoard?.owner && (
+                        <option 
+                          value={currentBoard.owner.id}
+                          style={{fontWeight: 'bold'}}
+                        >
+                          {currentBoard.owner.username} (Owner)
+                        </option>
+                      )}
+                      
+                      {/* Current user if not owner */}
+                      {currentUser && currentBoard?.owner?.id !== currentUser.id && (
+                        <option value={currentUser.id}>
+                          {currentUser.username} (You)
+                        </option>
+                      )}
+                      
+                      {/* All shared users */}
+                      {boardUsers.length > 0 && (
+                        <optgroup label="Shared users">
+                          {boardUsers.map(share => {
+                            // Skip owner and current user as they're already included above
+                            const isOwner = currentBoard?.owner && share.user.id === currentBoard.owner.id;
+                            const isCurrentUser = currentUser && share.user.id === currentUser.id;
+                            
+                            if (isOwner || isCurrentUser) {
+                              return null;
+                            }
+                            
+                            return (
+                              <option key={share.user.id} value={share.user.id}>
+                                {share.user.username} ({share.access_type})
+                              </option>
+                            );
+                          })}
+                        </optgroup>
+                      )}
+                    </select>
+                  </>
+                )}
+                
+                {/* Display selected assignee information */}
+                {assigneeUser && (
+                  <div className="mt-2 pt-2 border-t border-gray-100 flex items-center">
+                    <div className="bg-indigo-100 text-indigo-800 rounded-full w-8 h-8 flex items-center justify-center mr-2">
+                      {assigneeUser.username.substring(0, 1).toUpperCase()}
+                    </div>
+                    <div>
+                      <div className="font-medium">{assigneeUser.username}</div>
+                      <div className="text-xs text-gray-500">{assigneeUser.email}</div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
 
             {/* Color selector */}
             <div className="mb-5">

@@ -7,12 +7,12 @@ from backend.app.crud import list as crud_list
 from backend.app.crud import board as crud_board
 from backend.app.crud import board_share as crud_board_share
 from backend.app.models.user import User
-from backend.app.schemas.card import CardInDBBase, CardCreate, CardUpdate, MoveCard
+from backend.app.schemas.card import CardInDBBase, CardCreate, CardUpdate, MoveCard, CardWithAssignee
 
 router = APIRouter()
 
 
-@router.get("/", response_model=List[CardInDBBase])
+@router.get("/", response_model=List[CardWithAssignee])
 async def get_cards(
     *,
     db: AsyncSession = Depends(deps.get_db),
@@ -42,10 +42,20 @@ async def get_cards(
             # Здесь только проверка на чтение, так что read доступа достаточно
             pass
     
-    return await crud_card.get_list_cards(db, list_id)
+    cards = await crud_card.get_list_cards(db, list_id)
+    
+    # Manually convert each card to include proper assignee data
+    result = []
+    for card in cards:
+        card_dict = card.__dict__
+        # Remove the internal SQLAlchemy key
+        card_dict = {k: v for k, v in card_dict.items() if not k.startswith('_')}
+        result.append(card_dict)
+    
+    return result
 
 
-@router.post("/", response_model=CardInDBBase)
+@router.post("/", response_model=CardWithAssignee)
 async def create_card(
     *,
     db: AsyncSession = Depends(deps.get_db),
@@ -72,10 +82,27 @@ async def create_card(
             raise HTTPException(status_code=403, detail="Not enough permissions")
     
     card = await crud_card.create_card(db, card_in)
-    return card
+    
+    # Explicitly load the assignee to avoid lazy loading issues
+    if card.assignee_id:
+        # Get the assignee information
+        from backend.app.crud import user as crud_user
+        assignee = await crud_user.get_user(db, card.assignee_id)
+        
+        # Prepare the response manually to avoid lazy loading
+        return {
+            **card.__dict__,
+            "assignee": assignee
+        }
+    
+    # Return the card without assignee
+    return {
+        **card.__dict__,
+        "assignee": None
+    }
 
 
-@router.get("/{card_id}", response_model=CardInDBBase)
+@router.get("/{card_id}", response_model=CardWithAssignee)
 async def get_card(
     *,
     db: AsyncSession = Depends(deps.get_db),
@@ -99,10 +126,26 @@ async def get_card(
         if not board_share:
             raise HTTPException(status_code=403, detail="Not enough permissions")
     
-    return card
+    # Explicitly load the assignee to avoid lazy loading issues
+    if card.assignee_id:
+        # Get the assignee information
+        from backend.app.crud import user as crud_user
+        assignee = await crud_user.get_user(db, card.assignee_id)
+        
+        # Prepare the response manually to avoid lazy loading
+        return {
+            **card.__dict__,
+            "assignee": assignee
+        }
+    
+    # Return the card without assignee
+    return {
+        **card.__dict__,
+        "assignee": None
+    }
 
 
-@router.put("/{card_id}", response_model=CardInDBBase)
+@router.put("/{card_id}", response_model=CardWithAssignee)
 async def update_card(
     *,
     db: AsyncSession = Depends(deps.get_db),
@@ -127,8 +170,26 @@ async def update_card(
         if not board_share or board_share.access_type not in ["write", "admin"]:
             raise HTTPException(status_code=403, detail="Not enough permissions")
     
+    # Update the card
     card = await crud_card.update_card(db, card, card_in)
-    return card
+    
+    # Explicitly load the assignee to avoid lazy loading issues
+    if card.assignee_id:
+        # Get the assignee information
+        from backend.app.crud import user as crud_user
+        assignee = await crud_user.get_user(db, card.assignee_id)
+        
+        # Prepare the response manually to avoid lazy loading
+        return {
+            **card.__dict__,
+            "assignee": assignee
+        }
+    
+    # Return the card without assignee
+    return {
+        **card.__dict__,
+        "assignee": None
+    }
 
 
 @router.delete("/{card_id}")
@@ -159,7 +220,7 @@ async def delete_card(
     return {"message": "CardInDBBase deleted successfully"}
 
 
-@router.post("/{card_id}/move", response_model=CardInDBBase)
+@router.post("/{card_id}/move", response_model=CardWithAssignee)
 async def move_card(
     *,
     db: AsyncSession = Depends(deps.get_db),
@@ -205,4 +266,20 @@ async def move_card(
         new_position=move_data.new_position
     )
     
-    return card 
+    # Explicitly load the assignee to avoid lazy loading issues
+    if card and card.assignee_id:
+        # Get the assignee information
+        from backend.app.crud import user as crud_user
+        assignee = await crud_user.get_user(db, card.assignee_id)
+        
+        # Prepare the response manually to avoid lazy loading
+        return {
+            **card.__dict__,
+            "assignee": assignee
+        }
+    
+    # Return the card without assignee
+    return {
+        **card.__dict__,
+        "assignee": None
+    } if card else None 

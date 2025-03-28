@@ -1,10 +1,11 @@
 from typing import List, Optional, Any, Coroutine
 from sqlalchemy import select, func
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import selectinload
+from sqlalchemy.orm import selectinload, joinedload
 from backend.app.models.board_list import BoardList
 from backend.app.schemas.board import BoardListCreate, BoardListUpdate
 from backend.app.schemas.list import ResponseBoardList
+from backend.app.models.card import Card
 
 
 async def get_list(
@@ -23,7 +24,10 @@ async def get_board_lists(
 ) -> List[BoardList]:
     query = select(BoardList).where(BoardList.board_id == board_id)
     if include_cards:
-        query = query.options(selectinload(BoardList.cards))
+        # Load cards with their assignees in a single query
+        query = query.options(
+            selectinload(BoardList.cards).joinedload(Card.assignee)
+        )
     query = query.order_by(BoardList.position)  # Order by position
     result = await db.execute(query)
     return result.scalars().all()

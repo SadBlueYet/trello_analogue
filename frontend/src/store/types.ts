@@ -11,7 +11,9 @@ export interface Board {
     description?: string;
     background_color?: string;
     owner_id: number;
+    owner?: User;
     created_at?: string;
+    updated_at?: string;
     lists: BoardList[];
     shared_with?: BoardShare[];
 }
@@ -41,6 +43,8 @@ export interface Card {
     created_at?: string;
     updated_at?: string;
     card_color?: string;
+    assignee_id?: number;
+    assignee?: User;
 }
 
 export interface AuthState {
