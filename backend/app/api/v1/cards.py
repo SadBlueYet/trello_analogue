@@ -7,12 +7,12 @@ from backend.app.crud import list as crud_list
 from backend.app.crud import board as crud_board
 from backend.app.crud import board_share as crud_board_share
 from backend.app.models.user import User
-from backend.app.schemas.card import Card, CardCreate, CardUpdate, MoveCard
+from backend.app.schemas.card import CardInDBBase, CardCreate, CardUpdate, MoveCard
 
 router = APIRouter()
 
 
-@router.get("/", response_model=List[Card])
+@router.get("/", response_model=List[CardInDBBase])
 async def get_cards(
     *,
     db: AsyncSession = Depends(deps.get_db),
@@ -45,7 +45,7 @@ async def get_cards(
     return await crud_card.get_list_cards(db, list_id)
 
 
-@router.post("/", response_model=Card)
+@router.post("/", response_model=CardInDBBase)
 async def create_card(
     *,
     db: AsyncSession = Depends(deps.get_db),
@@ -75,7 +75,7 @@ async def create_card(
     return card
 
 
-@router.get("/{card_id}", response_model=Card)
+@router.get("/{card_id}", response_model=CardInDBBase)
 async def get_card(
     *,
     db: AsyncSession = Depends(deps.get_db),
@@ -87,7 +87,7 @@ async def get_card(
     """
     card = await crud_card.get_card(db, card_id)
     if not card:
-        raise HTTPException(status_code=404, detail="Card not found")
+        raise HTTPException(status_code=404, detail="CardInDBBase not found")
     
     list_obj = await crud_list.get_list(db, card.list_id)
     board = await crud_board.get_board(db, list_obj.board_id)
@@ -102,7 +102,7 @@ async def get_card(
     return card
 
 
-@router.put("/{card_id}", response_model=Card)
+@router.put("/{card_id}", response_model=CardInDBBase)
 async def update_card(
     *,
     db: AsyncSession = Depends(deps.get_db),
@@ -115,7 +115,7 @@ async def update_card(
     """
     card = await crud_card.get_card(db, card_id)
     if not card:
-        raise HTTPException(status_code=404, detail="Card not found")
+        raise HTTPException(status_code=404, detail="CardInDBBase not found")
     
     list_obj = await crud_list.get_list(db, card.list_id)
     board = await crud_board.get_board(db, list_obj.board_id)
@@ -143,7 +143,7 @@ async def delete_card(
     """
     card = await crud_card.get_card(db, card_id)
     if not card:
-        raise HTTPException(status_code=404, detail="Card not found")
+        raise HTTPException(status_code=404, detail="CardInDBBase not found")
     
     list_obj = await crud_list.get_list(db, card.list_id)
     board = await crud_board.get_board(db, list_obj.board_id)
@@ -156,10 +156,10 @@ async def delete_card(
             raise HTTPException(status_code=403, detail="Not enough permissions")
     
     await crud_card.delete_card(db, card_id)
-    return {"message": "Card deleted successfully"}
+    return {"message": "CardInDBBase deleted successfully"}
 
 
-@router.post("/{card_id}/move", response_model=Card)
+@router.post("/{card_id}/move", response_model=CardInDBBase)
 async def move_card(
     *,
     db: AsyncSession = Depends(deps.get_db),
@@ -172,7 +172,7 @@ async def move_card(
     """
     card = await crud_card.get_card(db, card_id)
     if not card:
-        raise HTTPException(status_code=404, detail="Card not found")
+        raise HTTPException(status_code=404, detail="CardInDBBase not found")
     
     # Проверяем исходный список и доску
     source_list = await crud_list.get_list(db, card.list_id)

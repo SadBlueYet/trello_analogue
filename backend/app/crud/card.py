@@ -1,6 +1,7 @@
 from typing import List, Optional
-from sqlalchemy import select, text
+from sqlalchemy import select, text, update
 from sqlalchemy.ext.asyncio import AsyncSession
+
 from backend.app.models.card import Card
 from backend.app.schemas.card import CardCreate, CardUpdate
 from backend.app.models.board_list import BoardList
@@ -88,29 +89,19 @@ async def delete_card(db: AsyncSession, card_id: int) -> None:
     """
     card = await get_card(db, card_id)
     if card:
-        # Get the list and board to update positions properly
-        list_result = await db.execute(
-            select(BoardList).where(BoardList.id == card.list_id)
+        stmt = (
+            update(Card)
+            .where(Card.list_id == card.list_id and Card.position > card.position)
+            .values(position=card.position)
         )
-        list_obj = list_result.scalar_one()
-        
-        # Update positions of cards in the list
-        await db.execute(
-            text("""
-            UPDATE card
-            SET position = position - 1 
-            WHERE list_id = :list_id 
-            AND position > :old_position
-            """),
-            {"list_id": card.list_id, "old_position": card.position}
-        )
-        
-        # Delete the card
+
+        await db.execute(stmt)
+
         await db.delete(card)
         await db.commit()
 
 
-async def move_card(db: AsyncSession, card_id: int, target_list_id: int, new_position: int) -> Card:
+async def move_card(db: AsyncSession, card_id: int, target_list_id: int, new_position: int) -> Card | None:
     """
     Move a card to a new position and/or list.
     """
@@ -118,70 +109,43 @@ async def move_card(db: AsyncSession, card_id: int, target_list_id: int, new_pos
     if not card:
         return None
 
-    # If moving to a different list
-    if card.list_id != target_list_id:
-        # Update positions in the old list
+    old_position = card.position
+    old_list_id = card.list_id
+
+    if old_list_id != target_list_id:
+        # Освобождаем место в старом списке
         await db.execute(
-            text("""
-            UPDATE card
-            SET position = position - 1 
-            WHERE list_id = :list_id 
-            AND position > :old_position
-            """),
-            {"list_id": card.list_id, "old_position": card.position}
+            update(Card)
+            .where((Card.list_id == old_list_id) & (Card.position > old_position))
+            .values(position=Card.position - 1)
         )
 
-        # Update positions in the new list
+        # Сдвигаем позиции в новом списке
         await db.execute(
-            text("""
-            UPDATE card
-            SET position = position + 1 
-            WHERE list_id = :list_id 
-            AND position >= :new_position
-            """),
-            {"list_id": target_list_id, "new_position": new_position}
+            update(Card)
+            .where((Card.list_id == target_list_id) & (Card.position >= new_position))
+            .values(position=Card.position + 1)
         )
 
         card.list_id = target_list_id
-        card.position = new_position
 
-    # If moving within the same list
     else:
-        if card.position < new_position:
-            # Moving forward
+        if old_position < new_position:
+            # Двигаем вперёд
             await db.execute(
-                text("""
-                UPDATE card
-                SET position = position - 1 
-                WHERE list_id = :list_id 
-                AND position > :old_position 
-                AND position <= :new_position
-                """),
-                {
-                    "list_id": card.list_id,
-                    "old_position": card.position,
-                    "new_position": new_position
-                }
+                update(Card)
+                .where((Card.list_id == old_list_id) & (Card.position > old_position) & (Card.position <= new_position))
+                .values(position=Card.position - 1)
             )
-        else:
-            # Moving backward
+        elif old_position > new_position:
+            # Двигаем назад
             await db.execute(
-                text("""
-                UPDATE card
-                SET position = position + 1 
-                WHERE list_id = :list_id 
-                AND position >= :new_position 
-                AND position < :old_position
-                """),
-                {
-                    "list_id": card.list_id,
-                    "old_position": card.position,
-                    "new_position": new_position
-                }
+                update(Card)
+                .where((Card.list_id == old_list_id) & (Card.position >= new_position) & (Card.position < old_position))
+                .values(position=Card.position + 1)
             )
 
-        card.position = new_position
-
+    card.position = new_position
     await db.commit()
-    await db.refresh(card)
-    return card 
+
+    return card

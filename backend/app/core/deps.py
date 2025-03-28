@@ -17,7 +17,6 @@ async def get_token_from_cookie_or_header(
     access_token: Optional[str] = Cookie(None),
 ) -> str:
     """Get token from cookie or header."""
-    # First try to get from cookie
     if access_token:
         return access_token
     
@@ -51,7 +50,6 @@ async def get_current_user(
         if token_data.sub is None:
             raise credentials_exception
         
-        # Verify it's an access token not a refresh token
         if token_data.type != TokenType.ACCESS:
             raise credentials_exception
     except JWTError:

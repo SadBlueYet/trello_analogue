@@ -6,7 +6,7 @@ from backend.app.crud import board as crud_board
 from backend.app.crud import board_share as crud_board_share
 from backend.app.models.user import User
 from backend.app.schemas.board import (
-    Board, BoardCreate, BoardUpdate, BoardWithLists,
+    BoardCreate, BoardUpdate, BoardWithLists, BoardBase, BoardInDBBase,
     BoardShareCreate, BoardShareUpdate, BoardShareInfo,
 )
 from backend.app.crud import user as crud_user
@@ -23,25 +23,20 @@ async def get_boards(
     """
     Get all boards for the current user.
     """
-    # Получаем доски, которыми владеет пользователь
     owned_boards = await crud_board.get_boards(db, current_user.id)
-    
-    # Получаем доски, к которым пользователь имеет доступ
     shared_boards_access = await crud_board_share.get_shared_boards_for_user(db, current_user.id)
     
-    # Загружаем полную информацию о досках с общим доступом
     shared_boards = []
     for share in shared_boards_access:
         board = await crud_board.get_board(db, share.board_id)
         if board:
             shared_boards.append(board)
     
-    # Объединяем результаты
     all_boards = owned_boards + shared_boards
     return all_boards
 
 
-@router.post("/", response_model=Board)
+@router.post("/", response_model=BoardInDBBase)
 async def create_board(
     *,
     db: AsyncSession = Depends(deps.get_db),
@@ -79,7 +74,7 @@ async def get_board(
     return board
 
 
-@router.put("/{board_id}", response_model=Board)
+@router.put("/{board_id}", response_model=BoardInDBBase)
 async def update_board(
     *,
     db: AsyncSession = Depends(deps.get_db),

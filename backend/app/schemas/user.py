@@ -32,11 +32,3 @@ class UserInDBBase(UserBase):
 
     class Config:
         from_attributes = True
-
-
-class User(UserInDBBase):
-    pass
-
-
-class UserInDB(UserInDBBase):
-    hashed_password: str 

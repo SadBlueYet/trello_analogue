@@ -6,11 +6,11 @@ from backend.app.crud import list as crud_list
 from backend.app.crud import board as crud_board
 from backend.app.crud import board_share as crud_board_share
 from backend.app.models.user import User
-from backend.app.schemas.list import NewBoardListPosition, ResponseBoardList, BoardListCreate, BoardListUpdate
+from backend.app.schemas.list import NewBoardListPosition, ResponseBoardList, BoardListUpdate, BoardListBase
 
 router = APIRouter()
 
-@router.get("/", response_model=List[BoardListCreate])
+@router.get("/", response_model=List[BoardListBase])
 async def get_lists(
     *,
     db: AsyncSession = Depends(deps.get_db),
@@ -37,7 +37,7 @@ async def get_lists(
 async def create_list(
     *,
     db: AsyncSession = Depends(deps.get_db),
-    list_in: BoardListCreate,
+    list_in: BoardListBase,
     current_user: User = Depends(deps.get_current_active_user),
 ) -> Any:
     """
@@ -58,7 +58,7 @@ async def create_list(
     list_obj = await crud_list.create_list(db, list_in)
     return list_obj
 
-@router.get("/{list_id}", response_model=BoardListCreate)
+@router.get("/{list_id}", response_model=BoardListBase)
 async def get_list(
     *,
     db: AsyncSession = Depends(deps.get_db),

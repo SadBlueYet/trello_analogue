@@ -75,7 +75,6 @@ async def update_user_profile(
     This function allows updating email, username, and full_name.
     It also supports password change with current password verification.
     """
-    # Validate email uniqueness if it's being changed
     if profile_update.email and profile_update.email != current_user.email:
         existing_user = await get_user_by_email(db, profile_update.email)
         if existing_user:
@@ -84,7 +83,6 @@ async def update_user_profile(
                 detail="Email already registered",
             )
     
-    # Validate username uniqueness if it's being changed
     if profile_update.username and profile_update.username != current_user.username:
         existing_user = await get_user_by_username(db, profile_update.username)
         if existing_user:
@@ -93,7 +91,6 @@ async def update_user_profile(
                 detail="Username already taken",
             )
     
-    # Handle password change
     if profile_update.new_password:
         if not profile_update.current_password:
             raise HTTPException(
@@ -101,27 +98,22 @@ async def update_user_profile(
                 detail="Current password is required to set a new password",
             )
         
-        # Verify current password
         if not verify_password(profile_update.current_password, current_user.hashed_password):
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="Incorrect password",
             )
-        
-        # Set new password
         current_user.hashed_password = get_password_hash(profile_update.new_password)
     
-    # Update profile fields
     if profile_update.email:
         current_user.email = profile_update.email
     
     if profile_update.username:
         current_user.username = profile_update.username
     
-    if profile_update.full_name is not None:  # Allow empty string to clear the name
+    if profile_update.full_name is not None:
         current_user.full_name = profile_update.full_name
     
-    # Save changes
     await db.commit()
     await db.refresh(current_user)
     
