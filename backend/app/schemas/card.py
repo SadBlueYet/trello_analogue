@@ -1,6 +1,8 @@
-from typing import Optional, List, ForwardRef
+from typing import Optional, List
 from datetime import datetime
 from pydantic import BaseModel
+
+from backend.app.schemas.board import BoardListInDBBase
 
 
 class CardBase(BaseModel):
@@ -39,10 +41,6 @@ class Card(CardInDBBase):
 class MoveCard(BaseModel):
     new_position: int
     target_list_id: int
-
-
-# Отложенный импорт, чтобы избежать циклических зависимостей
-from app.schemas.board import BoardListInDBBase
 
 
 class ListWithCards(BoardListInDBBase):

@@ -1,7 +1,7 @@
 from fastapi import FastAPI, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
-from app.api.v1.api import api_router
-from app.core.config import settings
+from backend.app.api.v1.api import api_router
+from backend.app.core.config import settings
 import logging
 
 # Настройка логирования
@@ -15,12 +15,9 @@ app = FastAPI(
     openapi_url=f"{settings.API_V1_STR}/openapi.json"
 )
 
-# CORS middleware для разрешения запросов с любых IP адресов
-# Базовый список разрешенных origins - в реальности будет использоваться 
-# origin из заголовка запроса
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173"], # Это не имеет значения, middleware ниже переопределит заголовки
+    allow_origins=["http://localhost:5173"],
     allow_credentials=True,
     allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
     allow_headers=["Content-Type", "Authorization", "Accept", "X-Requested-With", "Origin"],
@@ -28,13 +25,10 @@ app.add_middleware(
     max_age=86400,
 )
 
-# Универсальный CORS middleware - разрешаем запросы с любого происхождения
 @app.middleware("http")
 async def universal_cors_middleware(request: Request, call_next):
-    # Получаем origin из заголовков запроса
     origin = request.headers.get("origin", "")
     
-    # Логируем, с какого origin пришел запрос
     if origin:
         logging.info(f"Request from origin: {origin}")
     
@@ -53,7 +47,6 @@ async def universal_cors_middleware(request: Request, call_next):
             },
         )
     
-    # Выполняем обычную обработку для не-OPTIONS запросов
     response = await call_next(request)
     
     # Добавляем CORS заголовки в ответ для любого запроса

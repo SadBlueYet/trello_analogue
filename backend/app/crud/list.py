@@ -2,9 +2,8 @@ from typing import List, Optional
 from sqlalchemy import select, func
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
-from app.models.board import Board
-from app.models.board_list import BoardList
-from app.schemas.board import BoardListCreate, BoardListUpdate
+from backend.app.models.board_list import BoardList
+from backend.app.schemas.board import BoardListCreate, BoardListUpdate
 
 
 async def get_list(

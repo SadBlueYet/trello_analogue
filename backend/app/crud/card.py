@@ -1,11 +1,9 @@
-from typing import List, Optional, Tuple
-from sqlalchemy import select, text, func, and_
+from typing import List, Optional
+from sqlalchemy import select, text
 from sqlalchemy.ext.asyncio import AsyncSession
-from app.models.card import Card
-from app.schemas.card import CardCreate, CardUpdate
-from app.models.board_list import BoardList
-from app.models.board import Board
-import re
+from backend.app.models.card import Card
+from backend.app.schemas.card import CardCreate, CardUpdate
+from backend.app.models.board_list import BoardList
 
 
 async def get_card(db: AsyncSession, card_id: int) -> Optional[Card]:

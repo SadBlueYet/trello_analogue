@@ -1,6 +1,7 @@
 from typing import Optional, List, ForwardRef
 from pydantic import BaseModel
 from datetime import datetime
+from backend.app.schemas.user import User
 
 class BoardBase(BaseModel):
     title: str
@@ -92,7 +93,6 @@ class BoardWithLists(BoardInDBBase):
 
 # Добавим в конец файла новые схемы для представления информации о шаринге
 
-from app.schemas.user import User
 
 class BoardShareBase(BaseModel):
     board_id: int

@@ -1,10 +1,10 @@
 from typing import Any, List
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, Query
 from sqlalchemy import or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
-from app.core import deps
-from app.models.user import User
-from app.schemas.user import User as UserSchema
+from backend.app.core import deps
+from backend.app.models.user import User
+from backend.app.schemas.user import User as UserSchema
 
 router = APIRouter()
 

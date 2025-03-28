@@ -1,11 +1,11 @@
-from typing import List, Optional, Union
+from typing import List, Optional
 from dotenv import load_dotenv
 from pydantic_settings import BaseSettings
 from pydantic import AnyHttpUrl
 
 
 class Settings(BaseSettings):
-    load_dotenv(".env")
+    load_dotenv(override=True)
     PROJECT_NAME: str = "Trello Clone"
     API_V1_STR: str = "/api/v1"
     

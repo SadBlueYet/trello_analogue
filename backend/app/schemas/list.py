@@ -1,6 +1,5 @@
-from typing import Optional, List
+from typing import Optional
 from pydantic import BaseModel
-from app.schemas.card import Card
 
 class BoardListBase(BaseModel):
     title: str

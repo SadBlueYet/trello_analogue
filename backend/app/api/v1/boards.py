@@ -1,16 +1,15 @@
 from typing import Any, List
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
-from app.core import deps
-from app.crud import board as crud_board
-from app.crud import board_share as crud_board_share
-from app.models.user import User
-from app.schemas.board import (
+from backend.app.core import deps
+from backend.app.crud import board as crud_board
+from backend.app.crud import board_share as crud_board_share
+from backend.app.models.user import User
+from backend.app.schemas.board import (
     Board, BoardCreate, BoardUpdate, BoardWithLists,
     BoardShareCreate, BoardShareUpdate, BoardShareInfo,
-    BoardWithSharing
 )
-from app.crud import user as crud_user
+from backend.app.crud import user as crud_user
 
 router = APIRouter()
 

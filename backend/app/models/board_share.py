@@ -1,6 +1,6 @@
 from sqlalchemy import Column, Integer, ForeignKey, String, UniqueConstraint
 from sqlalchemy.orm import relationship
-from app.models.base import Base
+from .base import Base
 
 class BoardShare(Base):
     """

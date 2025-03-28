@@ -1,6 +1,6 @@
 from sqlalchemy import Column, String, Integer, ForeignKey
 from sqlalchemy.orm import relationship
-from app.models.base import Base
+from .base import Base
 
 
 class Board(Base):
