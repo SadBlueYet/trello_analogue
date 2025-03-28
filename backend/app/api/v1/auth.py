@@ -15,12 +15,12 @@ from backend.app.crud import user as crud_user
 from backend.app.db.session import get_db
 from backend.app.models.user import User
 from backend.app.schemas.token import Token
-from backend.app.schemas.user import User as UserSchema, UserCreate, UserProfileUpdate
+from backend.app.schemas.user import UserInDBBase, UserCreate, UserProfileUpdate
 
 router = APIRouter()
 
 
-@router.post("/register", response_model=UserSchema)
+@router.post("/register", response_model=UserInDBBase)
 async def register(
     *,
     db: AsyncSession = Depends(get_db),
@@ -129,7 +129,7 @@ async def logout(response: Response) -> Any:
     return {"detail": "Successfully logged out"}
 
 
-@router.get("/me", response_model=UserSchema)
+@router.get("/me", response_model=UserInDBBase)
 async def get_current_user_info(
     current_user: User = Depends(get_current_active_user),
 ) -> Any:
@@ -139,7 +139,7 @@ async def get_current_user_info(
     return current_user
 
 
-@router.put("/update-profile", response_model=UserSchema)
+@router.put("/update-profile", response_model=UserInDBBase)
 async def update_profile(
     *,
     db: AsyncSession = Depends(get_db),

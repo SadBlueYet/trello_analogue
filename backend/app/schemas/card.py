@@ -35,13 +35,6 @@ class CardInDBBase(CardBase):
         from_attributes = True
 
 
-class Card(CardInDBBase):
-    pass
-
 class MoveCard(BaseModel):
     new_position: int
     target_list_id: int
-
-
-class ListWithCards(BoardListInDBBase):
-    cards: List[Card] = [] 

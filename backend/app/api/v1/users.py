@@ -4,12 +4,12 @@ from sqlalchemy import or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from backend.app.core import deps
 from backend.app.models.user import User
-from backend.app.schemas.user import User as UserSchema
+from backend.app.schemas.user import UserInDBBase
 
 router = APIRouter()
 
 
-@router.get("/search", response_model=List[UserSchema])
+@router.get("/search", response_model=List[UserInDBBase])
 async def search_users(
     *,
     db: AsyncSession = Depends(deps.get_db),

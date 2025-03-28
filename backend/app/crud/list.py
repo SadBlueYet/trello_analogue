@@ -1,9 +1,10 @@
-from typing import List, Optional
+from typing import List, Optional, Any, Coroutine
 from sqlalchemy import select, func
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 from backend.app.models.board_list import BoardList
 from backend.app.schemas.board import BoardListCreate, BoardListUpdate
+from backend.app.schemas.list import ResponseBoardList
 
 
 async def get_list(
@@ -92,7 +93,7 @@ async def delete_list(db: AsyncSession, list_id: int) -> bool:
 
 async def reorder_list(
     db: AsyncSession, list_id: int, new_position: int
-) -> Optional[BoardList]:
+) -> ResponseBoardList | None:
     list_obj = await get_list(db, list_id)
     if not list_obj:
         return None
@@ -113,7 +114,8 @@ async def reorder_list(
     list_obj.position = new_position
     await db.commit()
     await db.refresh(list_obj)
-    return BoardListCreate(
+    return ResponseBoardList(
+        id=list_obj.id,
         title=list_obj.title,
         position=list_obj.position,
         board_id=list_obj.board_id,

@@ -1,7 +1,7 @@
 from typing import Optional, List, ForwardRef
 from pydantic import BaseModel
 from datetime import datetime
-from backend.app.schemas.user import User
+from backend.app.schemas.user import UserInDBBase
 
 class BoardBase(BaseModel):
     title: str
@@ -12,14 +12,6 @@ class BoardBase(BaseModel):
 class BoardCreate(BoardBase):
     pass
 
-class GetBoards(BaseModel):
-    title: Optional[str] = None
-    description: Optional[str] = None
-    background_color: Optional[str] = None
-    created_at: Optional[datetime] = None
-    updated_at: Optional[datetime] = None
-    owner_id: Optional[int] = None
-    id: Optional[int] = None
 
 class BoardUpdate(BaseModel):
     title: Optional[str] = None
@@ -52,11 +44,6 @@ class BoardListInDBBase(BoardListBase):
     class Config:
         from_attributes = True
 
-
-class BoardList(BoardListInDBBase):
-    pass
-
-
 class BoardInDBBase(BoardBase):
     id: int
     owner_id: int
@@ -70,28 +57,8 @@ class BoardInDBBase(BoardBase):
         }
 
 
-# Используем ForwardRef для решения проблемы циклических импортов
-
-
-class Board(BoardInDBBase):
-    # lists: List[BoardList] = []
-    pass
-
-
-class BoardInDB(BoardInDBBase):
-    pass
-
-
-# Разрешаем ForwardRef после определения всех классов
-Board.model_rebuild()
-
-
-# Add Board with lists
 class BoardWithLists(BoardInDBBase):
-    lists: List[BoardList] = []
-
-
-# Добавим в конец файла новые схемы для представления информации о шаринге
+    lists: List[BoardListInDBBase] = []
 
 
 class BoardShareBase(BaseModel):
@@ -102,29 +69,19 @@ class BoardShareBase(BaseModel):
     class Config:
         from_attributes = True
 
+
 class BoardShareCreate(BoardShareBase):
     pass
+
 
 class BoardShareUpdate(BaseModel):
     access_type: str
 
-class BoardShare(BoardShareBase):
-    id: int
-    
-    class Config:
-        from_attributes = True
 
 class BoardShareInfo(BaseModel):
     id: int
     access_type: str
-    user: User
+    user: UserInDBBase
     
     class Config:
         from_attributes = True
-
-# Добавим схему для расширенной информации о доске, включая шаринг
-class BoardWithSharing(BoardInDB):
-    shared_with: List[BoardShareInfo] = []
-    
-    class Config:
-        from_attributes = True 
