@@ -142,20 +142,18 @@ const LoginPage = () => {
                 }
               />
 
-              <div className="flex items-center justify-end">
-                <div className="text-sm">
-                  <a href="#" className="font-medium text-indigo-600 hover:text-indigo-500">
-                    Forgot password?
-                  </a>
-                </div>
-              </div>
-
               <Button 
                 type="submit" 
                 isLoading={isSubmitting || authLoading}
               >
                 Sign in
               </Button>
+              
+              <div className="text-center mt-4">
+                <a href="#" className="text-sm font-medium text-indigo-600 hover:text-indigo-500">
+                  Forgot password?
+                </a>
+              </div>
             </form>
           </Card>
 
