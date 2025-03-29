@@ -732,42 +732,14 @@ const BoardPage: React.FC = () => {
   };
 
   // Добавляем функцию для обновления настроек доски
-  const handleSaveSettings = async (updatedSettings: { 
-    title: string; 
-    description?: string; 
-    backgroundColor?: string 
-  }) => {
-    if (!currentBoard) return;
-    
-    setIsSavingSettings(true);
+  const handleSaveSettings = async (updatedSettings: { title: string; description?: string; background_color?: string }) => {
+    if (!boardId) return;
     
     try {
-      // Переименовываем свойство для соответствия бэкенду
-      const apiData = {
-        title: updatedSettings.title,
-        description: updatedSettings.description,
-        background_color: updatedSettings.backgroundColor
-      };
-      
-      // Вызываем сервис для обновления доски
-      const updatedBoard = await boardService.updateBoard(currentBoard.id, apiData);
-      
-      // Обновляем текущую доску в Redux
-      // Сохраняем списки и карточки из текущей доски, так как они могут отсутствовать в ответе API
-      dispatch(setCurrentBoard({
-        ...updatedBoard,
-        lists: currentBoard.lists
-      }));
-      
-      // Очищаем кеш досок
-      clearBoardCache(currentBoard.id);
-      
-      // Закрываем модальное окно
+      await dispatch(updateBoard({ id: Number(boardId), data: updatedSettings })).unwrap();
       setSettingsModalOpen(false);
     } catch (error) {
       console.error('Failed to update board settings:', error);
-    } finally {
-      setIsSavingSettings(false);
     }
   };
 

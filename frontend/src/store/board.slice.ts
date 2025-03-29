@@ -123,8 +123,8 @@ export const updateBoard = createAsyncThunk(
     'board/updateBoard',
     async ({ id, data }: { id: number; data: { title?: string; description?: string; background_color?: string } }) => {
         const updatedBoard = await boardService.updateBoard(id, data);
-        // Очищаем кеш обновленной доски
-        boardRequestPromises.delete(id);
+        // Clear both the specific board cache and the boards list cache
+        clearBoardCache();
         return updatedBoard;
     }
 );
@@ -227,10 +227,18 @@ const boardSlice = createSlice({
                 state.isLoading = false;
                 const index = state.boards.findIndex(board => board.id === action.payload.id);
                 if (index !== -1) {
-                    state.boards[index] = action.payload;
+                    // Preserve lists when updating the board in boards array
+                    state.boards[index] = {
+                        ...action.payload,
+                        lists: state.boards[index].lists || []
+                    };
                 }
                 if (state.currentBoard?.id === action.payload.id) {
-                    state.currentBoard = action.payload;
+                    // Preserve lists when updating the current board
+                    state.currentBoard = {
+                        ...action.payload,
+                        lists: state.currentBoard.lists || []
+                    };
                     state.lastBoardFetch = Date.now();
                 }
             })

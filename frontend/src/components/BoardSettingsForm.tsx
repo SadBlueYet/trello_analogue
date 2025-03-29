@@ -63,6 +63,9 @@ const BoardSettingsForm: React.FC<BoardSettingsFormProps> = ({
         description: description.trim() || undefined,
         background_color: selectedColor
       });
+      
+      // Reset error state after successful save
+      setError('');
     } catch (err) {
       setError('Failed to update board settings');
       console.error('Error updating board:', err);
