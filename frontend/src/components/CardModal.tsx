@@ -392,6 +392,14 @@ const CardModal: React.FC<CardModalProps> = ({ isOpen, onClose, card, onSave, li
     }
   };
 
+  // Add a new function to handle keyboard input
+  const handleCommentKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter' && !e.shiftKey && newComment.trim()) {
+      e.preventDefault();
+      handleCommentSubmit(e as any);
+    }
+  };
+
   if (!card) return null;
   
   // Generate card identifier
@@ -418,11 +426,11 @@ const CardModal: React.FC<CardModalProps> = ({ isOpen, onClose, card, onSave, li
     <Modal isOpen={isOpen} onClose={onClose} title="" size="large">
       <div className="relative">
         {/* Enhanced header section with gradient */}
-        <div className="bg-gradient-to-r from-indigo-50 via-blue-50 to-indigo-50 -mx-6 -mt-2 mb-6 p-6 border-b border-indigo-100 rounded-t-lg">
+        <div className="bg-gradient-to-r from-indigo-50 via-indigo-100 to-indigo-50 -mx-6 -mt-2 mb-6 p-6 border-b border-indigo-100 rounded-t-lg">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             {/* Card identifier with icon */}
             <div className="flex items-center">
-              <div className="bg-gradient-to-r from-indigo-600 to-blue-600 text-white p-2 rounded-md mr-3 shadow-sm">
+              <div className="bg-gradient-to-r from-indigo-600 to-indigo-500 text-white p-2 rounded-md mr-3 shadow-sm">
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
                 </svg>
@@ -510,6 +518,115 @@ const CardModal: React.FC<CardModalProps> = ({ isOpen, onClose, card, onSave, li
                 rows={6}
                 placeholder="Add a more detailed description..."
               />
+            </div>
+
+            {/* Comments Section - Moved here */}
+            <div className="mt-6 border-t pt-5 border-gray-200">
+              <h3 className="text-sm font-medium text-gray-700 flex items-center mb-3">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z" />
+                </svg>
+                Comments
+              </h3>
+              
+              {/* Comment input with avatar */}
+              <div className="mb-4">
+                <div className="flex items-start">
+                  {currentUser && (
+                    <div className="flex-shrink-0 mr-3">
+                      <div className="w-8 h-8 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-700 font-medium">
+                        {currentUser.username?.substring(0, 1).toUpperCase()}
+                      </div>
+                    </div>
+                  )}
+                  <div className="flex-grow relative">
+                    <Input
+                      value={newComment}
+                      onChange={(e) => setNewComment(e.target.value)}
+                      onKeyDown={handleCommentKeyDown}
+                      placeholder="Write a comment..."
+                      className="w-full pr-20"
+                    />
+                    <Button 
+                      type="button"
+                      onClick={handleCommentSubmit}
+                      className="absolute right-1 top-1 py-1 px-3 text-sm"
+                      disabled={submittingComment || !newComment.trim()}
+                    >
+                      {submittingComment ? (
+                        <svg className="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                      ) : 'Add'}
+                    </Button>
+                  </div>
+                </div>
+              </div>
+              
+              {/* Comments list with better styling */}
+              <div className="space-y-3 max-h-60 overflow-y-auto pr-1">
+                {comments.length === 0 ? (
+                  <div className="text-center py-5 bg-gray-50 rounded-lg">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-10 w-10 mx-auto text-gray-300 mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z" />
+                    </svg>
+                    <p className="text-gray-500 text-sm">No comments yet</p>
+                    <p className="text-gray-400 text-xs mt-1">Be the first to add a comment!</p>
+                  </div>
+                ) : (
+                  comments.map(comment => (
+                    <div key={comment.id} className="bg-gray-50 rounded-lg p-3 hover:bg-gray-100 transition-colors">
+                      <div className="flex">
+                        {/* User avatar */}
+                        <div className="flex-shrink-0 mr-3">
+                          <div className="w-8 h-8 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-700 font-medium">
+                            {comment.user?.username?.substring(0, 1).toUpperCase() || '?'}
+                          </div>
+                        </div>
+                        
+                        {/* Comment content */}
+                        <div className="flex-1 min-w-0">
+                          {/* Comment header with username and time */}
+                          <div className="flex justify-between items-start mb-1">
+                            <div className="font-medium text-sm text-gray-900 truncate">
+                              {comment.user?.username || 'Unknown user'}
+                            </div>
+                            <div className="flex items-center space-x-2 flex-shrink-0">
+                              <span className="text-xs text-gray-500">
+                                {new Date(comment.created_at).toLocaleString(undefined, {
+                                  month: 'short',
+                                  day: 'numeric',
+                                  hour: '2-digit',
+                                  minute: '2-digit'
+                                })}
+                              </span>
+                              
+                              {/* Delete button */}
+                              {(comment.user_id === currentUser?.id || currentBoard?.owner_id === currentUser?.id) && (
+                                <button 
+                                  onClick={() => handleDeleteComment(comment.id)}
+                                  className="text-gray-400 hover:text-red-500 transition-colors"
+                                  title="Delete comment"
+                                >
+                                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                  </svg>
+                                </button>
+                              )}
+                            </div>
+                          </div>
+                          
+                          {/* Comment text */}
+                          <div className="text-sm text-gray-800 whitespace-pre-wrap break-words">
+                            {comment.text}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
             </div>
           </div>
 
@@ -668,75 +785,9 @@ const CardModal: React.FC<CardModalProps> = ({ isOpen, onClose, card, onSave, li
           </div>
         </form>
 
-        {/* Comments Section */}
-        <div className="mb-5 mt-6">
-          <h3 className="block mb-3 text-sm font-medium text-gray-700 flex items-center">
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z" />
-            </svg>
-            Comments
-          </h3>
-          
-          <div className="mb-4">
-            <form onSubmit={handleCommentSubmit}>
-              <div className="flex">
-                <Input
-                  value={newComment}
-                  onChange={(e) => setNewComment(e.target.value)}
-                  placeholder="Write a comment..."
-                  className="flex-grow"
-                />
-                <Button 
-                  type="submit" 
-                  className="ml-2"
-                  disabled={submittingComment || !newComment.trim()}
-                >
-                  Add
-                </Button>
-              </div>
-            </form>
-          </div>
-          
-          <div className="space-y-4 max-h-60 overflow-y-auto">
-            {comments.length === 0 ? (
-              <p className="text-gray-500 italic text-sm">No comments yet</p>
-            ) : (
-              comments.map(comment => (
-                <div key={comment.id} className="p-3 bg-gray-50 rounded shadow-sm">
-                  <div className="flex justify-between items-start">
-                    <div className="font-semibold text-sm flex items-center">
-                      <div className="bg-indigo-100 text-indigo-800 rounded-full w-6 h-6 flex items-center justify-center mr-2">
-                        {comment.user?.username.substring(0, 1).toUpperCase()}
-                      </div>
-                      {comment.user?.username || 'Unknown user'}
-                    </div>
-                    <div className="flex space-x-2">
-                      {(comment.user_id === currentUser?.id || currentBoard?.owner_id === currentUser?.id) && (
-                        <button 
-                          onClick={() => handleDeleteComment(comment.id)}
-                          className="text-xs text-red-500 hover:text-red-700"
-                          title="Delete comment"
-                        >
-                          <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                          </svg>
-                        </button>
-                      )}
-                    </div>
-                  </div>
-                  <div className="mt-2 text-sm whitespace-pre-wrap">{comment.text}</div>
-                  <div className="mt-1 text-xs text-gray-500">
-                    {new Date(comment.created_at).toLocaleString()}
-                  </div>
-                </div>
-              ))
-            )}
-          </div>
-        </div>
-
         {error && <ErrorMessage message={error} />}
 
-        {/* Action buttons */}
+        {/* Action buttons - leave this outside the form and after it */}
         <div className="flex justify-end space-x-3 pt-3 mt-3 border-t border-gray-100">
           <Button type="button" variant="outline" onClick={onClose}>
             Cancel

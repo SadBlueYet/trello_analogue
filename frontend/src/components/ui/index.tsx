@@ -38,9 +38,9 @@ export const Button: React.FC<ButtonProps> = ({
   const baseStyles = "relative w-full flex justify-center items-center py-2.5 px-4 text-sm font-medium rounded-lg focus:outline-none focus:ring-2 focus:ring-offset-2 transition-all duration-200 ease-in-out";
   
   const variantStyles = {
-    primary: "bg-gradient-to-r from-indigo-500 to-purple-500 hover:from-indigo-600 hover:to-purple-600 text-white shadow-md hover:shadow-lg transform hover:-translate-y-0.5 focus:ring-indigo-500",
-    secondary: "bg-gradient-to-r from-pink-500 to-rose-500 hover:from-pink-600 hover:to-rose-600 text-white shadow-md hover:shadow-lg transform hover:-translate-y-0.5 focus:ring-pink-500",
-    outline: "bg-white text-indigo-600 border border-indigo-300 hover:bg-indigo-50 shadow-sm transform hover:-translate-y-0.5 focus:ring-indigo-500"
+    primary: "bg-gradient-to-r from-indigo-600 to-indigo-500 hover:from-indigo-700 hover:to-indigo-600 text-white shadow-md hover:shadow-lg transform hover:-translate-y-0.5 focus:ring-indigo-500 border border-indigo-700",
+    secondary: "bg-gradient-to-r from-violet-600 to-violet-500 hover:from-violet-700 hover:to-violet-600 text-white shadow-md hover:shadow-lg transform hover:-translate-y-0.5 focus:ring-violet-500 border border-violet-700",
+    outline: "bg-white text-indigo-600 border border-indigo-300 hover:bg-indigo-50 shadow-sm transform hover:-translate-y-0.5 focus:ring-indigo-500 hover:border-indigo-400"
   };
 
   return (
@@ -174,7 +174,7 @@ export const PageHeader: React.FC<{ title: string; subtitle?: string; icon?: Rea
         </div>
       ) : (
         <div className="flex justify-center mb-3">
-          <div className="h-16 w-16 rounded-full bg-gradient-to-r from-indigo-500 to-purple-500 flex items-center justify-center shadow-md">
+          <div className="h-16 w-16 rounded-full bg-gradient-to-r from-indigo-600 to-indigo-500 flex items-center justify-center shadow-md">
             <svg 
               xmlns="http://www.w3.org/2000/svg" 
               className="h-8 w-8 text-white" 

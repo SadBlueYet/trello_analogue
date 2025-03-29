@@ -121,7 +121,7 @@ export const createBoard = createAsyncThunk(
 
 export const updateBoard = createAsyncThunk(
     'board/updateBoard',
-    async ({ id, data }: { id: number; data: { title?: string; description?: string } }) => {
+    async ({ id, data }: { id: number; data: { title?: string; description?: string; background_color?: string } }) => {
         const updatedBoard = await boardService.updateBoard(id, data);
         // Очищаем кеш обновленной доски
         boardRequestPromises.delete(id);

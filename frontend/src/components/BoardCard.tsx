@@ -3,37 +3,20 @@ import React, { useState, useRef, useEffect } from 'react';
 interface BoardCardProps {
   title: string;
   listsCount?: number;
-  background?: string;
+  background_color?: string;
   boardId: number;
   description?: string;
   onClick: () => void;
   created_at?: string;
 }
 
-// Яркие цветовые градиенты для карточек досок
-const BOARD_GRADIENTS = [
-  'from-indigo-500 to-purple-500',
-  'from-pink-500 to-rose-500',
-  'from-orange-400 to-pink-500',
-  'from-green-400 to-cyan-500',
-  'from-blue-500 to-indigo-500',
-  'from-purple-500 to-indigo-500',
-  'from-yellow-400 to-orange-500',
-  'from-red-500 to-pink-500',
-  'from-teal-400 to-cyan-500',
-];
-
-// Получение градиента на основе ID доски
-const getGradientByBoardId = (id: number): string => {
-  // Используем ID доски для детерминированного выбора градиента
-  const gradientIndex = id % BOARD_GRADIENTS.length;
-  return BOARD_GRADIENTS[gradientIndex];
-};
+// Default board color (same as in handleCreateBoard)
+const DEFAULT_BOARD_COLOR = '#4F46E5'; // indigo
 
 const BoardCard: React.FC<BoardCardProps> = ({ 
   title, 
   listsCount = 0, 
-  background, 
+  background_color,
   boardId, 
   description, 
   onClick,
@@ -44,12 +27,11 @@ const BoardCard: React.FC<BoardCardProps> = ({
   const descriptionRef = useRef<HTMLDivElement>(null);
   
   // Определяем, является ли фон градиентом (начинается с 'from-')
-  const isGradient = background?.startsWith('from-');
+  const isGradient = background_color?.startsWith('from-');
   
-  // Если это градиент TailwindCSS или нет фона, используем предустановленные градиенты
-  // Иначе считаем, что это обычный цвет (HEX, RGB и т.д.)
-  const gradient = isGradient ? background : getGradientByBoardId(boardId);
-  
+  // Используем установленный цвет или цвет по умолчанию
+  const gradient = isGradient ? background_color : 'from-indigo-600 to-indigo-500';
+
   // Format date from database if available, or show placeholder
   const formatDate = () => {
     if (created_at) {
@@ -82,8 +64,9 @@ const BoardCard: React.FC<BoardCardProps> = ({
       style={{ minWidth: 'calc(100% - 1rem)', minHeight: '150px', maxHeight: '250px' }}
     >
       <div 
-        className={`w-full h-full p-3 text-white flex flex-col ${isGradient || !background ? 'bg-gradient-to-r' : ''} ${isGradient || !background ? gradient : ''}`}
-        style={background && !isGradient ? { backgroundColor: background } : {}}
+        className={`w-full h-full p-3 text-white flex flex-col ${isGradient ? 'bg-gradient-to-r' : ''} ${isGradient ? gradient : ''}`}
+        style={background_color && !isGradient ? { backgroundColor: background_color } : 
+               !background_color ? { backgroundColor: DEFAULT_BOARD_COLOR } : {}}
       >
         {/* Заголовок и количество списков */}
         <div className="flex items-start justify-between mb-1.5">

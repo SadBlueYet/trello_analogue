@@ -4,19 +4,19 @@ import { Board } from '../store/types';
 
 interface BoardSettingsFormProps {
   board: Board;
-  onSave: (updatedBoard: { title: string; description?: string; backgroundColor?: string }) => Promise<void>;
+  onSave: (updatedBoard: { title: string; description?: string; background_color?: string }) => Promise<void>;
   onCancel: () => void;
   isSubmitting: boolean;
 }
 
 // Список предустановленных цветов для доски
 const boardColors = [
-  { name: 'Blue', value: 'from-blue-600 to-indigo-700' },
+  { name: 'Indigo', value: 'from-indigo-600 to-indigo-500' },
+  { name: 'Purple', value: 'from-purple-600 to-indigo-500' },
+  { name: 'Blue', value: 'from-blue-600 to-indigo-600' },
   { name: 'Green', value: 'from-green-500 to-teal-600' },
-  { name: 'Purple', value: 'from-purple-600 to-indigo-800' },
   { name: 'Red', value: 'from-red-500 to-pink-600' },
   { name: 'Orange', value: 'from-orange-500 to-amber-600' },
-  { name: 'Gray', value: 'from-gray-600 to-gray-800' },
   { name: 'Teal', value: 'from-teal-500 to-emerald-700' },
   { name: 'Pink', value: 'from-pink-500 to-rose-700' },
   { name: 'Amber', value: 'from-amber-500 to-yellow-600' },
@@ -61,7 +61,7 @@ const BoardSettingsForm: React.FC<BoardSettingsFormProps> = ({
       await onSave({
         title: title.trim(),
         description: description.trim() || undefined,
-        backgroundColor: selectedColor
+        background_color: selectedColor
       });
     } catch (err) {
       setError('Failed to update board settings');

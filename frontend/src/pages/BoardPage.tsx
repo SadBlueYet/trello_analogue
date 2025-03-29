@@ -24,12 +24,12 @@ import ShareBoardModal from '../components/ShareBoardModal';
 
 // Список предустановленных цветов для списков
 const listColors = [
-  { name: 'Blue', value: 'from-blue-600 to-indigo-700' },
+  { name: 'Indigo', value: 'from-indigo-600 to-indigo-500' },
+  { name: 'Purple', value: 'from-purple-600 to-indigo-500' },
+  { name: 'Blue', value: 'from-blue-600 to-indigo-600' },
   { name: 'Green', value: 'from-green-500 to-teal-600' },
-  { name: 'Purple', value: 'from-purple-600 to-indigo-800' },
   { name: 'Red', value: 'from-red-500 to-pink-600' },
   { name: 'Orange', value: 'from-orange-500 to-amber-600' },
-  { name: 'Gray', value: 'from-gray-600 to-gray-800' },
 ];
 
 // New components for the board page
@@ -43,7 +43,7 @@ const ListCard: React.FC<{
   onEditColor?: () => void;
 }> = ({ id, title, children, onAddCard, dragHandleProps, listColor, onEditColor }) => {
   // Определяем цвет градиента, используя собственный цвет списка или дефолтный
-  const gradientClass = listColor || 'from-blue-600 to-indigo-700';
+  const gradientClass = listColor || 'from-indigo-600 to-indigo-500';
   
   // Определяем класс тени в зависимости от основного цвета
   let shadowClass = 'shadow-md';
@@ -120,7 +120,7 @@ const TaskCard: React.FC<{
   }) : '';
 
   // Используем один цвет по умолчанию для всех карточек
-  const defaultColor = 'from-blue-400 to-indigo-500';
+  const defaultColor = 'from-indigo-600 to-indigo-500';
   
   // Determine the color - if card_color is a Tailwind color class, use it directly
   // Otherwise, create a custom background color style
@@ -872,7 +872,7 @@ const BoardPage: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <div className={`bg-gradient-to-r ${currentBoard?.background_color || 'from-blue-600 to-indigo-700'} text-white shadow-lg`}>
+      <div className={`bg-gradient-to-r ${currentBoard?.background_color || 'from-indigo-600 to-indigo-500'} text-white shadow-lg`}>
         <div className="max-w-7xl mx-auto py-4 px-3 sm:px-6 lg:px-8">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
             <div className="flex flex-col sm:flex-row sm:items-start mb-4 sm:mb-0">
