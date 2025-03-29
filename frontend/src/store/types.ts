@@ -33,6 +33,15 @@ export interface BoardList {
     list_color?: string;
 }
 
+export interface Comment {
+    id: number;
+    text: string;
+    card_id: number;
+    user_id: number;
+    created_at: string;
+    user?: User;
+}
+
 export interface Card {
     id: number;
     title: string;
@@ -45,6 +54,7 @@ export interface Card {
     card_color?: string;
     assignee_id?: number;
     assignee?: User;
+    comments?: Comment[];
 }
 
 export interface AuthState {

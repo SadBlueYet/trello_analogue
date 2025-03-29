@@ -13,4 +13,5 @@ class Card(Base):
     assignee_id = Column(Integer, ForeignKey("user.id"), nullable=True)  # ID пользователя, ответственного за карточку
     
     list = relationship("BoardList", back_populates="cards")
-    assignee = relationship("User", backref="assigned_cards") 
+    assignee = relationship("User", backref="assigned_cards")
+    comments = relationship("Comment", back_populates="card", cascade="all, delete-orphan") 

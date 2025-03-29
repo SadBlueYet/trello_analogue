@@ -12,4 +12,5 @@ class User(Base):
     is_superuser = Column(Boolean, default=False)
     
     # Доски, к которым пользователю предоставлен доступ
-    shared_boards = relationship("BoardShare", back_populates="user", cascade="all, delete-orphan") 
+    shared_boards = relationship("BoardShare", back_populates="user", cascade="all, delete-orphan")
+    comments = relationship("Comment", back_populates="user", cascade="all, delete-orphan") 

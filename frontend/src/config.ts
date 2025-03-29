@@ -44,6 +44,12 @@ export const API_ENDPOINTS = {
     UPDATE: (id: number) => `/cards/${id}`,
     DELETE: (id: number) => `/cards/${id}`,
     MOVE: (id: number) => `/cards/${id}/move`,
+    COMMENTS: {
+      LIST: (cardId: number) => `/cards/${cardId}/comments`,
+      CREATE: (cardId: number) => `/cards/${cardId}/comments`,
+      UPDATE: (cardId: number, commentId: number) => `/cards/${cardId}/comments/${commentId}`,
+      DELETE: (cardId: number, commentId: number) => `/cards/${cardId}/comments/${commentId}`,
+    }
   },
   USERS: {
     SEARCH: `/users/search`

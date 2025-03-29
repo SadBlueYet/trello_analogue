@@ -4,6 +4,7 @@ from pydantic import BaseModel
 
 from backend.app.schemas.board import BoardListInDBBase
 from backend.app.schemas.user import UserInDBBase
+from backend.app.schemas.comment import CommentWithUser
 
 
 class CardBase(BaseModel):
@@ -41,6 +42,7 @@ class CardInDBBase(CardBase):
 
 class CardWithAssignee(CardInDBBase):
     assignee: Optional[UserInDBBase] = None
+    comments: Optional[List[CommentWithUser]] = None
 
 
 class MoveCard(BaseModel):

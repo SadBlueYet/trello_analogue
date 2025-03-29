@@ -6,8 +6,11 @@ from backend.app.crud import card as crud_card
 from backend.app.crud import list as crud_list
 from backend.app.crud import board as crud_board
 from backend.app.crud import board_share as crud_board_share
+from backend.app.crud import comment as crud_comment
+from backend.app.crud import user as crud_user
 from backend.app.models.user import User
 from backend.app.schemas.card import CardInDBBase, CardCreate, CardUpdate, MoveCard, CardWithAssignee
+from backend.app.schemas.comment import CommentCreate, CommentUpdate, CommentWithUser
 
 router = APIRouter()
 
@@ -86,7 +89,6 @@ async def create_card(
     # Explicitly load the assignee to avoid lazy loading issues
     if card.assignee_id:
         # Get the assignee information
-        from backend.app.crud import user as crud_user
         assignee = await crud_user.get_user(db, card.assignee_id)
         
         # Prepare the response manually to avoid lazy loading
@@ -126,22 +128,40 @@ async def get_card(
         if not board_share:
             raise HTTPException(status_code=403, detail="Not enough permissions")
     
+    # Get comments
+    comments = await crud_comment.get_card_comments(db, card_id)
+    
+    # Format comments with user data
+    formatted_comments = []
+    for comment in comments:
+        comment_dict = comment.__dict__
+        comment_dict = {k: v for k, v in comment_dict.items() if not k.startswith('_')}
+        
+        # Get user data
+        user = await crud_user.get_user(db, comment.user_id)
+        user_dict = {k: v for k, v in user.__dict__.items() if not k.startswith('_')}
+        
+        # Add user to comment
+        comment_dict["user"] = user_dict
+        formatted_comments.append(comment_dict)
+    
     # Explicitly load the assignee to avoid lazy loading issues
     if card.assignee_id:
         # Get the assignee information
-        from backend.app.crud import user as crud_user
         assignee = await crud_user.get_user(db, card.assignee_id)
         
         # Prepare the response manually to avoid lazy loading
         return {
             **card.__dict__,
-            "assignee": assignee
+            "assignee": assignee,
+            "comments": formatted_comments
         }
     
     # Return the card without assignee
     return {
         **card.__dict__,
-        "assignee": None
+        "assignee": None,
+        "comments": formatted_comments
     }
 
 
@@ -176,7 +196,6 @@ async def update_card(
     # Explicitly load the assignee to avoid lazy loading issues
     if card.assignee_id:
         # Get the assignee information
-        from backend.app.crud import user as crud_user
         assignee = await crud_user.get_user(db, card.assignee_id)
         
         # Prepare the response manually to avoid lazy loading
@@ -269,7 +288,6 @@ async def move_card(
     # Explicitly load the assignee to avoid lazy loading issues
     if card and card.assignee_id:
         # Get the assignee information
-        from backend.app.crud import user as crud_user
         assignee = await crud_user.get_user(db, card.assignee_id)
         
         # Prepare the response manually to avoid lazy loading
@@ -283,3 +301,203 @@ async def move_card(
         **card.__dict__,
         "assignee": None
     } if card else None 
+
+
+@router.get("/{card_id}/comments", response_model=List[CommentWithUser])
+async def get_card_comments(
+    *,
+    db: AsyncSession = Depends(deps.get_db),
+    card_id: int,
+    current_user: User = Depends(deps.get_current_active_user),
+) -> Any:
+    """
+    Get all comments for a specific card.
+    """
+    # Check if card exists
+    card = await crud_card.get_card(db, card_id)
+    if not card:
+        raise HTTPException(status_code=404, detail="Card not found")
+    
+    # Check if list exists
+    list_obj = await crud_list.get_list(db, card.list_id)
+    if not list_obj:
+        raise HTTPException(status_code=404, detail="List not found")
+    
+    # Check if board exists
+    board = await crud_board.get_board(db, list_obj.board_id)
+    if not board:
+        raise HTTPException(status_code=404, detail="Board not found")
+    
+    # Check permissions
+    if board.owner_id != current_user.id:
+        # Check board share permissions
+        board_share = await crud_board_share.get_board_share(db, board.id, current_user.id)
+        if not board_share:
+            raise HTTPException(status_code=403, detail="Not enough permissions")
+    
+    # Get comments
+    comments = await crud_comment.get_card_comments(db, card_id)
+    
+    # Format response with user data
+    result = []
+    for comment in comments:
+        comment_dict = comment.__dict__
+        comment_dict = {k: v for k, v in comment_dict.items() if not k.startswith('_')}
+        
+        # Get user data
+        user = await crud_user.get_user(db, comment.user_id)
+        user_dict = {k: v for k, v in user.__dict__.items() if not k.startswith('_')}
+        
+        # Add user to comment
+        comment_dict["user"] = user_dict
+        result.append(comment_dict)
+    
+    return result
+
+
+@router.post("/{card_id}/comments", response_model=CommentWithUser)
+async def create_comment(
+    *,
+    db: AsyncSession = Depends(deps.get_db),
+    card_id: int,
+    comment_in: CommentCreate,
+    current_user: User = Depends(deps.get_current_active_user),
+) -> Any:
+    """
+    Create a new comment.
+    """
+    # Check if card exists
+    card = await crud_card.get_card(db, card_id)
+    if not card:
+        raise HTTPException(status_code=404, detail="Card not found")
+    
+    # Check if list exists
+    list_obj = await crud_list.get_list(db, card.list_id)
+    if not list_obj:
+        raise HTTPException(status_code=404, detail="List not found")
+    
+    # Check if board exists
+    board = await crud_board.get_board(db, list_obj.board_id)
+    if not board:
+        raise HTTPException(status_code=404, detail="Board not found")
+    
+    # Check permissions
+    if board.owner_id != current_user.id:
+        # Check board share permissions
+        board_share = await crud_board_share.get_board_share(db, board.id, current_user.id)
+        if not board_share or board_share.access_type not in ["write", "admin"]:
+            raise HTTPException(status_code=403, detail="Not enough permissions")
+    
+    # Create comment
+    comment = await crud_comment.create_comment(db, comment_in, current_user.id)
+    
+    # Format response with user data
+    comment_dict = comment.__dict__
+    comment_dict = {k: v for k, v in comment_dict.items() if not k.startswith('_')}
+    
+    # Get user data
+    user = await crud_user.get_user(db, comment.user_id)
+    user_dict = {k: v for k, v in user.__dict__.items() if not k.startswith('_')}
+    
+    # Add user to comment
+    comment_dict["user"] = user_dict
+    
+    return comment_dict
+
+
+@router.put("/{card_id}/comments/{comment_id}", response_model=CommentWithUser)
+async def update_comment(
+    *,
+    db: AsyncSession = Depends(deps.get_db),
+    card_id: int,
+    comment_id: int,
+    comment_in: CommentUpdate,
+    current_user: User = Depends(deps.get_current_active_user),
+) -> Any:
+    """
+    Update a comment.
+    """
+    # Check if card exists
+    card = await crud_card.get_card(db, card_id)
+    if not card:
+        raise HTTPException(status_code=404, detail="Card not found")
+    
+    # Check if comment exists
+    comment = await crud_comment.get_comment(db, comment_id)
+    if not comment:
+        raise HTTPException(status_code=404, detail="Comment not found")
+    
+    # Check if comment belongs to card
+    if comment.card_id != card.id:
+        raise HTTPException(status_code=400, detail="Comment does not belong to this card")
+    
+    # Check if user is the owner of the comment
+    if comment.user_id != current_user.id:
+        # Check if user is board owner or admin
+        list_obj = await crud_list.get_list(db, card.list_id)
+        board = await crud_board.get_board(db, list_obj.board_id)
+        
+        if board.owner_id != current_user.id:
+            # Check board share permissions
+            board_share = await crud_board_share.get_board_share(db, board.id, current_user.id)
+            if not board_share or board_share.access_type != "admin":
+                raise HTTPException(status_code=403, detail="You can only update your own comments")
+    
+    # Update comment
+    comment = await crud_comment.update_comment(db, comment, comment_in)
+    
+    # Format response with user data
+    comment_dict = comment.__dict__
+    comment_dict = {k: v for k, v in comment_dict.items() if not k.startswith('_')}
+    
+    # Get user data
+    user = await crud_user.get_user(db, comment.user_id)
+    user_dict = {k: v for k, v in user.__dict__.items() if not k.startswith('_')}
+    
+    # Add user to comment
+    comment_dict["user"] = user_dict
+    
+    return comment_dict
+
+
+@router.delete("/{card_id}/comments/{comment_id}")
+async def delete_comment(
+    *,
+    db: AsyncSession = Depends(deps.get_db),
+    card_id: int,
+    comment_id: int,
+    current_user: User = Depends(deps.get_current_active_user),
+) -> Any:
+    """
+    Delete a comment.
+    """
+    # Check if card exists
+    card = await crud_card.get_card(db, card_id)
+    if not card:
+        raise HTTPException(status_code=404, detail="Card not found")
+    
+    # Check if comment exists
+    comment = await crud_comment.get_comment(db, comment_id)
+    if not comment:
+        raise HTTPException(status_code=404, detail="Comment not found")
+    
+    # Check if comment belongs to card
+    if comment.card_id != card.id:
+        raise HTTPException(status_code=400, detail="Comment does not belong to this card")
+    
+    # Check if user is the owner of the comment
+    if comment.user_id != current_user.id:
+        # Check if user is board owner or admin
+        list_obj = await crud_list.get_list(db, card.list_id)
+        board = await crud_board.get_board(db, list_obj.board_id)
+        
+        if board.owner_id != current_user.id:
+            # Check board share permissions
+            board_share = await crud_board_share.get_board_share(db, board.id, current_user.id)
+            if not board_share or board_share.access_type != "admin":
+                raise HTTPException(status_code=403, detail="You can only delete your own comments")
+    
+    # Delete comment
+    await crud_comment.delete_comment(db, comment)
+    
+    return {"success": True} 

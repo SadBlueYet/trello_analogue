@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Modal, Button, Input, ErrorMessage } from './ui';
-import { Card, BoardList, User, BoardShare } from '../store/types';
+import { Card, BoardList, User, BoardShare, Comment } from '../store/types';
 import { cardService } from '../services/card.service';
 import { boardService } from '../services/board.service';
 import { useDispatch, useSelector } from 'react-redux';
@@ -39,6 +39,9 @@ const CardModal: React.FC<CardModalProps> = ({ isOpen, onClose, card, onSave, li
   const [selectedAssigneeId, setSelectedAssigneeId] = useState<number | null>(null);
   const [boardUsers, setBoardUsers] = useState<BoardShare[]>([]);
   const [loadingUsers, setLoadingUsers] = useState(false);
+  const [comments, setComments] = useState<Comment[]>([]);
+  const [newComment, setNewComment] = useState('');
+  const [submittingComment, setSubmittingComment] = useState(false);
   
   const dispatch = useDispatch<AppDispatch>();
   const currentBoard = useSelector((state: RootState) => state.board.currentBoard);
@@ -64,6 +67,27 @@ const CardModal: React.FC<CardModalProps> = ({ isOpen, onClose, card, onSave, li
       loadBoardUsers();
     }
   }, [isOpen, boardId]);
+
+  // Load comments when card changes
+  useEffect(() => {
+    if (card && isOpen) {
+      // If comments are already loaded from the card object, use them
+      if (card.comments && card.comments.length > 0) {
+        setComments(card.comments);
+      } else {
+        // Otherwise fetch them from the API
+        const fetchComments = async () => {
+          try {
+            const commentsData = await cardService.getCardComments(card.id);
+            setComments(commentsData);
+          } catch (error) {
+            console.error('Error loading comments:', error);
+          }
+        };
+        fetchComments();
+      }
+    }
+  }, [card, isOpen]);
 
   const loadBoardUsers = async () => {
     setLoadingUsers(true);
@@ -294,6 +318,35 @@ const CardModal: React.FC<CardModalProps> = ({ isOpen, onClose, card, onSave, li
       console.error(err);
     } finally {
       setSubmitting(false);
+    }
+  };
+
+  const handleCommentSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newComment.trim()) return;
+    
+    setSubmittingComment(true);
+    try {
+      if (!card) return;
+      
+      const createdComment = await cardService.createComment(card.id, newComment.trim());
+      setComments([...comments, createdComment]);
+      setNewComment('');
+    } catch (error) {
+      console.error('Error creating comment:', error);
+    } finally {
+      setSubmittingComment(false);
+    }
+  };
+
+  const handleDeleteComment = async (commentId: number) => {
+    if (!card) return;
+    
+    try {
+      await cardService.deleteComment(card.id, commentId);
+      setComments(comments.filter(comment => comment.id !== commentId));
+    } catch (error) {
+      console.error('Error deleting comment:', error);
     }
   };
 
@@ -614,6 +667,72 @@ const CardModal: React.FC<CardModalProps> = ({ isOpen, onClose, card, onSave, li
             </div>
           </div>
         </form>
+
+        {/* Comments Section */}
+        <div className="mb-5 mt-6">
+          <h3 className="block mb-3 text-sm font-medium text-gray-700 flex items-center">
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z" />
+            </svg>
+            Comments
+          </h3>
+          
+          <div className="mb-4">
+            <form onSubmit={handleCommentSubmit}>
+              <div className="flex">
+                <Input
+                  value={newComment}
+                  onChange={(e) => setNewComment(e.target.value)}
+                  placeholder="Write a comment..."
+                  className="flex-grow"
+                />
+                <Button 
+                  type="submit" 
+                  className="ml-2"
+                  disabled={submittingComment || !newComment.trim()}
+                >
+                  Add
+                </Button>
+              </div>
+            </form>
+          </div>
+          
+          <div className="space-y-4 max-h-60 overflow-y-auto">
+            {comments.length === 0 ? (
+              <p className="text-gray-500 italic text-sm">No comments yet</p>
+            ) : (
+              comments.map(comment => (
+                <div key={comment.id} className="p-3 bg-gray-50 rounded shadow-sm">
+                  <div className="flex justify-between items-start">
+                    <div className="font-semibold text-sm flex items-center">
+                      <div className="bg-indigo-100 text-indigo-800 rounded-full w-6 h-6 flex items-center justify-center mr-2">
+                        {comment.user?.username.substring(0, 1).toUpperCase()}
+                      </div>
+                      {comment.user?.username || 'Unknown user'}
+                    </div>
+                    <div className="flex space-x-2">
+                      {(comment.user_id === currentUser?.id || currentBoard?.owner_id === currentUser?.id) && (
+                        <button 
+                          onClick={() => handleDeleteComment(comment.id)}
+                          className="text-xs text-red-500 hover:text-red-700"
+                          title="Delete comment"
+                        >
+                          <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                          </svg>
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                  <div className="mt-2 text-sm whitespace-pre-wrap">{comment.text}</div>
+                  <div className="mt-1 text-xs text-gray-500">
+                    {new Date(comment.created_at).toLocaleString()}
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+        </div>
 
         {error && <ErrorMessage message={error} />}
 
