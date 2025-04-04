@@ -39,6 +39,8 @@ class Settings(BaseSettings):
     SMTP_HOST: str
     SMTP_PORT: int
 
+    FRONTEND_URL: str
+
     @property
     def SQLALCHEMY_DATABASE_URI(self) -> str:
         return f"postgresql+asyncpg://{self.POSTGRES_USER}:{self.POSTGRES_PASSWORD}@{self.POSTGRES_SERVER}:{self.POSTGRES_PORT}/{self.POSTGRES_DB}"

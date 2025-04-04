@@ -55,6 +55,7 @@ export interface Card {
     assignee_id?: number;
     assignee?: User;
     comments?: Comment[];
+    formatted_id?: string;
 }
 
 export interface AuthState {

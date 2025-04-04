@@ -35,6 +35,7 @@ class CardInDBBase(CardBase):
     updated_at: datetime
     card_color: Optional[str] = None
     assignee_id: Optional[int] = None
+    formatted_id: Optional[str] = None
 
     class Config:
         from_attributes = True

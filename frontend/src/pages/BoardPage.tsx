@@ -109,9 +109,9 @@ const TaskCard: React.FC<{
   card_id?: number;
   created_at?: string;
   card_color?: string;
-  boardPrefix?: string;
+  formatted_id?: string;
   assignee?: any;
-}> = ({ id, title, description, dragHandleProps, onClick, card_id, created_at, card_color, boardPrefix, assignee }) => {
+}> = ({ id, title, description, dragHandleProps, onClick, card_id, created_at, card_color, formatted_id, assignee }) => {
   // Форматируем дату создания, если она есть
   const formattedDate = created_at ? new Date(created_at).toLocaleDateString('ru-RU', {
     day: '2-digit',
@@ -166,7 +166,7 @@ const TaskCard: React.FC<{
       <div className="flex justify-between items-start mb-2">
         <h4 className="font-medium text-gray-800">{title}</h4>
           <span className="text-xs font-mono bg-blue-100 text-blue-800 rounded px-2 py-1">
-            {`${boardPrefix || 'TA'}-${card_id}`}
+            {formatted_id || `${card_id}`}
           </span>
       </div>
       
@@ -1073,7 +1073,7 @@ const BoardPage: React.FC = () => {
                                               onClick={() => handleCardClick(card, list.title)}
                                               created_at={card.created_at}
                                               card_color={card.card_color}
-                                              boardPrefix={generateBoardPrefix(currentBoard?.title || '')}
+                                              formatted_id={card.formatted_id}
                                               assignee={card.assignee}
                                         />
                                       </div>

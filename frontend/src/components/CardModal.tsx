@@ -402,9 +402,9 @@ const CardModal: React.FC<CardModalProps> = ({ isOpen, onClose, card, onSave, li
 
   if (!card) return null;
   
-  // Generate card identifier
+  // Use the formatted_id from backend or generate if not available
   const cardPrefix = generateBoardPrefix(boardTitle);
-  const cardNumber = `${cardPrefix}-${card.card_id}`;
+  const cardNumber = card.formatted_id || `${cardPrefix}-${card.card_id}`;
   
   const formattedCreatedDate = card.created_at
     ? new Date(card.created_at).toLocaleDateString('en-US', {

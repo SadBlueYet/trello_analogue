@@ -11,9 +11,25 @@ from app.crud import user as crud_user
 from app.models.user import User
 from app.schemas.card import CardCreate, CardUpdate, MoveCard, CardWithAssignee
 from app.schemas.comment import CommentCreate, CommentUpdate, CommentWithUser
-from app.tasks import send_email
+from app.tasks import send_email, send_comment_notification
 
 router = APIRouter()
+
+
+# Helper function to generate board prefix from title
+def generate_board_prefix(board_title: str) -> str:
+    """
+    Generate board prefix from board title by taking first letter of each word.
+    Example: "Awesome Board" -> "AB"
+    """
+    if not board_title:
+        return 'TA'
+    
+    words = board_title.split()
+    if not words:
+        return 'TA'
+    
+    return ''.join([word[0].upper() for word in words if word])
 
 
 @router.get("/", response_model=List[CardWithAssignee])
@@ -39,10 +55,17 @@ async def get_cards(
 
     cards = await crud_card.get_list_cards(db, list_id)
     
+    # Generate board prefix for formatted IDs
+    board_prefix = generate_board_prefix(board.title)
+    
     result = []
     for card in cards:
         card_dict = card.__dict__
         card_dict = {k: v for k, v in card_dict.items() if not k.startswith('_')}
+        
+        # Add formatted ID (e.g., "AB-1")
+        card_dict["formatted_id"] = f"{board_prefix}-{card.card_id}"
+        
         result.append(card_dict)
     
     return result
@@ -77,10 +100,15 @@ async def create_card(
     assignee = None
     if card.assignee_id:
         assignee = await crud_user.get_user(db, card.assignee_id)
+    
+    # Generate formatted ID
+    board_prefix = generate_board_prefix(board.title)
+    formatted_id = f"{board_prefix}-{card.card_id}"
 
     return {
         **card.__dict__,
-        "assignee": assignee
+        "assignee": assignee,
+        "formatted_id": formatted_id
     }
 
 
@@ -121,10 +149,15 @@ async def get_card(
     if card.assignee_id:
         assignee = await crud_user.get_user(db, card.assignee_id)
 
+    # Generate formatted ID using board title
+    board_prefix = generate_board_prefix(board.title)
+    formatted_id = f"{board_prefix}-{card.card_id}"
+
     return {
         **card.__dict__,
         "assignee": assignee,
-        "comments": formatted_comments
+        "comments": formatted_comments,
+        "formatted_id": formatted_id
     }
 
 
@@ -154,12 +187,31 @@ async def update_card(
     assignee = None
     if card.assignee_id:
         assignee = await crud_user.get_user(db, card.assignee_id)
-        send_email.delay(assignee.email, assignee.username, card.title)
+        
+        if card.assignee_id != current_user.id:
+            # Generate formatted task ID
+            board_prefix = generate_board_prefix(board.title)
+            formatted_id = f"{board_prefix}-{card.card_id}"
+            
+            # Отправляем email-уведомление с дополнительными параметрами
+            send_email.delay(
+                assignee.email, 
+                assignee.username, 
+                card.title,
+                formatted_id,  # Use the formatted ID here
+                current_user.username,
+                board.id
+        )
+
+    # Generate formatted ID for response
+    board_prefix = generate_board_prefix(board.title)
+    formatted_id = f"{board_prefix}-{card.card_id}"
 
     return {
         **card.__dict__,
-        "assignee": assignee
-    }
+        "assignee": assignee,
+        "formatted_id": formatted_id
+    } 
 
 
 @router.delete("/{card_id}")
@@ -231,11 +283,18 @@ async def move_card(
     assignee = None
     if card and card.assignee_id:
         assignee = await crud_user.get_user(db, card.assignee_id)
+    
+    # After the move, get the formatted ID for the card
+    if card:
+        board_prefix = generate_board_prefix(source_board.title)
+        formatted_id = f"{board_prefix}-{card.card_id}"
         
-    return {
-        **card.__dict__,
-        "assignee": assignee
-    } if card else None 
+        return {
+            **card.__dict__,
+            "assignee": assignee,
+            "formatted_id": formatted_id
+        }
+    return None
 
 
 @router.get("/{card_id}/comments", response_model=List[CommentWithUser])
@@ -318,6 +377,25 @@ async def create_comment(
     user_dict = {k: v for k, v in user.__dict__.items() if not k.startswith('_')}
     
     comment_dict["user"] = user_dict
+    
+    # Если у карточки есть ответственный, отправляем ему уведомление о новом комментарии
+    if card.assignee_id and card.assignee_id != current_user.id:  # Don't notify if the assignee is the one who commented
+        assignee = await crud_user.get_user(db, card.assignee_id)
+        if assignee:
+            # Generate formatted task ID
+            board_prefix = generate_board_prefix(board.title)
+            formatted_id = f"{board_prefix}-{card.card_id}"
+            
+            # Отправляем email-уведомление с информацией о новом комментарии
+            send_comment_notification.delay(
+                assignee.email,
+                assignee.username,
+                card.title,
+                formatted_id,
+                current_user.username,
+                board.id,
+                comment_in.text  # Pass the comment text
+            )
     
     return comment_dict
 
