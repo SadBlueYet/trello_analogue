@@ -1,7 +1,7 @@
 from typing import Optional, List, ForwardRef
 from pydantic import BaseModel
 from datetime import datetime
-from backend.app.schemas.user import UserInDBBase
+from app.schemas.user import UserInDBBase
 
 class BoardBase(BaseModel):
     title: str

@@ -1,12 +1,12 @@
-from typing import List, Optional
+from typing import Optional, Sequence
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
-from backend.app.models.board import Board
-from backend.app.schemas.board import BoardCreate, BoardUpdate
+from app.models.board import Board
+from app.schemas.board import BoardCreate, BoardUpdate
 
 
-async def get_boards(db: AsyncSession, user_id: int) -> List[Board]:
+async def get_boards(db: AsyncSession, user_id: int) -> Sequence[Board]:
     result = await db.execute(
         select(Board)
         .where(Board.owner_id == user_id)

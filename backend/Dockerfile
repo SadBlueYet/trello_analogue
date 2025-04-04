@@ -2,7 +2,7 @@
 FROM python:3.13
 
 # Устанавливаем рабочую директорию в контейнере
-WORKDIR /app/backend
+WORKDIR /app/
 
 ENV PYTHONFAULTHANDLER=1 \
     PYTHONBUFFERED=1 \
@@ -14,14 +14,15 @@ ENV PYTHONFAULTHANDLER=1 \
     
 # Установка зависимостей
 RUN pip install --no-cache-dir "pdm==$PDM_VERSION" pip==23.2 && \
-pdm config python.use_venv false && \
-pdm config venv.in_project false && \
-pdm config check_update false
+    pdm config python.use_venv false && \
+    pdm config venv.in_project false && \
+    pdm config check_update false
 
-COPY backend/pyproject.toml backend/pdm.lock /app/backend/
-RUN pdm install -gp /app/backend/ -v --prod
+COPY pyproject.toml pdm.lock /app/
+RUN pdm install -gp /app/ -v --prod
 
 # Копируем файлы проекта в рабочую директорию
-COPY . /app
+COPY . /app/
 
-CMD ["python", "./app/main.py"]
+CMD ["sh", "-c", "alembic upgrade head && celery -A app.tasks worker --loglevel=info & python app/main.py"]
+

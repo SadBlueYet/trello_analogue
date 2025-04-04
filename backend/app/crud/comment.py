@@ -2,8 +2,8 @@ from typing import List, Optional
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from backend.app.models.comment import Comment
-from backend.app.schemas.comment import CommentCreate, CommentUpdate
+from app.models.comment import Comment
+from app.schemas.comment import CommentCreate, CommentUpdate
 
 
 async def create_comment(db: AsyncSession, comment_in: CommentCreate, user_id: int) -> Comment:

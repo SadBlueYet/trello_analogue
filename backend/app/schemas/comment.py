@@ -2,7 +2,7 @@ from typing import Optional
 from datetime import datetime
 from pydantic import BaseModel
 
-from backend.app.schemas.user import UserInDBBase
+from app.schemas.user import UserInDBBase
 
 
 class CommentBase(BaseModel):

@@ -2,9 +2,9 @@ from typing import Optional, List
 from datetime import datetime
 from pydantic import BaseModel
 
-from backend.app.schemas.board import BoardListInDBBase
-from backend.app.schemas.user import UserInDBBase
-from backend.app.schemas.comment import CommentWithUser
+from app.schemas.board import BoardListInDBBase
+from app.schemas.user import UserInDBBase
+from app.schemas.comment import CommentWithUser
 
 
 class CardBase(BaseModel):

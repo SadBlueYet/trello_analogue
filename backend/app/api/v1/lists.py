@@ -1,12 +1,12 @@
 from typing import Any, List
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.ext.asyncio import AsyncSession
-from backend.app.core import deps
-from backend.app.crud import list as crud_list
-from backend.app.crud import board as crud_board
-from backend.app.crud import board_share as crud_board_share
-from backend.app.models.user import User
-from backend.app.schemas.list import NewBoardListPosition, ResponseBoardList, BoardListUpdate, BoardListBase
+from app.core import deps
+from app.crud import list as crud_list
+from app.crud import board as crud_board
+from app.crud import board_share as crud_board_share
+from app.models.user import User
+from app.schemas.list import NewBoardListPosition, ResponseBoardList, BoardListUpdate, BoardListBase
 
 router = APIRouter()
 
@@ -26,7 +26,6 @@ async def get_lists(
     
     # Проверяем доступ: либо владелец, либо имеет доступ к доске
     if board.owner_id != current_user.id:
-        # Проверяем наличие доступа к доске через BoardShare
         board_share = await crud_board_share.get_board_share(db, board_id, current_user.id)
         if not board_share:
             raise HTTPException(status_code=403, detail="Not enough permissions")
@@ -50,7 +49,6 @@ async def create_list(
     
     # Check permissions
     if board.owner_id != current_user.id:
-        # Check board share permissions
         board_share = await crud_board_share.get_board_share(db, board.id, current_user.id)
         if not board_share or board_share.access_type not in ["write", "admin"]:
             raise HTTPException(status_code=403, detail="Not enough permissions")
@@ -78,7 +76,6 @@ async def get_list(
     
     # Проверяем доступ: либо владелец, либо имеет доступ к доске
     if board.owner_id != current_user.id:
-        # Проверяем наличие доступа к доске через BoardShare
         board_share = await crud_board_share.get_board_share(db, board.id, current_user.id)
         if not board_share:
             raise HTTPException(status_code=403, detail="Not enough permissions")
@@ -106,7 +103,6 @@ async def update_list(
     
     # Проверяем доступ: либо владелец, либо имеет права на запись
     if board.owner_id != current_user.id:
-        # Проверяем наличие доступа к доске через BoardShare
         board_share = await crud_board_share.get_board_share(db, board.id, current_user.id)
         if not board_share or board_share.access_type not in ["write", "admin"]:
             raise HTTPException(status_code=403, detail="Not enough permissions")
@@ -134,7 +130,6 @@ async def delete_list(
     
     # Проверяем доступ: либо владелец, либо имеет права на запись
     if board.owner_id != current_user.id:
-        # Проверяем наличие доступа к доске через BoardShare
         board_share = await crud_board_share.get_board_share(db, board.id, current_user.id)
         if not board_share or board_share.access_type not in ["write", "admin"]:
             raise HTTPException(status_code=403, detail="Not enough permissions")
@@ -163,7 +158,6 @@ async def reorder_list(
     
     # Проверяем доступ: либо владелец, либо имеет права на запись
     if board.owner_id != current_user.id:
-        # Проверяем наличие доступа к доске через BoardShare
         board_share = await crud_board_share.get_board_share(db, board.id, current_user.id)
         if not board_share or board_share.access_type not in ["write", "admin"]:
             raise HTTPException(status_code=403, detail="Not enough permissions")

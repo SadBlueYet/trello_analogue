@@ -1,11 +1,12 @@
+import logging
 from typing import List, Optional
 from sqlalchemy import select, text, update
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import joinedload
 
-from backend.app.models.card import Card
-from backend.app.schemas.card import CardCreate, CardUpdate
-from backend.app.models.board_list import BoardList
+from app.models.card import Card
+from app.schemas.card import CardCreate, CardUpdate
+from app.models.board_list import BoardList
 
 
 async def get_card(db: AsyncSession, card_id: int) -> Optional[Card]:
@@ -75,13 +76,12 @@ async def update_card(db: AsyncSession, db_card: Card, card_in: CardUpdate) -> C
     """
     Update a card.
     """
-    print(f"Updating card {db_card.id} with data: {card_in.model_dump(exclude_unset=True)}")
+    logging.info(f"Updating card {db_card.id} with data: {card_in.model_dump(exclude_unset=True)}")
     update_data = card_in.model_dump(exclude_unset=True)
     
     # Explicitly handle assignee_id field to ensure it's properly set
     if 'assignee_id' in update_data:
-        print(f"Setting assignee_id to {update_data['assignee_id']}")
-        # If it's None or null, set it to None for the database
+        logging.info(f"Setting assignee_id to {update_data['assignee_id']}")
         db_card.assignee_id = update_data['assignee_id']
     
     # Update all other fields
@@ -91,7 +91,7 @@ async def update_card(db: AsyncSession, db_card: Card, card_in: CardUpdate) -> C
     
     await db.commit()
     await db.refresh(db_card)
-    print(f"Card after update: assignee_id={db_card.assignee_id}")
+    logging.info(f"Card after update: assignee_id={db_card.assignee_id}")
     return db_card
 
 

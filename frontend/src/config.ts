@@ -1,6 +1,6 @@
 // Use window.location.hostname to dynamically determine the API server
 // This will allow the frontend to work whether accessed via localhost or IP address
-const hostname = window.location.hostname; 
+const hostname = import.meta.env.BACKEND_HOSTNAME || window.location.hostname;
 
 // Use same origin to avoid CORS issues with Safari
 // This assumes that backend and frontend are served from the same domain (but different ports)

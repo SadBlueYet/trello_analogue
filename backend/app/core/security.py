@@ -3,8 +3,8 @@ from typing import Any, Union, Optional
 from jose import jwt
 from passlib.context import CryptContext
 from fastapi import Response
-from backend.app.core.config import settings
-from backend.app.schemas.token import TokenType
+from app.core.config import settings
+from app.schemas.token import TokenType
 import logging
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")

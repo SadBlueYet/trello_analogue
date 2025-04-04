@@ -2,8 +2,8 @@ from typing import List, Optional
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import joinedload
-from backend.app.models.board_share import BoardShare
-from backend.app.schemas.board import BoardShareCreate, BoardShareUpdate
+from app.models.board_share import BoardShare
+from app.schemas.board import BoardShareCreate, BoardShareUpdate
 
 
 async def get_board_shares(db: AsyncSession, board_id: int) -> List[BoardShare]:

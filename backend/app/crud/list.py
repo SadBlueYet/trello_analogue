@@ -1,11 +1,11 @@
-from typing import List, Optional, Any, Coroutine
+from typing import List, Optional
 from sqlalchemy import select, func
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import selectinload, joinedload
-from backend.app.models.board_list import BoardList
-from backend.app.schemas.board import BoardListCreate, BoardListUpdate
-from backend.app.schemas.list import ResponseBoardList
-from backend.app.models.card import Card
+from sqlalchemy.orm import selectinload
+from app.models.board_list import BoardList
+from app.schemas.board import BoardListCreate, BoardListUpdate
+from app.schemas.list import ResponseBoardList
+from app.models.card import Card
 
 
 async def get_list(
