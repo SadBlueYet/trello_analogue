@@ -25,4 +25,3 @@ RUN pdm install -gp /app/ -v --prod
 COPY . /app/
 
 CMD ["sh", "-c", "alembic upgrade head && celery -A app.tasks worker --loglevel=info & python app/main.py"]
-

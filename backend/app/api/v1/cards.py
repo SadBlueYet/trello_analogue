@@ -12,6 +12,7 @@ from app.models.user import User
 from app.schemas.card import CardCreate, CardUpdate, MoveCard, CardWithAssignee
 from app.schemas.comment import CommentCreate, CommentUpdate, CommentWithUser
 from app.tasks import send_email, send_comment_notification
+from app.core.deps import check_board_access
 
 router = APIRouter()
 
@@ -47,11 +48,7 @@ async def get_cards(
     if not board:
         raise HTTPException(status_code=404, detail="Board not found")
     
-    # Проверяем доступ: либо владелец, либо имеет доступ к доске
-    if board.owner_id != current_user.id:
-        board_share = await crud_board_share.get_board_share(db, board.id, current_user.id)
-        if not board_share:
-            raise HTTPException(status_code=403, detail="Not enough permissions")
+    await check_board_access(board, current_user, db, ["read", "write", "admin"])
 
     cards = await crud_card.get_list_cards(db, list_id)
     
@@ -63,7 +60,6 @@ async def get_cards(
         card_dict = card.__dict__
         card_dict = {k: v for k, v in card_dict.items() if not k.startswith('_')}
         
-        # Add formatted ID (e.g., "AB-1")
         card_dict["formatted_id"] = f"{board_prefix}-{card.card_id}"
         
         result.append(card_dict)
@@ -90,18 +86,13 @@ async def create_card(
     if not board:
         raise HTTPException(status_code=404, detail="Board not found")
     
-    if board.owner_id != current_user.id:
-        board_share = await crud_board_share.get_board_share(db, board.id, current_user.id)
-        if not board_share or board_share.access_type not in ["write", "admin"]:
-            raise HTTPException(status_code=403, detail="Not enough permissions")
+    await check_board_access(board, current_user, db, ["write", "admin"])
     
     card = await crud_card.create_card(db, card_in)
-
     assignee = None
     if card.assignee_id:
         assignee = await crud_user.get_user(db, card.assignee_id)
     
-    # Generate formatted ID
     board_prefix = generate_board_prefix(board.title)
     formatted_id = f"{board_prefix}-{card.card_id}"
 
@@ -126,11 +117,7 @@ async def get_card(
     list_obj = await crud_list.get_list(db, card.list_id)
     board = await crud_board.get_board(db, list_obj.board_id)
     
-    # Проверяем доступ: либо владелец, либо имеет доступ к доске
-    if board.owner_id != current_user.id:
-        board_share = await crud_board_share.get_board_share(db, board.id, current_user.id)
-        if not board_share:
-            raise HTTPException(status_code=403, detail="Not enough permissions")
+    await check_board_access(board, current_user, db, ["read", "write", "admin"])
     
     comments = await crud_comment.get_card_comments(db, card_id)
     
@@ -149,7 +136,6 @@ async def get_card(
     if card.assignee_id:
         assignee = await crud_user.get_user(db, card.assignee_id)
 
-    # Generate formatted ID using board title
     board_prefix = generate_board_prefix(board.title)
     formatted_id = f"{board_prefix}-{card.card_id}"
 
@@ -176,24 +162,20 @@ async def update_card(
     list_obj = await crud_list.get_list(db, card.list_id)
     board = await crud_board.get_board(db, list_obj.board_id)
     
-    # Проверяем доступ: либо владелец, либо имеет права на запись
-    if board.owner_id != current_user.id:
-        board_share = await crud_board_share.get_board_share(db, board.id, current_user.id)
-        if not board_share or board_share.access_type not in ["write", "admin"]:
-            raise HTTPException(status_code=403, detail="Not enough permissions")
+    await check_board_access(board, current_user, db, ["write", "admin"])
     
     card = await crud_card.update_card(db, card, card_in)
     
+    
+    # Generate formatted ID for response
+    board_prefix = generate_board_prefix(board.title)
+    formatted_id = f"{board_prefix}-{card.card_id}"
+
     assignee = None
     if card.assignee_id:
         assignee = await crud_user.get_user(db, card.assignee_id)
         
         if card.assignee_id != current_user.id:
-            # Generate formatted task ID
-            board_prefix = generate_board_prefix(board.title)
-            formatted_id = f"{board_prefix}-{card.card_id}"
-            
-            # Отправляем email-уведомление с дополнительными параметрами
             send_email.delay(
                 assignee.email, 
                 assignee.username, 
@@ -202,10 +184,6 @@ async def update_card(
                 current_user.username,
                 board.id
         )
-
-    # Generate formatted ID for response
-    board_prefix = generate_board_prefix(board.title)
-    formatted_id = f"{board_prefix}-{card.card_id}"
 
     return {
         **card.__dict__,
@@ -228,11 +206,7 @@ async def delete_card(
     list_obj = await crud_list.get_list(db, card.list_id)
     board = await crud_board.get_board(db, list_obj.board_id)
     
-    # Проверяем доступ: либо владелец, либо имеет права на запись
-    if board.owner_id != current_user.id:
-        board_share = await crud_board_share.get_board_share(db, board.id, current_user.id)
-        if not board_share or board_share.access_type not in ["write", "admin"]:
-            raise HTTPException(status_code=403, detail="Not enough permissions")
+    await check_board_access(board, current_user, db, ["write", "admin"])
     
     await crud_card.delete_card(db, card_id)
     return {"message": "CardInDBBase deleted successfully"}
@@ -254,7 +228,6 @@ async def move_card(
     source_list = await crud_list.get_list(db, card.list_id)
     source_board = await crud_board.get_board(db, source_list.board_id)
     
-    # Проверяем целевой список
     target_list = await crud_list.get_list(db, move_data.target_list_id)
     if not target_list:
         raise HTTPException(status_code=404, detail="Target list not found")
@@ -266,13 +239,20 @@ async def move_card(
             detail="Cannot move card between different boards"
         )
     
-    # Проверяем доступ: либо владелец, либо имеет права на запись
-    if source_board.owner_id != current_user.id:
-        board_share = await crud_board_share.get_board_share(db, source_board.id, current_user.id)
-        if not board_share or board_share.access_type not in ["write", "admin"]:
-            raise HTTPException(status_code=403, detail="Not enough permissions")
+    await check_board_access(source_board, current_user, db, ["write", "admin"])
     
-    # Перемещаем карточку
+    if card.assignee_id:
+        assignee = await crud_user.get_user(db, card.assignee_id)
+        if card.list_id != move_data.target_list_id and card.assignee_id != current_user.id:
+            send_email.delay(
+                assignee.email,
+                assignee.username,
+                card.title,
+                formatted_id,
+                current_user.username,
+                source_board.id
+            )
+
     card = await crud_card.move_card(
         db, 
         card_id=card_id,
@@ -316,13 +296,8 @@ async def get_card_comments(
     if not board:
         raise HTTPException(status_code=404, detail="Board not found")
     
-    # Check permissions
-    if board.owner_id != current_user.id:
-        board_share = await crud_board_share.get_board_share(db, board.id, current_user.id)
-        if not board_share:
-            raise HTTPException(status_code=403, detail="Not enough permissions")
+    await check_board_access(board, current_user, db, ["read", "write", "admin"])
     
-    # Get comments
     comments = await crud_comment.get_card_comments(db, card_id)
     
     result = []
@@ -361,12 +336,7 @@ async def create_comment(
     if not board:
         raise HTTPException(status_code=404, detail="Board not found")
     
-    # Check permissions
-    if board.owner_id != current_user.id:
-        # Check board share permissions
-        board_share = await crud_board_share.get_board_share(db, board.id, current_user.id)
-        if not board_share or board_share.access_type not in ["write", "admin"]:
-            raise HTTPException(status_code=403, detail="Not enough permissions")
+    await check_board_access(board, current_user, db, ["write", "admin"])
     
     comment = await crud_comment.create_comment(db, comment_in, current_user.id)
     
@@ -420,20 +390,15 @@ async def update_comment(
     if comment.card_id != card.id:
         raise HTTPException(status_code=400, detail="Comment does not belong to this card")
     
-    # Check if user is the owner of the comment
     if comment.user_id != current_user.id:
         list_obj = await crud_list.get_list(db, card.list_id)
         board = await crud_board.get_board(db, list_obj.board_id)
         
-        if board.owner_id != current_user.id:
-            board_share = await crud_board_share.get_board_share(db, board.id, current_user.id)
-            if not board_share or board_share.access_type != "admin":
-                raise HTTPException(status_code=403, detail="You can only update your own comments")
+        await check_board_access(board, current_user, db, ["write", "admin"])
     
     comment = await crud_comment.update_comment(db, comment, comment_in)
     
-    comment_dict = comment.__dict__
-    comment_dict = {k: v for k, v in comment_dict.items() if not k.startswith('_')}
+    comment_dict = {k: v for k, v in comment.__dict__.items() if not k.startswith('_')}
     
     user = await crud_user.get_user(db, comment.user_id)
     user_dict = {k: v for k, v in user.__dict__.items() if not k.startswith('_')}
@@ -466,11 +431,8 @@ async def delete_comment(
         list_obj = await crud_list.get_list(db, card.list_id)
         board = await crud_board.get_board(db, list_obj.board_id)
         
-        if board.owner_id != current_user.id:
-            board_share = await crud_board_share.get_board_share(db, board.id, current_user.id)
-            if not board_share or board_share.access_type != "admin":
-                raise HTTPException(status_code=403, detail="You can only delete your own comments")
+        await check_board_access(board, current_user, db, ["write", "admin"])
     
     await crud_comment.delete_comment(db, comment)
     
-    return {"success": True} 
+    return {"success": True}

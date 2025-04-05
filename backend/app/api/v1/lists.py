@@ -24,11 +24,7 @@ async def get_lists(
     if not board:
         raise HTTPException(status_code=404, detail="Board not found")
     
-    # Проверяем доступ: либо владелец, либо имеет доступ к доске
-    if board.owner_id != current_user.id:
-        board_share = await crud_board_share.get_board_share(db, board_id, current_user.id)
-        if not board_share:
-            raise HTTPException(status_code=403, detail="Not enough permissions")
+    await deps.check_board_access(board, current_user, db, ["read", "write", "admin"])
     
     return await crud_list.get_board_lists(db, board_id)
 
@@ -42,16 +38,11 @@ async def create_list(
     """
     Create a new list.
     """
-    # Check if board exists
     board = await crud_board.get_board(db, list_in.board_id)
     if not board:
         raise HTTPException(status_code=404, detail="Board not found")
     
-    # Check permissions
-    if board.owner_id != current_user.id:
-        board_share = await crud_board_share.get_board_share(db, board.id, current_user.id)
-        if not board_share or board_share.access_type not in ["write", "admin"]:
-            raise HTTPException(status_code=403, detail="Not enough permissions")
+    await deps.check_board_access(board, current_user, db, ["write", "admin"])
     
     list_obj = await crud_list.create_list(db, list_in)
     return list_obj
@@ -74,11 +65,7 @@ async def get_list(
     if not board:
         raise HTTPException(status_code=404, detail="Board not found")
     
-    # Проверяем доступ: либо владелец, либо имеет доступ к доске
-    if board.owner_id != current_user.id:
-        board_share = await crud_board_share.get_board_share(db, board.id, current_user.id)
-        if not board_share:
-            raise HTTPException(status_code=403, detail="Not enough permissions")
+    await deps.check_board_access(board, current_user, db, ["read", "write", "admin"])
     
     return list_obj
 
@@ -101,11 +88,7 @@ async def update_list(
     if not board:
         raise HTTPException(status_code=404, detail="Board not found")
     
-    # Проверяем доступ: либо владелец, либо имеет права на запись
-    if board.owner_id != current_user.id:
-        board_share = await crud_board_share.get_board_share(db, board.id, current_user.id)
-        if not board_share or board_share.access_type not in ["write", "admin"]:
-            raise HTTPException(status_code=403, detail="Not enough permissions")
+    await deps.check_board_access(board, current_user, db, ["write", "admin"])
     
     list_obj = await crud_list.update_list(db, list_obj, list_in)
     return list_obj
@@ -128,11 +111,7 @@ async def delete_list(
     if not board:
         raise HTTPException(status_code=404, detail="Board not found")
     
-    # Проверяем доступ: либо владелец, либо имеет права на запись
-    if board.owner_id != current_user.id:
-        board_share = await crud_board_share.get_board_share(db, board.id, current_user.id)
-        if not board_share or board_share.access_type not in ["write", "admin"]:
-            raise HTTPException(status_code=403, detail="Not enough permissions")
+    await deps.check_board_access(board, current_user, db, ["admin"])
     
     await crud_list.delete_list(db, list_id)
     return {"message": "List deleted successfully"}
@@ -156,11 +135,7 @@ async def reorder_list(
     if not board:
         raise HTTPException(status_code=404, detail="Board not found")
     
-    # Проверяем доступ: либо владелец, либо имеет права на запись
-    if board.owner_id != current_user.id:
-        board_share = await crud_board_share.get_board_share(db, board.id, current_user.id)
-        if not board_share or board_share.access_type not in ["write", "admin"]:
-            raise HTTPException(status_code=403, detail="Not enough permissions")
+    await deps.check_board_access(board, current_user, db, ["write", "admin"])
     
     list_obj = await crud_list.reorder_list(db, list_id, position_in.new_position)
     return list_obj 

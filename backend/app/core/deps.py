@@ -7,6 +7,8 @@ from app.core.config import settings
 from app.db.session import get_db
 from app.models.user import User
 from app.schemas.token import TokenPayload, TokenType
+from app.models.board import Board
+from app.crud.board_share import get_board_share
 
 # Keep OAuth2PasswordBearer for compatibility
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl=f"{settings.API_V1_STR}/auth/login")
@@ -120,3 +122,10 @@ async def get_current_active_superuser(
             status_code=400, detail="The user doesn't have enough privileges"
         )
     return current_user 
+
+async def check_board_access(board: Board, current_user: User, db: AsyncSession = Depends(get_db), access_type: list[str] = ["write", "admin"]):
+    if board.owner_id != current_user.id:
+        board_share = await get_board_share(db, board.id, current_user.id)
+        if not board_share or board_share.access_type not in access_type:
+            raise HTTPException(status_code=403, detail="Not enough permissions")
+        
