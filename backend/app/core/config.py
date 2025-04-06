@@ -22,7 +22,7 @@ class Settings(BaseSettings):
     COOKIE_HTTP_ONLY: bool = True  # Recommended for security
 
     # CORS
-    BACKEND_CORS_ORIGINS: List[AnyHttpUrl] = []
+    CORS_ORIGINS: List[str] = []
 
     # Database
     POSTGRES_SERVER: str
