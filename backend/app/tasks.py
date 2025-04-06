@@ -3,27 +3,35 @@ import os
 import smtplib as smtp
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
-from jinja2 import Environment, FileSystemLoader
 
 from celery import Celery
+from jinja2 import Environment, FileSystemLoader
 
 from app.core.config import settings
 
-celery_app = Celery('tasks', broker=settings.REDIS_DSN)
-celery_app.conf.task_default_queue = 'default'
+celery_app = Celery("tasks", broker=settings.REDIS_DSN)
+celery_app.conf.task_default_queue = "default"
 
 # Автоматически обнаруживать задачи в этом файле
-celery_app.autodiscover_tasks(['app.tasks'])
+celery_app.autodiscover_tasks(["app.tasks"])
 
 # Настраиваем Jinja2
 template_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "templates")
 jinja_env = Environment(loader=FileSystemLoader(template_dir))
 
+
 @celery_app.task(name="app.tasks.send_email")
-def send_email(email: str, username: str, card_title: str, task_id: str = "Задача", editor_username: str = "пользователь", board_id: int = 1):
+def send_email(
+    email: str,
+    username: str,
+    card_title: str,
+    task_id: str = "Задача",
+    editor_username: str = "пользователь",
+    board_id: int = 1,
+):
     """
     Отправка email уведомления о изменении карточки
-    
+
     Args:
         email: Email получателя
         username: Имя получателя
@@ -35,7 +43,7 @@ def send_email(email: str, username: str, card_title: str, task_id: str = "За�
     try:
         # Получаем шаблон
         template = jinja_env.get_template("email_notification.html")
-        
+
         # Рендерим HTML с переданными параметрами
         html_content = template.render(
             username=username,
@@ -43,7 +51,7 @@ def send_email(email: str, username: str, card_title: str, task_id: str = "За�
             task_id=task_id,
             editor_username=editor_username,
             board_id=board_id,
-            frontend_url=settings.FRONTEND_URL
+            frontend_url=settings.FRONTEND_URL,
         )
 
         msg = MIMEMultipart()
@@ -67,10 +75,18 @@ def send_email(email: str, username: str, card_title: str, task_id: str = "За�
 
 
 @celery_app.task(name="app.tasks.send_comment_notification")
-def send_comment_notification(email: str, username: str, card_title: str, task_id: str, commenter_username: str, board_id: int, comment_text: str):
+def send_comment_notification(
+    email: str,
+    username: str,
+    card_title: str,
+    task_id: str,
+    commenter_username: str,
+    board_id: int,
+    comment_text: str,
+):
     """
     Отправка email уведомления о новом комментарии к карточке
-    
+
     Args:
         email: Email получателя
         username: Имя получателя
@@ -83,7 +99,7 @@ def send_comment_notification(email: str, username: str, card_title: str, task_i
     try:
         # Получаем шаблон
         template = jinja_env.get_template("email_notification.html")
-        
+
         # Рендерим HTML с переданными параметрами
         html_content = template.render(
             username=username,
@@ -93,7 +109,7 @@ def send_comment_notification(email: str, username: str, card_title: str, task_i
             board_id=board_id,
             frontend_url=settings.FRONTEND_URL,
             notification_type="comment",
-            comment_text=comment_text
+            comment_text=comment_text,
         )
 
         msg = MIMEMultipart()
@@ -113,4 +129,4 @@ def send_comment_notification(email: str, username: str, card_title: str, task_i
         return True
     except Exception as e:
         logging.error(f"Error sending comment notification: {e}")
-        return False 
+        return False

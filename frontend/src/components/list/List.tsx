@@ -129,4 +129,4 @@ const List: React.FC<ListProps> = ({ list, index }) => {
     );
 };
 
-export default List; 
+export default List;

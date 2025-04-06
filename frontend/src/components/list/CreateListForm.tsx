@@ -74,4 +74,4 @@ const CreateListForm: React.FC<CreateListFormProps> = ({ boardId, position }) =>
     );
 };
 
-export default CreateListForm; 
+export default CreateListForm;

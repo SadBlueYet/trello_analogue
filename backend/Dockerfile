@@ -11,7 +11,7 @@ ENV PYTHONFAULTHANDLER=1 \
     PDM_VERSION=2.20.1 \
     PYTHONPATH=/app
 
-    
+
 # Установка зависимостей
 RUN pip install --no-cache-dir "pdm==$PDM_VERSION" pip==23.2 && \
     pdm config python.use_venv false && \

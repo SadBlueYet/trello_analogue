@@ -43,7 +43,7 @@ const BoardSettingsForm: React.FC<BoardSettingsFormProps> = ({
     } else {
       setSelectedColor(boardColors[0].value);
     }
-    
+
     // Обновляем заголовок и описание при изменении доски
     setTitle(board.title || '');
     setDescription(board.description || '');
@@ -51,19 +51,19 @@ const BoardSettingsForm: React.FC<BoardSettingsFormProps> = ({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!title.trim()) {
       setError('Board title is required');
       return;
     }
-    
+
     try {
       await onSave({
         title: title.trim(),
         description: description.trim() || undefined,
         background_color: selectedColor
       });
-      
+
       // Reset error state after successful save
       setError('');
     } catch (err) {
@@ -87,7 +87,7 @@ const BoardSettingsForm: React.FC<BoardSettingsFormProps> = ({
           <p className="text-sm text-red-700">{error}</p>
         </div>
       )}
-      
+
       <div className="space-y-4">
         <Input
           label="Board Title"
@@ -96,7 +96,7 @@ const BoardSettingsForm: React.FC<BoardSettingsFormProps> = ({
           placeholder="Enter board title"
           required
         />
-        
+
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">
             Board Description
@@ -109,7 +109,7 @@ const BoardSettingsForm: React.FC<BoardSettingsFormProps> = ({
             rows={3}
           />
         </div>
-        
+
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">
             Board Color
@@ -132,17 +132,17 @@ const BoardSettingsForm: React.FC<BoardSettingsFormProps> = ({
               </button>
             ))}
           </div>
-          
+
           {/* Предпросмотр доски */}
           <div className="mt-4">
-            <div 
+            <div
               className={`h-16 rounded-md bg-gradient-to-r ${selectedColor} p-3 flex items-center justify-center shadow-md`}
             >
               <span className="text-white font-medium">Предпросмотр цвета доски</span>
             </div>
           </div>
         </div>
-        
+
         <div className="mt-6 flex justify-end space-x-3">
           <Button
             type="button"
@@ -163,4 +163,4 @@ const BoardSettingsForm: React.FC<BoardSettingsFormProps> = ({
   );
 };
 
-export default BoardSettingsForm; 
+export default BoardSettingsForm;

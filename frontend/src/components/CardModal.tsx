@@ -42,11 +42,11 @@ const CardModal: React.FC<CardModalProps> = ({ isOpen, onClose, card, onSave, li
   const [comments, setComments] = useState<Comment[]>([]);
   const [newComment, setNewComment] = useState('');
   const [submittingComment, setSubmittingComment] = useState(false);
-  
+
   const dispatch = useDispatch<AppDispatch>();
   const currentBoard = useSelector((state: RootState) => state.board.currentBoard);
   const currentUser = useSelector((state: RootState) => state.auth.user);
-  
+
   // Get all available lists from the current board
   const availableLists = currentBoard?.lists || [];
 
@@ -95,11 +95,11 @@ const CardModal: React.FC<CardModalProps> = ({ isOpen, onClose, card, onSave, li
       console.log(`Fetching board shares for board ID: ${boardId}`);
       const sharesData = await boardService.getBoardShares(boardId);
       console.log("Loaded board shares data:", sharesData);
-      
+
       // Check if we have a valid response with users
       if (!sharesData || sharesData.length === 0) {
         console.warn("No users returned from board shares API");
-        
+
         // Try to load from localStorage first
         try {
           const cachedShares = localStorage.getItem(`boardShares_${boardId}`);
@@ -112,22 +112,22 @@ const CardModal: React.FC<CardModalProps> = ({ isOpen, onClose, card, onSave, li
         } catch (localErr) {
           console.error("Failed to load cached board shares:", localErr);
         }
-        
+
         // If the current user is available and current board is loaded, at least include them
         if (currentUser && currentBoard) {
           // Include owner separately if available
           const usersToInclude = [];
-          
-          // Add the board owner if available 
+
+          // Add the board owner if available
           if (currentBoard.owner && currentBoard.owner.id) {
             usersToInclude.push({
               id: -1, // Temporary ID for fallback
               user: currentBoard.owner,
-              access_type: "owner", 
+              access_type: "owner",
               board_id: boardId
             });
           }
-          
+
           // Add current user if they're not the owner
           if (currentUser.id !== (currentBoard.owner?.id || null)) {
             usersToInclude.push({
@@ -137,14 +137,14 @@ const CardModal: React.FC<CardModalProps> = ({ isOpen, onClose, card, onSave, li
               board_id: boardId
             });
           }
-          
+
           console.log("Using fallback user list:", usersToInclude);
           setBoardUsers(usersToInclude);
         }
       } else {
         // Normal case - API returned valid users
         setBoardUsers(sharesData);
-        
+
         // Also store in localStorage as fallback for reloads
         try {
           localStorage.setItem(`boardShares_${boardId}`, JSON.stringify(sharesData));
@@ -154,7 +154,7 @@ const CardModal: React.FC<CardModalProps> = ({ isOpen, onClose, card, onSave, li
       }
     } catch (error) {
       console.error('Error loading board users:', error);
-      
+
       // Try to load from localStorage as fallback
       try {
         const cachedShares = localStorage.getItem(`boardShares_${boardId}`);
@@ -165,7 +165,7 @@ const CardModal: React.FC<CardModalProps> = ({ isOpen, onClose, card, onSave, li
         } else if (currentUser && currentBoard?.owner) {
           // Minimal fallback with just owner and current user
           const fallbackUsers = [];
-          
+
           // Add owner
           if (currentBoard.owner) {
             fallbackUsers.push({
@@ -175,7 +175,7 @@ const CardModal: React.FC<CardModalProps> = ({ isOpen, onClose, card, onSave, li
               board_id: boardId
             });
           }
-          
+
           // Add current user if not owner
           if (currentUser.id !== currentBoard.owner?.id) {
             fallbackUsers.push({
@@ -185,7 +185,7 @@ const CardModal: React.FC<CardModalProps> = ({ isOpen, onClose, card, onSave, li
               board_id: boardId
             });
           }
-          
+
           console.log("Using minimal fallback users:", fallbackUsers);
           setBoardUsers(fallbackUsers);
         }
@@ -222,24 +222,24 @@ const CardModal: React.FC<CardModalProps> = ({ isOpen, onClose, card, onSave, li
         list_id: selectedListId || card?.list_id, // Include changed list_id if it was modified
         assignee_id: selectedAssigneeId === null ? undefined : selectedAssigneeId, // Convert null to undefined for API compatibility
       };
-      
+
       console.log('Saving card with data:', JSON.stringify(updatedCard, null, 2));
       console.log('Selected assignee ID:', selectedAssigneeId);
-      
+
       // First save to backend
       await onSave(updatedCard);
-      
+
       // After successful save, update the current board immediately
       if (card && currentBoard) {
         // For debugging, log the card before update
         console.log('Current card before update:', card);
-        
+
         const oldListId = card.list_id;
         const newListId = selectedListId || oldListId;
         const isMovingLists = oldListId !== newListId;
-        
+
         let updatedBoard;
-        
+
         if (isMovingLists) {
           // If the card is moving to a different list
           updatedBoard = {
@@ -264,7 +264,7 @@ const CardModal: React.FC<CardModalProps> = ({ isOpen, onClose, card, onSave, li
                   assignee_id: selectedAssigneeId,
                   assignee: selectedAssigneeId ? boardUsers.find(u => u.user.id === selectedAssigneeId)?.user : undefined,
                 };
-                
+
                 return {
                   ...list,
                   cards: [...list.cards, updatedCardObj]
@@ -302,16 +302,16 @@ const CardModal: React.FC<CardModalProps> = ({ isOpen, onClose, card, onSave, li
             }),
           };
         }
-        
+
         console.log('Dispatching updated board to Redux');
         dispatch(setCurrentBoard(updatedBoard));
-        
+
         // Fetch the board again to ensure we have the latest data
         setTimeout(() => {
           dispatch(fetchBoard(currentBoard.id));
         }, 300);
       }
-      
+
       onClose();
     } catch (err) {
       setError('Error saving card');
@@ -324,11 +324,11 @@ const CardModal: React.FC<CardModalProps> = ({ isOpen, onClose, card, onSave, li
   const handleCommentSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newComment.trim()) return;
-    
+
     setSubmittingComment(true);
     try {
       if (!card) return;
-      
+
       const createdComment = await cardService.createComment(card.id, newComment.trim());
       setComments([...comments, createdComment]);
       setNewComment('');
@@ -341,7 +341,7 @@ const CardModal: React.FC<CardModalProps> = ({ isOpen, onClose, card, onSave, li
 
   const handleDeleteComment = async (commentId: number) => {
     if (!card) return;
-    
+
     try {
       await cardService.deleteComment(card.id, commentId);
       setComments(comments.filter(comment => comment.id !== commentId));
@@ -353,13 +353,13 @@ const CardModal: React.FC<CardModalProps> = ({ isOpen, onClose, card, onSave, li
   // Generate prefix from board title
   const generateBoardPrefix = (boardTitle: string): string => {
     if (!boardTitle) return 'TA';
-    
+
     const words = boardTitle.match(/\b\w/g);
     if (!words || words.length === 0) return 'TA';
-    
+
     return words.join('').toUpperCase();
   };
-  
+
   // Delete card function
   const handleDeleteCard = async () => {
     if (isDeleting || !card || !currentBoard) return;
@@ -367,7 +367,7 @@ const CardModal: React.FC<CardModalProps> = ({ isOpen, onClose, card, onSave, li
     try {
       setIsDeleting(true);
       await cardService.deleteCard(card.id);
-      
+
       // Create a new board object with the card removed
       const updatedBoard = {
         ...currentBoard,
@@ -381,7 +381,7 @@ const CardModal: React.FC<CardModalProps> = ({ isOpen, onClose, card, onSave, li
           return list;
         })
       };
-      
+
       // Update Redux state with the modified board
       dispatch(setCurrentBoard(updatedBoard));
       onClose();
@@ -401,11 +401,11 @@ const CardModal: React.FC<CardModalProps> = ({ isOpen, onClose, card, onSave, li
   };
 
   if (!card) return null;
-  
+
   // Use the formatted_id from backend or generate if not available
   const cardPrefix = generateBoardPrefix(boardTitle);
   const cardNumber = card.formatted_id || `${cardPrefix}-${card.card_id}`;
-  
+
   const formattedCreatedDate = card.created_at
     ? new Date(card.created_at).toLocaleDateString('en-US', {
         day: '2-digit',
@@ -418,8 +418,8 @@ const CardModal: React.FC<CardModalProps> = ({ isOpen, onClose, card, onSave, li
   const currentListName = availableLists.find(list => list.id === selectedListId)?.title || listTitle;
 
   // Find the assignee user object
-  const assigneeUser = selectedAssigneeId ? 
-    boardUsers.find(share => share.user.id === selectedAssigneeId)?.user : 
+  const assigneeUser = selectedAssigneeId ?
+    boardUsers.find(share => share.user.id === selectedAssigneeId)?.user :
     undefined;
 
   return (
@@ -441,7 +441,7 @@ const CardModal: React.FC<CardModalProps> = ({ isOpen, onClose, card, onSave, li
                   <span className="text-lg font-bold text-indigo-700">
                     {cardNumber}
                   </span>
-                  
+
                   {/* List selector as a badge */}
                   <div className="relative inline-block">
                     <select
@@ -464,7 +464,7 @@ const CardModal: React.FC<CardModalProps> = ({ isOpen, onClose, card, onSave, li
                 </div>
               </div>
             </div>
-            
+
             {/* Card metadata in header */}
             <div className="flex flex-wrap gap-3">
               {/* Created date badge */}
@@ -476,7 +476,7 @@ const CardModal: React.FC<CardModalProps> = ({ isOpen, onClose, card, onSave, li
                   <span className="text-gray-600">{formattedCreatedDate}</span>
                 </div>
               )}
-              
+
               {/* Delete button in header */}
               <button
                 onClick={handleDeleteCard}
@@ -505,7 +505,7 @@ const CardModal: React.FC<CardModalProps> = ({ isOpen, onClose, card, onSave, li
                 className="font-medium text-gray-900"
               />
             </div>
-            
+
             {/* Description textarea */}
             <div className="mb-5">
               <label className="block mb-2 text-sm font-medium text-gray-700">
@@ -528,7 +528,7 @@ const CardModal: React.FC<CardModalProps> = ({ isOpen, onClose, card, onSave, li
                 </svg>
                 Comments
               </h3>
-              
+
               {/* Comment input with avatar */}
               <div className="mb-4">
                 <div className="flex items-start">
@@ -547,7 +547,7 @@ const CardModal: React.FC<CardModalProps> = ({ isOpen, onClose, card, onSave, li
                       placeholder="Write a comment..."
                       className="w-full pr-20"
                     />
-                    <Button 
+                    <Button
                       type="button"
                       onClick={handleCommentSubmit}
                       className="absolute right-1 top-1 py-1 px-3 text-sm"
@@ -563,7 +563,7 @@ const CardModal: React.FC<CardModalProps> = ({ isOpen, onClose, card, onSave, li
                   </div>
                 </div>
               </div>
-              
+
               {/* Comments list with better styling */}
               <div className="space-y-3 max-h-60 overflow-y-auto pr-1">
                 {comments.length === 0 ? (
@@ -584,7 +584,7 @@ const CardModal: React.FC<CardModalProps> = ({ isOpen, onClose, card, onSave, li
                             {comment.user?.username?.substring(0, 1).toUpperCase() || '?'}
                           </div>
                         </div>
-                        
+
                         {/* Comment content */}
                         <div className="flex-1 min-w-0">
                           {/* Comment header with username and time */}
@@ -601,10 +601,10 @@ const CardModal: React.FC<CardModalProps> = ({ isOpen, onClose, card, onSave, li
                                   minute: '2-digit'
                                 })}
                               </span>
-                              
+
                               {/* Delete button */}
                               {(comment.user_id === currentUser?.id || currentBoard?.owner_id === currentUser?.id) && (
-                                <button 
+                                <button
                                   onClick={() => handleDeleteComment(comment.id)}
                                   className="text-gray-400 hover:text-red-500 transition-colors"
                                   title="Delete comment"
@@ -616,7 +616,7 @@ const CardModal: React.FC<CardModalProps> = ({ isOpen, onClose, card, onSave, li
                               )}
                             </div>
                           </div>
-                          
+
                           {/* Comment text */}
                           <div className="text-sm text-gray-800 whitespace-pre-wrap break-words">
                             {comment.text}
@@ -656,8 +656,8 @@ const CardModal: React.FC<CardModalProps> = ({ isOpen, onClose, card, onSave, li
                     <div className="text-xs text-gray-500 mb-2 flex justify-between">
                       <span>Available users: {boardUsers.length > 0 ? boardUsers.length : 'None found'}</span>
                       {boardUsers.length === 0 && (
-                        <button 
-                          type="button" 
+                        <button
+                          type="button"
                           onClick={loadBoardUsers}
                           className="text-indigo-600 hover:text-indigo-800"
                         >
@@ -669,7 +669,7 @@ const CardModal: React.FC<CardModalProps> = ({ isOpen, onClose, card, onSave, li
                       value={selectedAssigneeId || ''}
                       onChange={(e) => setSelectedAssigneeId(e.target.value ? Number(e.target.value) : null)}
                       className="w-full bg-white px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-gray-700 appearance-none"
-                      style={{ 
+                      style={{
                         backgroundImage: `url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e")`,
                         backgroundPosition: 'right 0.5rem center',
                         backgroundRepeat: 'no-repeat',
@@ -678,24 +678,24 @@ const CardModal: React.FC<CardModalProps> = ({ isOpen, onClose, card, onSave, li
                       }}
                     >
                       <option value="">Not assigned</option>
-                      
+
                       {/* Board owner */}
                       {currentBoard?.owner && (
-                        <option 
+                        <option
                           value={currentBoard.owner.id}
                           style={{fontWeight: 'bold'}}
                         >
                           {currentBoard.owner.username} (Owner)
                         </option>
                       )}
-                      
+
                       {/* Current user if not owner */}
                       {currentUser && currentBoard?.owner?.id !== currentUser.id && (
                         <option value={currentUser.id}>
                           {currentUser.username} (You)
                         </option>
                       )}
-                      
+
                       {/* All shared users */}
                       {boardUsers.length > 0 && (
                         <optgroup label="Shared users">
@@ -703,11 +703,11 @@ const CardModal: React.FC<CardModalProps> = ({ isOpen, onClose, card, onSave, li
                             // Skip owner and current user as they're already included above
                             const isOwner = currentBoard?.owner && share.user.id === currentBoard.owner.id;
                             const isCurrentUser = currentUser && share.user.id === currentUser.id;
-                            
+
                             if (isOwner || isCurrentUser) {
                               return null;
                             }
-                            
+
                             return (
                               <option key={share.user.id} value={share.user.id}>
                                 {share.user.username} ({share.access_type})
@@ -719,7 +719,7 @@ const CardModal: React.FC<CardModalProps> = ({ isOpen, onClose, card, onSave, li
                     </select>
                   </>
                 )}
-                
+
                 {/* Display selected assignee information */}
                 {assigneeUser && (
                   <div className="mt-2 pt-2 border-t border-gray-100 flex items-center">
@@ -792,8 +792,8 @@ const CardModal: React.FC<CardModalProps> = ({ isOpen, onClose, card, onSave, li
           <Button type="button" variant="outline" onClick={onClose}>
             Cancel
           </Button>
-          <Button 
-            type="button" 
+          <Button
+            type="button"
             onClick={handleSubmit}
             isLoading={submitting}
             className="bg-gradient-to-r from-blue-600 to-indigo-700 hover:from-blue-700 hover:to-indigo-800"
@@ -806,4 +806,4 @@ const CardModal: React.FC<CardModalProps> = ({ isOpen, onClose, card, onSave, li
   );
 };
 
-export default CardModal; 
+export default CardModal;

@@ -1,5 +1,6 @@
-from sqlalchemy import Column, String, Integer, ForeignKey, Text
+from sqlalchemy import Column, ForeignKey, Integer, String, Text
 from sqlalchemy.orm import relationship
+
 from .base import Base
 
 
@@ -11,7 +12,7 @@ class Card(Base):
     list_id = Column(Integer, ForeignKey("list.id"), nullable=False)
     card_color = Column(String, nullable=True)  # Цвет карточки в формате CSS-градиента
     assignee_id = Column(Integer, ForeignKey("user.id"), nullable=True)  # ID пользователя, ответственного за карточку
-    
+
     list = relationship("BoardList", back_populates="cards")
     assignee = relationship("User", backref="assigned_cards")
-    comments = relationship("Comment", back_populates="card", cascade="all, delete-orphan") 
+    comments = relationship("Comment", back_populates="card", cascade="all, delete-orphan")

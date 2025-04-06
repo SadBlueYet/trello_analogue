@@ -9,9 +9,9 @@ import { Board, BoardList, Card } from '../store/types';
 import { listService } from '../services/list.service';
 import { cardService } from '../services/card.service';
 import { boardService } from '../services/board.service';
-import { 
-  Button, 
-  Input, 
+import {
+  Button,
+  Input,
   Card as UICard,
   ErrorMessage,
   PageContainer,
@@ -44,7 +44,7 @@ const ListCard: React.FC<{
 }> = ({ id, title, children, onAddCard, dragHandleProps, listColor, onEditColor }) => {
   // Определяем цвет градиента, используя собственный цвет списка или дефолтный
   const gradientClass = listColor || 'from-indigo-600 to-indigo-500';
-  
+
   // Определяем класс тени в зависимости от основного цвета
   let shadowClass = 'shadow-md';
   if (listColor) {
@@ -64,7 +64,7 @@ const ListCard: React.FC<{
       shadowClass = 'shadow-blue-100';
     }
   }
-  
+
   return (
     <div className={`w-80 flex-shrink-0 bg-gray-100 rounded-lg ${shadowClass} border border-gray-200 overflow-hidden`}>
     <div
@@ -72,8 +72,8 @@ const ListCard: React.FC<{
         className={`p-3 font-semibold bg-gradient-to-r ${gradientClass} text-white rounded-t-lg flex justify-between items-center transition-colors duration-300`}
     >
       <span>{title}</span>
-        <button 
-          onClick={onEditColor} 
+        <button
+          onClick={onEditColor}
           className="text-white opacity-80 hover:opacity-100 p-1 rounded hover:bg-white/10"
           title="Изменить цвет списка"
         >
@@ -121,12 +121,12 @@ const TaskCard: React.FC<{
 
   // Используем один цвет по умолчанию для всех карточек
   const defaultColor = 'from-indigo-600 to-indigo-500';
-  
+
   // Determine the color - if card_color is a Tailwind color class, use it directly
   // Otherwise, create a custom background color style
   let colorStyle = {};
   let colorClass = 'bg-gradient-to-r';
-  
+
   if (card_color) {
     // If it's a hex color, use it as a background style
     if (card_color.startsWith('#')) {
@@ -142,16 +142,16 @@ const TaskCard: React.FC<{
   }
 
   return (
-    <div 
+    <div
       className="bg-white rounded-md shadow-sm border border-gray-200 hover:shadow-md transition-shadow duration-200 cursor-pointer overflow-hidden"
       onClick={onClick}
     >
       {/* Тонкая цветная полоса сверху */}
-      <div 
+      <div
         className={`h-1 ${colorClass}`}
         style={colorStyle}
       ></div>
-      
+
     <div
       {...dragHandleProps}
         className="p-3 relative"
@@ -162,18 +162,18 @@ const TaskCard: React.FC<{
             <path fillRule="evenodd" d="M5.625 1.5c-1.036 0-1.875.84-1.875 1.875v17.25c0 1.035.84 1.875 1.875 1.875h12.75c1.035 0 1.875-.84 1.875-1.875V12.75A3.75 3.75 0 0016.5 9h-1.875a1.875 1.875 0 01-1.875-1.875V5.25A3.75 3.75 0 009 1.5H5.625zM7.5 15a.75.75 0 01.75-.75h7.5a.75.75 0 010 1.5h-7.5A.75.75 0 017.5 15zm.75 2.25a.75.75 0 000 1.5H12a.75.75 0 000-1.5H8.25z" clipRule="evenodd" />
           </svg>
         </div>
-        
+
       <div className="flex justify-between items-start mb-2">
         <h4 className="font-medium text-gray-800">{title}</h4>
           <span className="text-xs font-mono bg-blue-100 text-blue-800 rounded px-2 py-1">
             {formatted_id || `${card_id}`}
           </span>
       </div>
-      
+
       {description && (
         <p className="mt-1 text-sm text-gray-600 line-clamp-2">{description}</p>
       )}
-      
+
       <div className="mt-3 flex items-center justify-between">
         <span className="flex items-center text-xs text-gray-500">
           <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -189,7 +189,7 @@ const TaskCard: React.FC<{
               </svg>
             </span>
           )}
-          
+
           {/* Show assignee if exists */}
           {assignee && (
             <span className="inline-flex items-center bg-indigo-50 text-indigo-700 text-xs px-1.5 py-0.5 rounded-full ml-2">
@@ -249,11 +249,11 @@ async function getListCardsWithCache(listId: number): Promise<Card[]> {
   // Проверяем кеш
   const cachedData = cardsCache.get(listId);
   const now = Date.now();
-  
+
   if (cachedData && now - cachedData.timestamp < CARDS_CACHE_TIME) {
     return cachedData.cards;
   }
-  
+
   // Проверяем, есть ли уже запрос на эти карточки
   if (pendingCardRequests.has(listId)) {
     try {
@@ -263,7 +263,7 @@ async function getListCardsWithCache(listId: number): Promise<Card[]> {
       return [];
     }
   }
-  
+
   // Создаем новый запрос
   const cardPromise = cardService.getListCards(listId)
     .then(cards => {
@@ -272,7 +272,7 @@ async function getListCardsWithCache(listId: number): Promise<Card[]> {
         console.error(`Received invalid cards data for list ${listId}:`, cards);
         return [];
       }
-      
+
       // Кешируем результат
       cardsCache.set(listId, { cards, timestamp: Date.now() });
       // Удаляем запрос из списка ожидающих
@@ -285,10 +285,10 @@ async function getListCardsWithCache(listId: number): Promise<Card[]> {
       console.error(`Error fetching cards for list ${listId}:`, error);
       return [];
     });
-  
+
   // Сохраняем запрос
   pendingCardRequests.set(listId, cardPromise);
-  
+
   return cardPromise;
 }
 
@@ -311,10 +311,10 @@ export function clearListCardsCache(listId: number) {
 const generateBoardPrefix = (boardTitle: string): string => {
   // Аналогично логике на бэкенде: берем первые буквы каждого слова
   if (!boardTitle) return 'TA';
-  
+
   const words = boardTitle.match(/\b\w/g);
   if (!words || words.length === 0) return 'TA';
-  
+
   return words.join('').toUpperCase();
 };
 
@@ -324,16 +324,16 @@ const BoardPage: React.FC = () => {
   const navigate = useNavigate();
   const { user } = useSelector((state: RootState) => state.auth);
   const { currentBoard, isLoading, error } = useSelector((state: RootState) => state.board);
-  
+
   const [newListTitle, setNewListTitle] = useState('');
   const [isAddingList, setIsAddingList] = useState(false);
   const [newCardTitle, setNewCardTitle] = useState('');
   const [addingCardToList, setAddingCardToList] = useState<number | null>(null);
-  
+
   // Добавляем новые состояния для управления модальным окном настроек
   const [settingsModalOpen, setSettingsModalOpen] = useState(false);
   const [isSavingSettings, setIsSavingSettings] = useState(false);
-  
+
   // Избегаем повторной загрузки
   const boardLoadedRef = useRef(false);
 
@@ -347,24 +347,24 @@ const BoardPage: React.FC = () => {
 
   useEffect(() => {
     if (!boardId || boardLoadedRef.current) return;
-    
+
     const loadBoard = async () => {
       // Очищаем весь кеш при загрузке доски
       clearAllCardsCache();
-      
+
       try {
     if (boardId) {
           const parsedBoardId = parseInt(boardId);
-          
+
           try {
             // Загружаем основную информацию о доске
             const boardResult = await dispatch(fetchBoard(parsedBoardId)).unwrap();
-            
+
             if (!boardResult || !Array.isArray(boardResult.lists)) {
               console.error("Invalid board data received:", boardResult);
               return;
             }
-            
+
             // Загружаем карточки для всех списков параллельно
             const listsWithCards = await Promise.all(
               boardResult.lists.map(async (list) => {
@@ -372,7 +372,7 @@ const BoardPage: React.FC = () => {
                   console.error("Invalid list data:", list);
                   return { ...list, cards: [] };
                 }
-                
+
                 try {
                   const cards = await getListCardsWithCache(list.id);
                   return { ...list, cards: Array.isArray(cards) ? cards : [] };
@@ -382,7 +382,7 @@ const BoardPage: React.FC = () => {
                 }
               })
             );
-            
+
             // Обновляем доску с полученными карточками
             dispatch(setCurrentBoard({ ...boardResult, lists: listsWithCards }));
           } catch (error) {
@@ -393,16 +393,16 @@ const BoardPage: React.FC = () => {
         console.error('Error processing board ID:', error);
       }
     };
-    
+
     loadBoard();
     boardLoadedRef.current = true;
-    
+
     // Сбрасываем флаг при размонтировании или изменении ID доски
     return () => {
       boardLoadedRef.current = false;
     };
   }, [dispatch, boardId]);
-  
+
   if (!user) {
     return <Navigate to="/login" />;
   }
@@ -505,12 +505,12 @@ const BoardPage: React.FC = () => {
 
   const handleDragEnd = async (result: any) => {
     const { destination, source, draggableId, type } = result;
-    
+
     // Если нет места назначения, ничего не делаем
     if (!destination) {
       return;
     }
-    
+
     // Если исходный и целевой индексы совпадают, ничего не делаем
     if (
       destination.droppableId === source.droppableId &&
@@ -518,38 +518,38 @@ const BoardPage: React.FC = () => {
     ) {
       return;
     }
-    
+
     // Проверяем, что currentBoard существует
     if (!currentBoard || !Array.isArray(currentBoard.lists)) {
       console.error("Cannot handle drag end - board or lists are undefined");
       return;
     }
-    
+
     // Если перетаскивается список
     if (type === 'LIST') {
       try {
         // Получаем списки и перемещаемый список
         const lists = [...currentBoard.lists];
-        
+
         if (!Array.isArray(lists)) {
           console.error("Lists array is not valid");
           return;
         }
-        
+
         // Получаем список, который перемещаем
         const movedList = lists[source.index];
-        
+
         if (!movedList) {
           console.error("Moved list is undefined");
           return;
         }
-        
+
         // Удаляем список из исходной позиции
         lists.splice(source.index, 1);
-        
+
         // Вставляем список в новую позицию
         lists.splice(destination.index, 0, movedList);
-        
+
         // Обновляем позиции
       const updatedLists = lists.map((list, index) => ({
         ...list,
@@ -561,7 +561,7 @@ const BoardPage: React.FC = () => {
         ...currentBoard,
         lists: updatedLists
       };
-      
+
       // Обновляем локальное состояние
       dispatch(setCurrentBoard(updatedBoard));
 
@@ -581,71 +581,71 @@ const BoardPage: React.FC = () => {
         console.error("Error handling list drag:", error);
       }
     }
-    
+
     // Если перетаскивается карточка
     if (type === 'CARD') {
       try {
       // Извлекаем ID списков из droppableId
         const sourceListIdMatch = source.droppableId.match(/list-(\d+)/);
         const destListIdMatch = destination.droppableId.match(/list-(\d+)/);
-        
+
         if (!sourceListIdMatch || !destListIdMatch) {
           console.error("Invalid list ID format in droppable IDs");
           return;
         }
-        
+
         const sourceListId = parseInt(sourceListIdMatch[1]);
         const destListId = parseInt(destListIdMatch[1]);
-        
+
         if (isNaN(sourceListId) || isNaN(destListId)) {
           console.error("Invalid list IDs:", sourceListId, destListId);
           return;
         }
-        
+
         // Находим исходный и целевой списки
         const sourceList = currentBoard.lists.find(list => list.id === sourceListId);
         const destList = currentBoard.lists.find(list => list.id === destListId);
-        
+
         if (!sourceList || !destList) {
           console.error("Source or destination list not found");
           return;
         }
-        
+
         // Получаем ID карточки из draggableId
         let cardId: number;
-        
+
         // Поддерживаем оба формата ID: либо "card-123", либо просто "123"
         if (draggableId.startsWith('card-')) {
           cardId = parseInt(draggableId.replace('card-', ''));
         } else {
           cardId = parseInt(draggableId);
         }
-        
+
         if (isNaN(cardId)) {
           console.error("Invalid card ID:", draggableId);
           return;
         }
-        
+
         // Находим карточку, которую перемещаем
         const movedCard = sourceList.cards.find(card => card.id === cardId);
-        
+
         if (!movedCard) {
           console.error("Moved card not found");
           return;
         }
-        
+
         // Копируем массивы карточек, чтобы не изменять оригинальные
         const sourceCards = Array.isArray(sourceList.cards) ? [...sourceList.cards] : [];
         const destCards = Array.isArray(destList.cards) ? [...destList.cards] : [];
-        
+
         // Если перемещение в пределах одного списка
         if (sourceListId === destListId) {
           // Удаляем карточку из исходной позиции
           sourceCards.splice(source.index, 1);
-          
+
           // Вставляем карточку в новую позицию
           sourceCards.splice(destination.index, 0, movedCard);
-          
+
           // Обновляем позиции
         const updatedCards = sourceCards.map((card, index) => ({
           ...card,
@@ -655,30 +655,30 @@ const BoardPage: React.FC = () => {
         // Создаем обновленную доску
         const updatedBoard: Board = {
           ...currentBoard,
-            lists: Array.isArray(currentBoard.lists) ? currentBoard.lists.map(list => 
-            list.id === sourceListId 
+            lists: Array.isArray(currentBoard.lists) ? currentBoard.lists.map(list =>
+            list.id === sourceListId
               ? { ...list, cards: updatedCards }
               : list
             ) : []
         };
-        
+
         // Обновляем локальное состояние
         dispatch(setCurrentBoard(updatedBoard));
       } else {
           // Если перемещение между списками
-          
+
           // Удаляем карточку из исходного списка
           sourceCards.splice(source.index, 1);
-          
+
           // Вставляем карточку в целевой список
           destCards.splice(destination.index, 0, { ...movedCard, list_id: destListId });
-          
+
           // Обновляем позиции в обоих списках
         const updatedSourceCards = sourceCards.map((card, index) => ({
           ...card,
           position: index
         }));
-        
+
         const updatedDestCards = destCards.map((card, index) => ({
           ...card,
           position: index,
@@ -698,7 +698,7 @@ const BoardPage: React.FC = () => {
             return list;
             }) : []
         };
-        
+
         // Обновляем локальное состояние
         dispatch(setCurrentBoard(updatedBoard));
       }
@@ -711,13 +711,13 @@ const BoardPage: React.FC = () => {
           destListId,
           destination.index
         );
-          
+
           // Очищаем кеш для затронутых списков
           clearListCardsCache(sourceListId);
           if (sourceListId !== destListId) {
             clearListCardsCache(destListId);
           }
-          
+
           // Очищаем кеш доски
           clearBoardCache(currentBoard.id);
       } catch (err) {
@@ -734,7 +734,7 @@ const BoardPage: React.FC = () => {
   // Добавляем функцию для обновления настроек доски
   const handleSaveSettings = async (updatedSettings: { title: string; description?: string; background_color?: string }) => {
     if (!boardId) return;
-    
+
     try {
       await dispatch(updateBoard({ id: Number(boardId), data: updatedSettings })).unwrap();
       setSettingsModalOpen(false);
@@ -749,51 +749,51 @@ const BoardPage: React.FC = () => {
     setSelectedListTitle(listTitle);
     setIsCardModalOpen(true);
   };
-  
+
   // Add a function to handle card update
   const handleUpdateCard = async (updatedCard: Partial<Card>) => {
     if (!selectedCard) return;
-    
+
     try {
       console.log('Updating card with data:', JSON.stringify(updatedCard, null, 2));
-      
+
       // Make sure we're sending all required fields
       const cardData = {
         title: updatedCard.title,
-        description: updatedCard.description, 
+        description: updatedCard.description,
         card_color: updatedCard.card_color,
         list_id: updatedCard.list_id || selectedCard.list_id, // Include list_id
         assignee_id: updatedCard.assignee_id
       };
-      
+
       console.log('Sending to API:', JSON.stringify(cardData, null, 2));
-      
+
       // Обновляем карточку на сервере
       const response = await cardService.updateCard(selectedCard.id, cardData);
       console.log('API response:', JSON.stringify(response, null, 2));
-      
+
       // Если запрос успешен, обновляем карточку в стейте
       if (currentBoard) {
         const updatedLists = currentBoard.lists.map(list => {
           if (list.id === response.list_id) {
             return {
               ...list,
-              cards: list.cards.map(card => 
+              cards: list.cards.map(card =>
                 card.id === response.id ? { ...card, ...response } : card
               )
             };
           }
           return list;
         });
-        
+
         dispatch(setCurrentBoard({
           ...currentBoard,
           lists: updatedLists
         }));
-        
+
         // Очищаем кеш карточек этого списка
         clearListCardsCache(response.list_id);
-        
+
         // Обновляем выбранную карточку
         setSelectedCard(response);
       }
@@ -826,7 +826,7 @@ const BoardPage: React.FC = () => {
       });
 
       // Обновляем локальный стейт
-      const updatedLists = currentBoard.lists.map(list => 
+      const updatedLists = currentBoard.lists.map(list =>
         list.id === editingListId ? { ...list, list_color: selectedListColor } : list
       );
 
@@ -858,8 +858,8 @@ const BoardPage: React.FC = () => {
                   {currentBoard?.title || 'Loading board...'}
                 </h1>
                 {currentBoard?.description && (
-                  <div className="mt-2 bg-black/10 rounded-md p-2 text-sm text-white/90 max-w-full sm:max-w-2xl backdrop-blur-sm border border-white/10 max-h-[100px] overflow-y-auto" 
-                    style={{ 
+                  <div className="mt-2 bg-black/10 rounded-md p-2 text-sm text-white/90 max-w-full sm:max-w-2xl backdrop-blur-sm border border-white/10 max-h-[100px] overflow-y-auto"
+                    style={{
                       scrollbarWidth: 'thin',
                       scrollbarColor: 'rgba(255,255,255,0.2) transparent',
                     }}>
@@ -868,12 +868,12 @@ const BoardPage: React.FC = () => {
                 )}
               </div>
             </div>
-            
+
             <div className="flex flex-wrap gap-2">
               <button
-                className="text-sm px-2 py-1 sm:px-3 sm:py-1.5 rounded-md text-white bg-white/10 backdrop-blur-sm shadow-md hover:bg-white/20 
+                className="text-sm px-2 py-1 sm:px-3 sm:py-1.5 rounded-md text-white bg-white/10 backdrop-blur-sm shadow-md hover:bg-white/20
                           border border-white/20 transition-all font-medium flex items-center"
-                style={{ 
+                style={{
                   backdropFilter: 'blur(4px)',
                   WebkitBackdropFilter: 'blur(4px)'
                 }}
@@ -885,11 +885,11 @@ const BoardPage: React.FC = () => {
                 </svg>
                 <span className="hidden sm:inline">Settings</span>
               </button>
-              
+
               <button
-                className="text-sm px-2 py-1 sm:px-3 sm:py-1.5 rounded-md text-white bg-white/10 backdrop-blur-sm shadow-md hover:bg-white/20 
+                className="text-sm px-2 py-1 sm:px-3 sm:py-1.5 rounded-md text-white bg-white/10 backdrop-blur-sm shadow-md hover:bg-white/20
                           border border-white/20 transition-all font-medium flex items-center"
-                style={{ 
+                style={{
                   backdropFilter: 'blur(4px)',
                   WebkitBackdropFilter: 'blur(4px)'
                 }}
@@ -900,11 +900,11 @@ const BoardPage: React.FC = () => {
                 </svg>
                 <span className="hidden sm:inline">Share</span>
               </button>
-              
+
               <button
-                className="text-sm px-2 py-1 sm:px-3 sm:py-1.5 rounded-md text-white bg-white/10 backdrop-blur-sm shadow-md hover:bg-white/20 
+                className="text-sm px-2 py-1 sm:px-3 sm:py-1.5 rounded-md text-white bg-white/10 backdrop-blur-sm shadow-md hover:bg-white/20
                           border border-white/20 transition-all font-medium flex items-center"
-                style={{ 
+                style={{
                   backdropFilter: 'blur(4px)',
                   WebkitBackdropFilter: 'blur(4px)'
                 }}
@@ -915,10 +915,10 @@ const BoardPage: React.FC = () => {
                 </svg>
                 <span className="hidden sm:inline">Home</span>
               </button>
-              
-              <div className="text-sm px-2 py-1 sm:px-3 sm:py-1.5 rounded-md text-white bg-white/10 backdrop-blur-sm shadow-md 
+
+              <div className="text-sm px-2 py-1 sm:px-3 sm:py-1.5 rounded-md text-white bg-white/10 backdrop-blur-sm shadow-md
                           border border-white/20 font-medium flex items-center"
-                style={{ 
+                style={{
                   backdropFilter: 'blur(4px)',
                   WebkitBackdropFilter: 'blur(4px)'
                 }}>
@@ -988,10 +988,10 @@ const BoardPage: React.FC = () => {
               ))}
             </div>
           </div>
-          
+
           <div className="flex justify-end space-x-2">
-            <Button 
-              variant="secondary" 
+            <Button
+              variant="secondary"
               onClick={() => setEditingListId(null)}
             >
               Отмена
@@ -1145,4 +1145,4 @@ const BoardPage: React.FC = () => {
   );
 };
 
-export default BoardPage; 
+export default BoardPage;

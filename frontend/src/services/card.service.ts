@@ -90,4 +90,4 @@ export const cardService = {
     async deleteComment(cardId: number, commentId: number): Promise<void> {
         await api.delete(API_ENDPOINTS.CARDS.COMMENTS.DELETE(cardId, commentId));
     }
-}; 
+};

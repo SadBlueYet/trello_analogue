@@ -1,5 +1,6 @@
-from typing import Optional
 from datetime import datetime
+from typing import Optional
+
 from pydantic import BaseModel
 
 from app.schemas.user import UserInDBBase
@@ -28,4 +29,4 @@ class CommentInDBBase(CommentBase):
 
 
 class CommentWithUser(CommentInDBBase):
-    user: Optional[UserInDBBase] = None 
+    user: Optional[UserInDBBase] = None

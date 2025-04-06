@@ -34,4 +34,4 @@ const SessionProvider: React.FC<SessionProviderProps> = ({ children }) => {
   return <>{children}</>;
 };
 
-export default SessionProvider; 
+export default SessionProvider;

@@ -13,22 +13,22 @@ interface BoardCardProps {
 // Default board color (same as in handleCreateBoard)
 const DEFAULT_BOARD_COLOR = '#4F46E5'; // indigo
 
-const BoardCard: React.FC<BoardCardProps> = ({ 
-  title, 
-  listsCount = 0, 
+const BoardCard: React.FC<BoardCardProps> = ({
+  title,
+  listsCount = 0,
   background_color,
-  boardId, 
-  description, 
+  boardId,
+  description,
   onClick,
   created_at
 }) => {
   // Состояние для отслеживания, можно ли прокручивать описание
   const [isScrollable, setIsScrollable] = useState(false);
   const descriptionRef = useRef<HTMLDivElement>(null);
-  
+
   // Определяем, является ли фон градиентом (начинается с 'from-')
   const isGradient = background_color?.startsWith('from-');
-  
+
   // Используем установленный цвет или цвет по умолчанию
   const gradient = isGradient ? background_color : 'from-indigo-600 to-indigo-500';
 
@@ -43,7 +43,7 @@ const BoardCard: React.FC<BoardCardProps> = ({
     }
     return 'Нет даты';
   };
-  
+
   // Проверяем, можно ли прокручивать описание при монтировании и обновлении
   useEffect(() => {
     if (descriptionRef.current) {
@@ -51,21 +51,21 @@ const BoardCard: React.FC<BoardCardProps> = ({
       setIsScrollable(element.scrollHeight > element.clientHeight);
     }
   }, [description]);
-  
+
   // Предотвращаем запуск onClick при скролле
   const handleDescriptionClick = (e: React.MouseEvent) => {
     e.stopPropagation();
   };
-  
+
   return (
-    <div 
+    <div
       className="aspect-square rounded-xl overflow-hidden shadow-md hover:shadow-lg transition-all duration-200 cursor-pointer flex flex-col relative"
       onClick={onClick}
       style={{ minWidth: 'calc(100% - 1rem)', minHeight: '150px', maxHeight: '250px' }}
     >
-      <div 
+      <div
         className={`w-full h-full p-3 text-white flex flex-col ${isGradient ? 'bg-gradient-to-r' : ''} ${isGradient ? gradient : ''}`}
-        style={background_color && !isGradient ? { backgroundColor: background_color } : 
+        style={background_color && !isGradient ? { backgroundColor: background_color } :
                !background_color ? { backgroundColor: DEFAULT_BOARD_COLOR } : {}}
       >
         {/* Заголовок и количество списков */}
@@ -75,13 +75,13 @@ const BoardCard: React.FC<BoardCardProps> = ({
             {listsCount}
           </div>
         </div>
-        
+
         {/* Описание - с ограничением высоты и возможностью прокрутки */}
         <div className="overflow-hidden mb-16 flex-grow">
-          <div 
+          <div
             ref={descriptionRef}
             className="bg-black/10 rounded-md p-2 text-sm text-white/90 break-words overflow-y-auto h-full"
-            style={{ 
+            style={{
               scrollbarWidth: 'thin',
               scrollbarColor: 'rgba(255,255,255,0.2) transparent',
             }}
@@ -89,13 +89,13 @@ const BoardCard: React.FC<BoardCardProps> = ({
           >
             {description || <span className="italic text-white/70">No description</span>}
           </div>
-          
+
           {/* Простой индикатор прокрутки */}
           {isScrollable && (
             <div className="absolute bottom-20 right-1 w-1.5 h-1.5 rounded-full bg-white/40"></div>
           )}
         </div>
-        
+
         {/* Нижняя информационная панель - абсолютно позиционированная для гарантированного отображения */}
         <div className="absolute left-3 right-3 bottom-3">
           <div className="flex items-center justify-between mb-1.5 bg-black/15 backdrop-blur-sm rounded-md px-2 py-1 border border-white/10 overflow-hidden">
@@ -113,7 +113,7 @@ const BoardCard: React.FC<BoardCardProps> = ({
               <span className="truncate">{listsCount} {listsCount === 1 ? 'list' : 'lists'}</span>
             </span>
           </div>
-          
+
           <div className="flex justify-end">
             <span className="bg-black/15 hover:bg-black/25 px-2 py-1 rounded-full text-xs flex items-center transition-colors cursor-pointer border border-white/10 font-medium">
               <span className="mr-1">Open</span>
@@ -128,4 +128,4 @@ const BoardCard: React.FC<BoardCardProps> = ({
   );
 };
 
-export default BoardCard; 
+export default BoardCard;

@@ -1,20 +1,21 @@
 from typing import List, Optional
+
 from dotenv import load_dotenv
-from pydantic_settings import BaseSettings
 from pydantic import AnyHttpUrl
+from pydantic_settings import BaseSettings
 
 
 class Settings(BaseSettings):
     load_dotenv(override=True)
     PROJECT_NAME: str = "Trello Clone"
     API_V1_STR: str = "/api/v1"
-    
+
     # JWT
     SECRET_KEY: str
     ALGORITHM: str
     ACCESS_TOKEN_EXPIRE_MINUTES: int
     REFRESH_TOKEN_EXPIRE_DAYS: int = 7
-    
+
     # Cookie settings
     COOKIE_DOMAIN: Optional[str] = None  # None позволяет использовать куки на localhost
     COOKIE_SECURE: bool = False  # Set to False for HTTP connections
@@ -50,4 +51,4 @@ class Settings(BaseSettings):
         env_file = ".env"
 
 
-settings = Settings() 
+settings = Settings()

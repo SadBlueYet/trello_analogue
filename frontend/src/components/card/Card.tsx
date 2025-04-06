@@ -26,9 +26,9 @@ const Card: React.FC<CardProps> = ({ card, index, listId, onCardUpdate }) => {
         if (title !== card.title || description !== card.description) {
             try {
                 setIsSubmitting(true);
-                await cardService.updateCard(card.id, { 
-                    title, 
-                    description: description || undefined 
+                await cardService.updateCard(card.id, {
+                    title,
+                    description: description || undefined
                 });
                 // Уведомляем родительский компонент об изменении
                 if (onCardUpdate) {
@@ -50,7 +50,7 @@ const Card: React.FC<CardProps> = ({ card, index, listId, onCardUpdate }) => {
             try {
                 setIsSubmitting(true);
                 await cardService.deleteCard(card.id);
-                
+
                 // Update the Redux state directly
                 if (currentBoard) {
                     const updatedBoard = {
@@ -65,11 +65,11 @@ const Card: React.FC<CardProps> = ({ card, index, listId, onCardUpdate }) => {
                             return list;
                         })
                     };
-                    
+
                     // Update Redux state with the modified board
                     dispatch(setCurrentBoard(updatedBoard));
                 }
-                
+
                 // Also notify parent if callback exists
                 if (onCardUpdate) {
                     onCardUpdate();
@@ -163,4 +163,4 @@ const Card: React.FC<CardProps> = ({ card, index, listId, onCardUpdate }) => {
     );
 };
 
-export default Card; 
+export default Card;

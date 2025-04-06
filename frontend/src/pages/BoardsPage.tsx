@@ -29,4 +29,4 @@ const BoardsPage: React.FC = () => {
     );
 };
 
-export default BoardsPage; 
+export default BoardsPage;

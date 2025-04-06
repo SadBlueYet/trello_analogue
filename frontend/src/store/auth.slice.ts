@@ -21,10 +21,10 @@ export const login = createAsyncThunk(
     async (credentials: { username: string; password: string }, { dispatch }) => {
         // 1. Perform login to get auth cookies
         await authService.login(credentials);
-        
+
         // 2. Immediately fetch user data to confirm login was successful
         const userResponse = await api.get(API_ENDPOINTS.AUTH.ME);
-        
+
         return { user: userResponse.data };
     }
 );
@@ -34,16 +34,16 @@ export const register = createAsyncThunk(
     async (data: { email: string; username: string; password: string; full_name?: string }, { dispatch }) => {
         // 1. Register user
         const response = await authService.register(data);
-        
+
         // 2. Login to get auth cookies
         await authService.login({
             username: data.username,
             password: data.password,
         });
-        
+
         // 3. Fetch user data to confirm
         const userResponse = await api.get(API_ENDPOINTS.AUTH.ME);
-        
+
         return { user: userResponse.data };
     }
 );
@@ -66,16 +66,16 @@ export const checkAuth = createAsyncThunk(
         const state = getState() as { auth: AuthState };
         const lastCheck = state.auth.lastAuthCheck;
         const now = Date.now();
-        
+
         // Если аутентификация уже проверена и проверка была недавно, используем кэш
         if (
-            state.auth.isAuthenticated && 
-            lastCheck && 
+            state.auth.isAuthenticated &&
+            lastCheck &&
             now - lastCheck < AUTH_CACHE_TIME
         ) {
             return { user: state.auth.user };
         }
-        
+
         // Если запрос уже выполняется, возвращаем его
         if (authCheckPromise) {
             try {
@@ -84,26 +84,26 @@ export const checkAuth = createAsyncThunk(
                 return rejectWithValue('Not authenticated');
             }
         }
-        
+
         try {
             // Создаем новый запрос и кэшируем его
             authCheckPromise = api.get(API_ENDPOINTS.AUTH.ME).then(response => ({ user: response.data }));
-            
+
             // Выполняем запрос
             const result = await authCheckPromise;
-            
+
             // После выполнения запроса сбрасываем промис
             setTimeout(() => {
                 authCheckPromise = null;
             }, 0);
-            
+
             return result;
         } catch (error) {
             // После выполнения запроса сбрасываем промис
             setTimeout(() => {
                 authCheckPromise = null;
             }, 0);
-            
+
             return rejectWithValue('Not authenticated');
         }
     }
@@ -125,7 +125,7 @@ export const loadUserProfile = createAsyncThunk(
 // Update user profile
 export const updateProfile = createAsyncThunk(
     'auth/updateProfile',
-    async (userData: Partial<User & { 
+    async (userData: Partial<User & {
         current_password?: string;
         new_password?: string;
     }>, { rejectWithValue }) => {
@@ -242,4 +242,4 @@ const authSlice = createSlice({
 });
 
 export const { logout, clearError } = authSlice.actions;
-export default authSlice.reducer; 
+export default authSlice.reducer;

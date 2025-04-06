@@ -23,10 +23,10 @@ axiosInstance.interceptors.request.use(
   (config) => {
     // Log all requests except OPTIONS
     if (config.method?.toUpperCase() !== 'OPTIONS') {
-      console.log(`Request: ${config.method?.toUpperCase()} ${config.url}`, 
+      console.log(`Request: ${config.method?.toUpperCase()} ${config.url}`,
                  { withCredentials: config.withCredentials });
     }
-    
+
     // Don't add headers for OPTIONS requests
     if (config.method?.toUpperCase() === 'OPTIONS') {
       return config;
@@ -48,20 +48,20 @@ axiosInstance.interceptors.response.use(
   },
   async (error: AxiosError) => {
     const config = error.config as InternalAxiosRequestConfig & { _retry?: boolean };
-    
+
     // Only retry for first request with network error (typical Safari CORS issue)
     if (isFirstRequest && !error.response && config && !config._retry) {
       console.log('First request failed with network error, retrying after delay...');
       config._retry = true;
       isFirstRequest = false; // Don't retry more than once
-      
+
       // Wait a brief moment before retrying
       await new Promise(resolve => setTimeout(resolve, 100));
       return axiosInstance(config);
     }
-    
+
     if (error.response) {
-      console.error(`Error response: ${error.response.status} from ${error.config?.url}`, 
+      console.error(`Error response: ${error.response.status} from ${error.config?.url}`,
                    error.response.data);
     } else if (error.request) {
       console.error('Error with request (no response):', error.message);
@@ -94,11 +94,11 @@ axiosInstance.interceptors.response.use(
   (response) => response,
   async (error: AxiosError) => {
     const originalRequest = error.config;
-    
+
     if (!originalRequest) {
       return Promise.reject(error);
     }
-    
+
     // Check if it's a 401 error and not a refresh token request
     // and not already retrying this request
     if (
@@ -122,13 +122,13 @@ axiosInstance.interceptors.response.use(
 
       isRefreshing = true;
       (originalRequest as any).__isRetryRequest = true;
-      
+
       try {
         // Send token refresh request
         const response = await axiosInstance.post(
           API_ENDPOINTS.AUTH.REFRESH
         );
-        
+
         // If refresh successful, retry original request
         if (response.status === 200) {
           // Process any pending requests
@@ -139,10 +139,10 @@ axiosInstance.interceptors.response.use(
       } catch (refreshError) {
         // If refresh fails, reject all pending requests
         processQueue(refreshError);
-        
+
         // Store the current URL to redirect back after login
         sessionStorage.setItem('redirectUrl', window.location.pathname);
-        
+
         // Only redirect to login page if not already there
         if (window.location.pathname !== '/login') {
           console.log('Refresh token failed, redirecting to login');
@@ -152,7 +152,7 @@ axiosInstance.interceptors.response.use(
         isRefreshing = false;
       }
     }
-    
+
     // Convert backend error responses to a more usable format
     if (error.response?.data) {
       const backendError = error.response.data as Record<string, any>;
@@ -163,9 +163,9 @@ axiosInstance.interceptors.response.use(
       enhancedError.data = backendError;
       return Promise.reject(enhancedError);
     }
-    
+
     return Promise.reject(error);
   }
 );
 
-export default axiosInstance; 
+export default axiosInstance;

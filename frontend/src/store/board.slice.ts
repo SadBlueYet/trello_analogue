@@ -71,20 +71,20 @@ export const fetchBoard = createAsyncThunk(
         const currentBoard = state.board.currentBoard;
         const lastFetch = state.board.lastBoardFetch;
         const now = Date.now();
-        
+
         // Если доска уже загружена, она та же самая, и прошло меньше BOARD_CACHE_TIME с момента загрузки
-        if (currentBoard && 
-            currentBoard.id === id && 
-            lastFetch && 
+        if (currentBoard &&
+            currentBoard.id === id &&
+            lastFetch &&
             now - lastFetch < BOARD_CACHE_TIME) {
             return currentBoard;
         }
-        
+
         // Проверяем, есть ли уже запрос для этой доски
         if (boardRequestPromises.has(id)) {
             return boardRequestPromises.get(id)!;
         }
-        
+
         // Создаем новый запрос
         const boardPromise = boardService.getBoard(id)
             .then(board => {
@@ -101,10 +101,10 @@ export const fetchBoard = createAsyncThunk(
                 }, 0);
                 throw error;
             });
-        
+
         // Сохраняем промис
         boardRequestPromises.set(id, boardPromise);
-        
+
         return boardPromise;
     }
 );
@@ -267,4 +267,4 @@ const boardSlice = createSlice({
 });
 
 export const { clearCurrentBoard, clearError, setCurrentBoard, clearBoardCacheAction } = boardSlice.actions;
-export default boardSlice.reducer; 
+export default boardSlice.reducer;

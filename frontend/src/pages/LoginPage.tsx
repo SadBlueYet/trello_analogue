@@ -4,11 +4,11 @@ import { useDispatch, useSelector } from 'react-redux';
 import { AppDispatch, RootState } from '../store';
 import { login } from '../store/auth.slice';
 import AuthBackground from '../components/ui/AuthBackground';
-import { 
-  Button, 
-  Input, 
-  Card, 
-  Link, 
+import {
+  Button,
+  Input,
+  Card,
+  Link,
   ErrorMessage
 } from '../components/ui';
 
@@ -52,7 +52,7 @@ const LoginPage = () => {
 
     try {
       await dispatch(login({ username, password })).unwrap();
-      
+
       // Прямое перенаправление после успешного входа,
       // не дожидаясь обновления Redux состояния
       const redirectUrl = sessionStorage.getItem('redirectUrl') || '/home';
@@ -60,7 +60,7 @@ const LoginPage = () => {
       navigate(redirectUrl);
     } catch (err: any) {
       console.error('Login error:', err);
-      
+
       if (err.status === 401) {
         setError('Invalid username or password');
       } else if (err.status === 422) {
@@ -76,24 +76,24 @@ const LoginPage = () => {
   return (
     <div className="relative min-h-screen">
       <AuthBackground />
-      
+
       <div className="min-h-screen flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8 relative z-10">
         <div className="max-w-md w-full space-y-6">
           <div className="text-center mb-8">
             <div className="flex justify-center">
               <div className="h-24 w-24 rounded-full bg-gradient-to-r from-indigo-500 to-purple-500 flex items-center justify-center shadow-lg animate-pulse-soft">
-                <svg 
-                  xmlns="http://www.w3.org/2000/svg" 
-                  className="h-12 w-12 text-white" 
-                  fill="none" 
-                  viewBox="0 0 24 24" 
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  className="h-12 w-12 text-white"
+                  fill="none"
+                  viewBox="0 0 24 24"
                   stroke="currentColor"
                   strokeWidth={1.5}
                 >
-                  <path 
-                    strokeLinecap="round" 
-                    strokeLinejoin="round" 
-                    d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" 
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
                   />
                 </svg>
               </div>
@@ -105,10 +105,10 @@ const LoginPage = () => {
               Sign in to your account to continue
             </p>
           </div>
-          
+
           <Card className="p-8 shadow-xl" hover>
             {error && <ErrorMessage message={error} />}
-            
+
             <form className="space-y-6" onSubmit={handleSubmit}>
               <Input
                 id="username"
@@ -125,7 +125,7 @@ const LoginPage = () => {
                   </svg>
                 }
               />
-              
+
               <Input
                 id="password"
                 name="password"
@@ -142,13 +142,13 @@ const LoginPage = () => {
                 }
               />
 
-              <Button 
-                type="submit" 
+              <Button
+                type="submit"
                 isLoading={isSubmitting || authLoading}
               >
                 Sign in
               </Button>
-              
+
               <div className="text-center mt-4">
                 <a href="#" className="text-sm font-medium text-indigo-600 hover:text-indigo-500">
                   Forgot password?

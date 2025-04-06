@@ -30,7 +30,7 @@ export const boardService = {
             console.log('Fetching boards from:', API_ENDPOINTS.BOARDS.LIST);
             const response = await api.get<any[]>(API_ENDPOINTS.BOARDS.LIST);
             console.log('Raw API response:', response.data);
-            
+
             if (!Array.isArray(response.data)) {
                 console.error('API response is not an array:', response.data);
                 return [];
@@ -53,7 +53,7 @@ export const boardService = {
 
         const board = {
             ...response.data,
-            lists: Array.isArray(response.data.lists) 
+            lists: Array.isArray(response.data.lists)
                 ? response.data.lists
                     .map((list: any) => ({
                         ...list,
@@ -62,7 +62,7 @@ export const boardService = {
                     .sort((a: any, b: any) => a.position - b.position)
                 : []
         };
-        
+
         console.log('Processed board data:', JSON.stringify(board, null, 2));
         return board;
     },
@@ -93,28 +93,28 @@ export const boardService = {
             console.log(`Fetching board shares from: ${API_ENDPOINTS.BOARDS.SHARES.LIST(boardId)}`);
             const response = await api.get<BoardShare[]>(API_ENDPOINTS.BOARDS.SHARES.LIST(boardId));
             console.log(`Board shares API response:`, response.data);
-            
+
             // Validate response format
             if (!Array.isArray(response.data)) {
                 console.error('API response is not an array:', response.data);
                 return [];
             }
-            
+
             // Check if each share has the correct format
             const validShares = response.data.filter(share => {
                 if (!share || typeof share !== 'object') {
                     console.error('Invalid share object:', share);
                     return false;
                 }
-                
+
                 if (!share.id || !share.user || !share.access_type) {
                     console.error('Share missing required properties:', share);
                     return false;
                 }
-                
+
                 return true;
             });
-            
+
             return validShares;
         } catch (error) {
             console.error(`Error fetching board shares for board ${boardId}:`, error);
@@ -146,4 +146,4 @@ export const boardService = {
     async removeBoardShare(boardId: number, userId: number): Promise<void> {
         await api.delete(API_ENDPOINTS.BOARDS.SHARES.DELETE(boardId, userId));
     }
-}; 
+};

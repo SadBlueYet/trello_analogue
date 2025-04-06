@@ -16,4 +16,4 @@ export const getToken = (): { token: string | null; type: string | null } => {
 export const removeToken = (): void => {
     localStorage.removeItem(TOKEN_KEY);
     localStorage.removeItem(TOKEN_TYPE_KEY);
-}; 
+};

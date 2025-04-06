@@ -37,3 +37,25 @@ test = [
 asyncio_mode = "auto"
 testpaths = ["tests"]
 python_files = ["test_*.py"]
+
+[tool.black]
+line-length = 120
+
+[tool.isort]
+profile = "black"
+line_length = 120
+
+[tool.flake8]
+ignore = ["W291", "E203", "W503", "E231"]
+exclude = [
+    ".git",
+    "__pycashe__",
+    "docs",
+    "build",
+    "dist",
+    ".venv",
+    "venv",
+    "__pypackeges__"
+]
+max-line-length = 120
+count = true

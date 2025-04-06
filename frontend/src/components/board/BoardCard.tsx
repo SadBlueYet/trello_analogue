@@ -28,7 +28,7 @@ const BoardCard: React.FC<BoardCardProps> = ({ board }) => {
               </svg>
               <span className="truncate max-w-[80px]">{board.created_at}</span>
             </span>
-            
+
             <span className="text-xs flex items-center font-medium whitespace-nowrap ml-1">
               <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 mr-1 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
@@ -40,4 +40,4 @@ const BoardCard: React.FC<BoardCardProps> = ({ board }) => {
     );
 };
 
-export default BoardCard; 
+export default BoardCard;

@@ -86,4 +86,4 @@ export interface RegisterResponse {
     email: string;
     username: string;
     full_name?: string;
-} 
+}

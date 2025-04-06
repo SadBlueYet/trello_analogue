@@ -42,16 +42,16 @@ const ShareBoardModal: React.FC<ShareBoardModalProps> = ({ isOpen, onClose, boar
 
   const handleSearch = async () => {
     if (!searchQuery.trim()) return;
-    
+
     setIsSearching(true);
     try {
       const users = await userService.searchUsers(searchQuery);
-      
+
       // Фильтруем пользователей, которым уже предоставлен доступ
-      const filteredUsers = users.filter(user => 
+      const filteredUsers = users.filter(user =>
         !shares.some(share => share.user.id === user.id)
       );
-      
+
       setSearchResults(filteredUsers);
     } catch (error) {
       console.error('Error searching users:', error);
@@ -64,10 +64,10 @@ const ShareBoardModal: React.FC<ShareBoardModalProps> = ({ isOpen, onClose, boar
   const handleShareBoard = async (userId: number) => {
     try {
       await boardService.shareBoard(boardId, userId, selectedAccessType);
-      
+
       // Обновляем список шарингов
       await loadShares();
-      
+
       // Очищаем результаты поиска
       setSearchResults([]);
       setSearchQuery('');
@@ -80,7 +80,7 @@ const ShareBoardModal: React.FC<ShareBoardModalProps> = ({ isOpen, onClose, boar
   const handleUpdateShare = async (userId: number, accessType: string) => {
     try {
       await boardService.updateBoardShare(boardId, userId, accessType);
-      
+
       // Обновляем список шарингов
       await loadShares();
     } catch (error) {
@@ -92,7 +92,7 @@ const ShareBoardModal: React.FC<ShareBoardModalProps> = ({ isOpen, onClose, boar
   const handleRemoveShare = async (userId: number) => {
     try {
       await boardService.removeBoardShare(boardId, userId);
-      
+
       // Обновляем список шарингов
       await loadShares();
     } catch (error) {
@@ -109,7 +109,7 @@ const ShareBoardModal: React.FC<ShareBoardModalProps> = ({ isOpen, onClose, boar
             {error}
           </div>
         )}
-        
+
         <div className="mb-6">
           <h3 className="text-lg font-medium mb-2">Add People</h3>
           <div className="flex space-x-2">
@@ -120,15 +120,15 @@ const ShareBoardModal: React.FC<ShareBoardModalProps> = ({ isOpen, onClose, boar
               onChange={(e) => setSearchQuery(e.target.value)}
               className="flex-grow"
             />
-            <Button 
-              onClick={handleSearch} 
+            <Button
+              onClick={handleSearch}
               disabled={isSearching || !searchQuery.trim()}
               isLoading={isSearching}
             >
               Search
             </Button>
           </div>
-          
+
           {searchResults.length > 0 && (
             <div className="mt-4 border rounded-md divide-y">
               {searchResults.map(user => (
@@ -147,7 +147,7 @@ const ShareBoardModal: React.FC<ShareBoardModalProps> = ({ isOpen, onClose, boar
                       <option value="write">Can edit</option>
                       <option value="admin">Admin</option>
                     </select>
-                    <Button 
+                    <Button
                       onClick={() => handleShareBoard(user.id!)}
                       className="text-sm px-3 py-1"
                     >
@@ -158,12 +158,12 @@ const ShareBoardModal: React.FC<ShareBoardModalProps> = ({ isOpen, onClose, boar
               ))}
             </div>
           )}
-          
+
           {searchQuery && searchResults.length === 0 && !isSearching && (
             <div className="mt-2 text-gray-500">No users found</div>
           )}
         </div>
-        
+
         <div>
           <h3 className="text-lg font-medium mb-2">People with Access</h3>
           {isLoading ? (
@@ -207,4 +207,4 @@ const ShareBoardModal: React.FC<ShareBoardModalProps> = ({ isOpen, onClose, boar
   );
 };
 
-export default ShareBoardModal; 
+export default ShareBoardModal;

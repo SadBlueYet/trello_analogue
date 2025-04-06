@@ -54,4 +54,4 @@ export const API_ENDPOINTS = {
   USERS: {
     SEARCH: `/users/search`
   }
-}; 
+};

@@ -55,4 +55,4 @@ export const {
   setError,
 } = boardSlice.actions;
 
-export default boardSlice.reducer; 
+export default boardSlice.reducer;

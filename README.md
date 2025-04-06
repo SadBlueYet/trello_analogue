@@ -52,4 +52,4 @@ pdm run uvicorn app.main:app --reload
 - List management
 - Card management
 - Drag and drop interface
-- Real-time updates 
+- Real-time updates

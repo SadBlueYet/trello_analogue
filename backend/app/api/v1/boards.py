@@ -1,16 +1,23 @@
 from typing import Any, List
+
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
+
 from app.core import deps
 from app.crud import board as crud_board
 from app.crud import board_share as crud_board_share
+from app.crud import list as crud_list
+from app.crud import user as crud_user
 from app.models.user import User
 from app.schemas.board import (
-    BoardCreate, BoardUpdate, BoardWithLists, BoardInDBBase,
-    BoardShareCreate, BoardShareUpdate, BoardShareInfo,
+    BoardCreate,
+    BoardInDBBase,
+    BoardShareCreate,
+    BoardShareInfo,
+    BoardShareUpdate,
+    BoardUpdate,
+    BoardWithLists,
 )
-from app.crud import user as crud_user
-from app.crud import list as crud_list
 
 router = APIRouter()
 
@@ -26,13 +33,13 @@ async def get_boards(
     """
     owned_boards = await crud_board.get_boards(db, current_user.id)
     shared_boards_access = await crud_board_share.get_shared_boards_for_user(db, current_user.id)
-    
+
     shared_boards = []
     for share in shared_boards_access:
         board = await crud_board.get_board(db, share.board_id)
         if board:
             shared_boards.append(board)
-    
+
     all_boards = owned_boards + shared_boards
     return all_boards
 
@@ -61,19 +68,19 @@ async def get_board(
     Get a specific board by id.
     """
     # Load board with all related data
-    
+
     board = await crud_board.get_board(db, board_id)
     if not board:
         raise HTTPException(status_code=404, detail="Board not found")
-    
+
     await deps.check_board_access(board, current_user, db, ["read", "write", "admin"])
-    
+
     # Load lists with cards and assignees
     lists = await crud_list.get_board_lists(db, board_id, include_cards=True)
-    
+
     # Assign the loaded lists to the board
     board.lists = lists
-    
+
     return board
 
 
@@ -91,9 +98,9 @@ async def update_board(
     board = await crud_board.get_board(db, board_id)
     if not board:
         raise HTTPException(status_code=404, detail="Board not found")
-    
+
     await deps.check_board_access(board, current_user, db, ["write", "admin"])
-    
+
     board = await crud_board.update_board(db, board, board_in)
     return board
 
@@ -111,12 +118,11 @@ async def delete_board(
     board = await crud_board.get_board(db, board_id)
     if not board:
         raise HTTPException(status_code=404, detail="Board not found")
-    
+
     await deps.check_board_access(board, current_user, db, ["admin"])
-    
+
     await crud_board.delete_board(db, board_id)
     return {"message": "Board deleted successfully"}
-
 
 
 @router.get("/{board_id}/share", response_model=List[BoardShareInfo])
@@ -132,32 +138,24 @@ async def get_board_shares(
     board = await crud_board.get_board(db, board_id)
     if not board:
         raise HTTPException(status_code=404, detail="Board not found")
-    
+
     await deps.check_board_access(board, current_user, db, ["read", "write", "admin"])
-    
+
     board_shares = await crud_board_share.get_board_shares_with_user_info(db, board_id)
-    
+
     owner_user = await crud_user.get_user(db, board.owner_id)
-    
+
     result = []
-    
+
     if owner_user:
-        result.append({
-            "id": -1,
-            "access_type": "owner",
-            "user": owner_user
-        })
-    
+        result.append({"id": -1, "access_type": "owner", "user": owner_user})
+
     for share in board_shares:
         if share.user.id == board.owner_id:
             continue
-            
-        result.append({
-            "id": share.id,
-            "access_type": share.access_type,
-            "user": share.user
-        })
-    
+
+        result.append({"id": share.id, "access_type": share.access_type, "user": share.user})
+
     return result
 
 
@@ -175,28 +173,24 @@ async def create_board_share(
     board = await crud_board.get_board(db, board_id)
     if not board:
         raise HTTPException(status_code=404, detail="Board not found")
-    
+
     await deps.check_board_access(board, current_user, db, ["admin"])
-    
+
     user = await crud_user.get_user(db, board_share_in.user_id)
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
-    
+
     if user.id == current_user.id:
         raise HTTPException(status_code=400, detail="You are the owner of this board")
-    
+
     existing_share = await crud_board_share.get_board_share(db, board_id, user.id)
     if existing_share:
         raise HTTPException(status_code=400, detail="User already has access to this board")
-    
+
     board_share = await crud_board_share.create_board_share(db, board_share_in)
-    
+
     # Формируем ответ
-    return {
-        "id": board_share.id,
-        "access_type": board_share.access_type,
-        "user": user
-    }
+    return {"id": board_share.id, "access_type": board_share.access_type, "user": user}
 
 
 @router.put("/{board_id}/share/{user_id}", response_model=BoardShareInfo)
@@ -214,23 +208,23 @@ async def update_board_share(
     board = await crud_board.get_board(db, board_id)
     if not board:
         raise HTTPException(status_code=404, detail="Board not found")
-    
+
     await deps.check_board_access(board, current_user, db, ["admin"])
-    
+
     board_share = await crud_board_share.get_board_share(db, board_id, user_id)
     if not board_share:
         raise HTTPException(status_code=404, detail="Share not found")
-    
+
     user = await crud_user.get_user(db, user_id)
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
-    
+
     updated_share = await crud_board_share.update_board_share(db, board_share, board_share_in)
-    
+
     return {
         "id": updated_share.id,
         "access_type": updated_share.access_type,
-        "user": user
+        "user": user,
     }
 
 
@@ -248,13 +242,13 @@ async def delete_board_share(
     board = await crud_board.get_board(db, board_id)
     if not board:
         raise HTTPException(status_code=404, detail="Board not found")
-    
+
     await deps.check_board_access(board, current_user, db, ["admin"])
-    
+
     board_share = await crud_board_share.get_board_share(db, board_id, user_id)
     if not board_share:
         raise HTTPException(status_code=404, detail="Share not found")
-    
+
     await crud_board_share.delete_board_share(db, board_share)
-    
-    return {"message": "Share removed successfully"} 
+
+    return {"message": "Share removed successfully"}

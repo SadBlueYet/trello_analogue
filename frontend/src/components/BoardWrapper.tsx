@@ -20,4 +20,4 @@ const BoardWrapper: React.FC = () => {
   return <BoardPage />;
 };
 
-export default BoardWrapper; 
+export default BoardWrapper;

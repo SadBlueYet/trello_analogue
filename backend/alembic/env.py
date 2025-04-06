@@ -7,18 +7,17 @@ from sqlalchemy.engine import Connection
 from sqlalchemy.ext.asyncio import async_engine_from_config
 
 from alembic import context
-
 from app.models.base import Base
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
 config = context.config
 
-POSTGRES_SERVER = os.environ.get("POSTGRES_SERVER")
-POSTGRES_USER = os.environ.get("POSTGRES_USER")
-POSTGRES_PASSWORD = os.environ.get("POSTGRES_PASSWORD")
-POSTGRES_DB = os.environ.get("POSTGRES_DB")
-POSTGRES_PORT = os.environ.get("POSTGRES_PORT")
+POSTGRES_SERVER = os.environ.get("POSTGRES_SERVER", "localhost")
+POSTGRES_USER = os.environ.get("POSTGRES_USER", "postgres")
+POSTGRES_PASSWORD = os.environ.get("POSTGRES_PASSWORD", "postgres")
+POSTGRES_DB = os.environ.get("POSTGRES_DB", "trello_clone")
+POSTGRES_PORT = os.environ.get("POSTGRES_PORT", "5432")
 # Interpret the config file for Python logging.
 # This line sets up loggers basically.
 if config.config_file_name is not None:
@@ -29,7 +28,10 @@ if config.config_file_name is not None:
 target_metadata = Base.metadata
 
 # Set the database URL in the alembic.ini file
-config.set_main_option("sqlalchemy.url", f"postgresql+asyncpg://{POSTGRES_USER}:{POSTGRES_PASSWORD}@{POSTGRES_SERVER}:{POSTGRES_PORT}/{POSTGRES_DB}")
+config.set_main_option(
+    "sqlalchemy.url",
+    f"postgresql+asyncpg://{POSTGRES_USER}:{POSTGRES_PASSWORD}@{POSTGRES_SERVER}:{POSTGRES_PORT}/{POSTGRES_DB}",
+)
 
 # other values from the config, defined by the needs of env.py,
 # can be acquired:

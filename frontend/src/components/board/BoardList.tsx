@@ -36,7 +36,7 @@ const BoardList: React.FC = () => {
                 <h1 className="text-2xl font-bold text-gray-900">Your Boards</h1>
                 <CreateBoardForm />
             </div>
-            
+
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                 {boards.map((board) => (
                     <Link key={board.id} to={`/boards/${board.id}`}>
@@ -48,4 +48,4 @@ const BoardList: React.FC = () => {
     );
 };
 
-export default BoardList; 
+export default BoardList;

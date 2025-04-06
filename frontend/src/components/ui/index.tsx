@@ -27,16 +27,16 @@ interface LinkProps {
   className?: string;
 }
 
-export const Button: React.FC<ButtonProps> = ({ 
-  children, 
-  isLoading, 
+export const Button: React.FC<ButtonProps> = ({
+  children,
+  isLoading,
   variant = 'primary',
   icon,
   className = '',
-  ...props 
+  ...props
 }) => {
   const baseStyles = "relative w-full flex justify-center items-center py-2.5 px-4 text-sm font-medium rounded-lg focus:outline-none focus:ring-2 focus:ring-offset-2 transition-all duration-200 ease-in-out";
-  
+
   const variantStyles = {
     primary: "bg-gradient-to-r from-indigo-600 to-indigo-500 hover:from-indigo-700 hover:to-indigo-600 text-white shadow-md hover:shadow-lg transform hover:-translate-y-0.5 focus:ring-indigo-500 border border-indigo-700",
     secondary: "bg-gradient-to-r from-violet-600 to-violet-500 hover:from-violet-700 hover:to-violet-600 text-white shadow-md hover:shadow-lg transform hover:-translate-y-0.5 focus:ring-violet-500 border border-violet-700",
@@ -67,12 +67,12 @@ export const Button: React.FC<ButtonProps> = ({
   );
 };
 
-export const Input: React.FC<InputProps> = ({ 
-  label, 
+export const Input: React.FC<InputProps> = ({
+  label,
   error,
   icon,
   className = '',
-  ...props 
+  ...props
 }) => {
   return (
     <div>
@@ -99,7 +99,7 @@ export const Input: React.FC<InputProps> = ({
 
 export const Card: React.FC<CardProps> = ({ children, className = '', onClick, hover = false }) => {
   return (
-    <div 
+    <div
       className={`card p-6 ${hover ? 'card-hover' : ''} ${className}`}
       onClick={onClick}
     >
@@ -121,7 +121,7 @@ export const Link: React.FC<LinkProps> = ({ children, className = '', ...props }
 
 export const ErrorMessage: React.FC<{ message: string }> = ({ message }) => {
   if (!message) return null;
-  
+
   return (
     <div className="rounded-lg bg-red-50 p-4 border border-red-100 shadow-sm">
       <div className="flex">
@@ -134,9 +134,9 @@ export const ErrorMessage: React.FC<{ message: string }> = ({ message }) => {
   );
 };
 
-export const Badge: React.FC<{ children: React.ReactNode; color?: 'indigo' | 'purple' | 'pink' | 'blue' | 'green' | 'yellow' | 'red' }> = 
+export const Badge: React.FC<{ children: React.ReactNode; color?: 'indigo' | 'purple' | 'pink' | 'blue' | 'green' | 'yellow' | 'red' }> =
   ({ children, color = 'indigo' }) => {
-  
+
   const colorClasses = {
     indigo: 'tag',
     purple: 'tag-purple',
@@ -146,7 +146,7 @@ export const Badge: React.FC<{ children: React.ReactNode; color?: 'indigo' | 'pu
     yellow: 'tag-yellow',
     red: 'tag-red'
   };
-  
+
   return (
     <span className={colorClasses[color]}>
       {children}
@@ -164,7 +164,7 @@ export const PageContainer: React.FC<{ children: React.ReactNode }> = ({ childre
   );
 };
 
-export const PageHeader: React.FC<{ title: string; subtitle?: string; icon?: React.ReactNode }> = 
+export const PageHeader: React.FC<{ title: string; subtitle?: string; icon?: React.ReactNode }> =
   ({ title, subtitle, icon }) => {
   return (
     <div className="text-center">
@@ -175,18 +175,18 @@ export const PageHeader: React.FC<{ title: string; subtitle?: string; icon?: Rea
       ) : (
         <div className="flex justify-center mb-3">
           <div className="h-16 w-16 rounded-full bg-gradient-to-r from-indigo-600 to-indigo-500 flex items-center justify-center shadow-md">
-            <svg 
-              xmlns="http://www.w3.org/2000/svg" 
-              className="h-8 w-8 text-white" 
-              fill="none" 
-              viewBox="0 0 24 24" 
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              className="h-8 w-8 text-white"
+              fill="none"
+              viewBox="0 0 24 24"
               stroke="currentColor"
             >
-              <path 
-                strokeLinecap="round" 
-                strokeLinejoin="round" 
-                strokeWidth={2} 
-                d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" 
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
               />
             </svg>
           </div>
@@ -204,4 +204,4 @@ export const PageHeader: React.FC<{ title: string; subtitle?: string; icon?: Rea
   );
 };
 
-export { Modal }; 
+export { Modal };

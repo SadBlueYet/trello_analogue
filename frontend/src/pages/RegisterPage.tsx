@@ -5,11 +5,11 @@ import { AppDispatch, RootState } from '../store';
 import { register } from '../store/auth.slice';
 import AuthBackground from '../components/ui/AuthBackground';
 import axios, { AxiosError } from 'axios';
-import { 
-  Button, 
-  Input, 
-  Card, 
-  Link, 
+import {
+  Button,
+  Input,
+  Card,
+  Link,
   ErrorMessage
 } from '../components/ui';
 
@@ -80,18 +80,18 @@ const RegisterPage = () => {
         username,
         password,
       })).unwrap();
-      
+
       // Прямое перенаправление после успешной регистрации
       navigate('/home');
     } catch (err) {
       console.error('Registration error:', err);
-      
+
       if (axios.isAxiosError(err)) {
         const axiosError = err as AxiosError<any>;
         if (axiosError.response) {
           const statusCode = axiosError.response.status;
           const errorDetail = axiosError.response.data?.detail;
-          
+
           if (statusCode === 400) {
             setError(errorDetail || 'Invalid registration data');
           } else if (statusCode === 409) {
@@ -117,24 +117,24 @@ const RegisterPage = () => {
   return (
     <div className="relative min-h-screen">
       <AuthBackground />
-      
+
       <div className="min-h-screen flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8 relative z-10">
         <div className="max-w-md w-full space-y-6">
           <div className="text-center mb-8">
             <div className="flex justify-center">
               <div className="h-24 w-24 rounded-full bg-gradient-to-r from-pink-500 to-purple-500 flex items-center justify-center shadow-lg animate-pulse-soft">
-                <svg 
-                  xmlns="http://www.w3.org/2000/svg" 
-                  className="h-12 w-12 text-white" 
-                  fill="none" 
-                  viewBox="0 0 24 24" 
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  className="h-12 w-12 text-white"
+                  fill="none"
+                  viewBox="0 0 24 24"
                   stroke="currentColor"
                 >
-                  <path 
-                    strokeLinecap="round" 
-                    strokeLinejoin="round" 
-                    strokeWidth={1.5} 
-                    d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" 
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={1.5}
+                    d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"
                   />
                 </svg>
               </div>
@@ -146,10 +146,10 @@ const RegisterPage = () => {
               Create your account to get started
             </p>
           </div>
-          
+
           <Card className="p-8 shadow-xl" hover>
             {error && <ErrorMessage message={error} />}
-            
+
             <form className="space-y-6" onSubmit={handleSubmit}>
               <Input
                 id="email"
@@ -167,7 +167,7 @@ const RegisterPage = () => {
                   </svg>
                 }
               />
-              
+
               <Input
                 id="username"
                 name="username"
@@ -183,7 +183,7 @@ const RegisterPage = () => {
                   </svg>
                 }
               />
-              
+
               <Input
                 id="password"
                 name="password"
@@ -199,7 +199,7 @@ const RegisterPage = () => {
                   </svg>
                 }
               />
-              
+
               <Input
                 id="confirm-password"
                 name="confirmPassword"
@@ -217,15 +217,15 @@ const RegisterPage = () => {
               />
 
               <div className="pt-2">
-                <Button 
-                  type="submit" 
+                <Button
+                  type="submit"
                   isLoading={isSubmitting || authLoading}
                   className="bg-gradient-to-r from-pink-500 to-purple-500 hover:from-pink-600 hover:to-purple-600"
                 >
                   Create Account
                 </Button>
               </div>
-              
+
               <div className="mt-4">
                 <div className="relative">
                   <div className="absolute inset-0 flex items-center">
@@ -250,4 +250,4 @@ const RegisterPage = () => {
   );
 };
 
-export default RegisterPage; 
+export default RegisterPage;

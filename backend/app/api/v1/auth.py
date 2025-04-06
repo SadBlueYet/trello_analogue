@@ -1,21 +1,18 @@
 from datetime import timedelta
 from typing import Any
-from fastapi import APIRouter, Depends, HTTPException, status, Response
+
+from fastapi import APIRouter, Depends, HTTPException, Response, status
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.ext.asyncio import AsyncSession
+
 from app.core.config import settings
-from app.core.security import (
-    create_access_token, 
-    create_refresh_token, 
-    set_auth_cookies,
-    delete_auth_cookies
-)
-from app.core.deps import get_user_from_refresh_token, get_current_active_user
+from app.core.deps import get_current_active_user, get_user_from_refresh_token
+from app.core.security import create_access_token, create_refresh_token, delete_auth_cookies, set_auth_cookies
 from app.crud import user as crud_user
 from app.db.session import get_db
 from app.models.user import User
 from app.schemas.token import Token
-from app.schemas.user import UserInDBBase, UserCreate, UserProfileUpdate
+from app.schemas.user import UserCreate, UserInDBBase, UserProfileUpdate
 
 router = APIRouter()
 
@@ -55,9 +52,7 @@ async def login(
     OAuth2 compatible token login, get an access token for future requests.
     Sets HTTP-only cookies for access and refresh tokens.
     """
-    user = await crud_user.authenticate(
-        db, username=form_data.username, password=form_data.password
-    )
+    user = await crud_user.authenticate(db, username=form_data.username, password=form_data.password)
     if not user:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -65,24 +60,17 @@ async def login(
             headers={"WWW-Authenticate": "Bearer"},
         )
     elif not user.is_active:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Inactive user"
-        )
-    
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Inactive user")
+
     access_token_expires = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
     refresh_token_expires = timedelta(days=settings.REFRESH_TOKEN_EXPIRE_DAYS)
-    
-    access_token = create_access_token(
-        user.id, expires_delta=access_token_expires
-    )
-    refresh_token = create_refresh_token(
-        user.id, expires_delta=refresh_token_expires
-    )
-    
+
+    access_token = create_access_token(user.id, expires_delta=access_token_expires)
+    refresh_token = create_refresh_token(user.id, expires_delta=refresh_token_expires)
+
     # Set cookies
     set_auth_cookies(response, access_token, refresh_token)
-    
+
     # Return tokens in body too (for backward compatibility and non-browser clients)
     return {
         "access_token": access_token,
@@ -101,17 +89,13 @@ async def refresh_token(
     """
     access_token_expires = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
     refresh_token_expires = timedelta(days=settings.REFRESH_TOKEN_EXPIRE_DAYS)
-    
-    access_token = create_access_token(
-        current_user.id, expires_delta=access_token_expires
-    )
-    refresh_token = create_refresh_token(
-        current_user.id, expires_delta=refresh_token_expires
-    )
-    
+
+    access_token = create_access_token(current_user.id, expires_delta=access_token_expires)
+    refresh_token = create_refresh_token(current_user.id, expires_delta=refresh_token_expires)
+
     # Set cookies
     set_auth_cookies(response, access_token, refresh_token)
-    
+
     # Return tokens in body too
     return {
         "access_token": access_token,
@@ -151,9 +135,7 @@ async def update_profile(
     """
     try:
         updated_user = await crud_user.update_user_profile(
-            db=db, 
-            current_user=current_user, 
-            profile_update=profile_update
+            db=db, current_user=current_user, profile_update=profile_update
         )
         return updated_user
     except HTTPException as e:
@@ -161,5 +143,5 @@ async def update_profile(
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to update profile: {str(e)}"
+            detail=f"Failed to update profile: {str(e)}",
         )

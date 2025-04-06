@@ -38,7 +38,7 @@ export const authService = {
         formData.append('username', data.username);
         formData.append('password', data.password);
         formData.append('grant_type', 'password');
-        
+
         // Use retry for Safari first-request CORS issues
         const response = await retryRequest(async () => {
             return api.post<LoginResponse>(API_ENDPOINTS.AUTH.LOGIN, formData, {
@@ -47,7 +47,7 @@ export const authService = {
                 }
             });
         });
-        
+
         return response.data;
     },
 
@@ -56,16 +56,16 @@ export const authService = {
         const response = await retryRequest(async () => {
             return api.post<RegisterResponse>(API_ENDPOINTS.AUTH.REGISTER, data);
         });
-        
+
         return response.data;
     },
-    
+
     async logout(): Promise<void> {
         await api.post(API_ENDPOINTS.AUTH.LOGOUT);
     },
-    
+
     async refreshToken(): Promise<LoginResponse> {
         const response = await api.post<LoginResponse>(API_ENDPOINTS.AUTH.REFRESH);
         return response.data;
     }
-}; 
+};

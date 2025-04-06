@@ -83,4 +83,4 @@ const CreateBoardForm: React.FC = () => {
     );
 };
 
-export default CreateBoardForm; 
+export default CreateBoardForm;

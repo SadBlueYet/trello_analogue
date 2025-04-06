@@ -1,7 +1,10 @@
-from typing import Optional, List, ForwardRef
-from pydantic import BaseModel
 from datetime import datetime
+from typing import ForwardRef, List, Optional
+
+from pydantic import BaseModel
+
 from app.schemas.user import UserInDBBase
+
 
 class BoardBase(BaseModel):
     title: str
@@ -44,6 +47,7 @@ class BoardListInDBBase(BoardListBase):
     class Config:
         from_attributes = True
 
+
 class BoardInDBBase(BoardBase):
     id: int
     owner_id: int
@@ -52,9 +56,7 @@ class BoardInDBBase(BoardBase):
 
     class Config:
         from_attributes = True
-        json_encoders = {
-            datetime: lambda v: v.isoformat() if v else None
-        }
+        json_encoders = {datetime: lambda v: v.isoformat() if v else None}
 
 
 class BoardWithLists(BoardInDBBase):
@@ -65,7 +67,7 @@ class BoardShareBase(BaseModel):
     board_id: int
     user_id: int
     access_type: str = "read"
-    
+
     class Config:
         from_attributes = True
 
@@ -82,6 +84,6 @@ class BoardShareInfo(BaseModel):
     id: int
     access_type: str
     user: UserInDBBase
-    
+
     class Config:
         from_attributes = True

@@ -1,7 +1,9 @@
 from typing import Any, List
+
 from fastapi import APIRouter, Depends, Query
 from sqlalchemy import or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
+
 from app.core import deps
 from app.models.user import User
 from app.schemas.user import UserInDBBase
@@ -22,17 +24,21 @@ async def search_users(
     """
     # Строим запрос для поиска пользователей
     search_query = f"%{query}%"
-    stmt = select(User).filter(
-        or_(
-            User.username.ilike(search_query),
-            User.email.ilike(search_query),
-            User.full_name.ilike(search_query) if User.full_name else False
+    stmt = (
+        select(User)
+        .filter(
+            or_(
+                User.username.ilike(search_query),
+                User.email.ilike(search_query),
+                User.full_name.ilike(search_query) if User.full_name else False,
+            )
         )
-    ).limit(limit)
+        .limit(limit)
+    )
 
     result = await db.execute(stmt)
 
     users = result.scalars().all()
     users = [user for user in users if user.id != current_user.id]
-    
-    return users 
+
+    return users

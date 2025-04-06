@@ -3,10 +3,10 @@ import { useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState, AppDispatch } from '../store';
 import { fetchBoards, createBoard } from '../store/board.slice';
-import { 
-  Button, 
-  Input, 
-  Card, 
+import {
+  Button,
+  Input,
+  Card,
   ErrorMessage,
   Badge
 } from '../components/ui';
@@ -64,7 +64,7 @@ const CreateBoardForm: React.FC<{
   onChange: (value: string) => void;
   onCancel: () => void;
 }> = ({ title, onSubmit, onChange, onCancel }) => {
-  
+
   return (
     <form onSubmit={onSubmit} className="space-y-5">
       <div className="flex items-center mb-4">
@@ -75,7 +75,7 @@ const CreateBoardForm: React.FC<{
         </div>
         <h3 className="text-xl font-bold text-gray-800">Create New Board</h3>
       </div>
-      
+
       <Input
         type="text"
         value={title}
@@ -84,7 +84,7 @@ const CreateBoardForm: React.FC<{
         label="Board Name"
         autoFocus
       />
-      
+
       <div className="flex gap-3 pt-2">
         <Button type="submit" className="px-4 shadow-md border border-indigo-700">
           Create Board
@@ -101,7 +101,7 @@ const HomePage = () => {
   const [newBoardTitle, setNewBoardTitle] = useState('');
   const [isCreating, setIsCreating] = useState(false);
   const [error, setError] = useState('');
-  
+
   const navigate = useNavigate();
   const dispatch = useDispatch<AppDispatch>();
   const { boards, isLoading } = useSelector((state: RootState) => state.board);
@@ -120,7 +120,7 @@ const HomePage = () => {
     if (!newBoardTitle.trim()) return;
 
     try {
-      const result = await dispatch(createBoard({ 
+      const result = await dispatch(createBoard({
         title: newBoardTitle,
         description: 'A new board',
         background_color: '#4F46E5' // Default indigo color
@@ -151,7 +151,7 @@ const HomePage = () => {
               </p>
             </div>
             <div className="mt-4 md:mt-0">
-              <Button 
+              <Button
                 onClick={() => setIsCreating(true)}
                 className="px-4 py-2 bg-white text-indigo-600 hover:bg-indigo-50 shadow-lg border border-white hover:border-indigo-100 transition-all duration-200"
               >
@@ -202,9 +202,9 @@ const HomePage = () => {
               <div className="mb-4 flex items-center justify-between">
                 <h2 className="text-xl font-bold text-gray-800">Your Boards</h2>
                 {!isCreating && (
-                  <Button 
+                  <Button
                     onClick={() => setIsCreating(true)}
-                    variant="outline" 
+                    variant="outline"
                     className="text-sm px-3 py-1 border-indigo-300 hover:bg-indigo-50 shadow-sm"
                   >
                     <span className="flex items-center">

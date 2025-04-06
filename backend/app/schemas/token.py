@@ -1,6 +1,7 @@
-from typing import Optional
-from pydantic import BaseModel
 from enum import Enum
+from typing import Optional
+
+from pydantic import BaseModel
 
 
 class TokenType(str, Enum):
@@ -16,4 +17,4 @@ class Token(BaseModel):
 
 class TokenPayload(BaseModel):
     sub: Optional[int] = None
-    type: Optional[TokenType] = None 
+    type: Optional[TokenType] = None

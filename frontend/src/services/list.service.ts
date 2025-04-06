@@ -44,4 +44,4 @@ export const listService = {
         );
         return response.data;
     }
-}; 
+};
