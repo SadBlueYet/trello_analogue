@@ -241,8 +241,12 @@ async def move_card(
     
     await check_board_access(source_board, current_user, db, ["write", "admin"])
     
+    board_prefix = generate_board_prefix(source_board.title)
+    formatted_id = f"{board_prefix}-{card.card_id}"
+    
     if card.assignee_id:
         assignee = await crud_user.get_user(db, card.assignee_id)
+        
         if card.list_id != move_data.target_list_id and card.assignee_id != current_user.id:
             send_email.delay(
                 assignee.email,
@@ -264,11 +268,7 @@ async def move_card(
     if card and card.assignee_id:
         assignee = await crud_user.get_user(db, card.assignee_id)
     
-    # After the move, get the formatted ID for the card
     if card:
-        board_prefix = generate_board_prefix(source_board.title)
-        formatted_id = f"{board_prefix}-{card.card_id}"
-        
         return {
             **card.__dict__,
             "assignee": assignee,
