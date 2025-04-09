@@ -92,20 +92,16 @@ const CardModal: React.FC<CardModalProps> = ({ isOpen, onClose, card, onSave, li
   const loadBoardUsers = async () => {
     setLoadingUsers(true);
     try {
-      console.log(`Fetching board shares for board ID: ${boardId}`);
       const sharesData = await boardService.getBoardShares(boardId);
-      console.log("Loaded board shares data:", sharesData);
 
       // Check if we have a valid response with users
       if (!sharesData || sharesData.length === 0) {
-        console.warn("No users returned from board shares API");
 
         // Try to load from localStorage first
         try {
           const cachedShares = localStorage.getItem(`boardShares_${boardId}`);
           if (cachedShares) {
             const parsedShares = JSON.parse(cachedShares);
-            console.log("Using cached board shares from localStorage:", parsedShares);
             setBoardUsers(parsedShares);
             return; // Exit early if we have cached data
           }
@@ -138,7 +134,6 @@ const CardModal: React.FC<CardModalProps> = ({ isOpen, onClose, card, onSave, li
             });
           }
 
-          console.log("Using fallback user list:", usersToInclude);
           setBoardUsers(usersToInclude);
         }
       } else {

@@ -119,12 +119,11 @@ def send_comment_notification(
 
         msg.attach(MIMEText(html_content, "html", "utf-8"))
 
-        server = smtp.SMTP(settings.SMTP_HOST, settings.SMTP_PORT)
-        server.starttls()
-        server.login(settings.SMTP_LOGIN, settings.SMTP_PASSWORD)
+        with smtp.SMTP(settings.SMTP_HOST, settings.SMTP_PORT) as server:
+            server.starttls()
+            server.login(settings.SMTP_LOGIN, settings.SMTP_PASSWORD)
 
-        server.sendmail(settings.SMTP_LOGIN, email, msg.as_string())
-        server.quit()
+            server.sendmail(settings.SMTP_LOGIN, email, msg.as_string())
         logging.info(f"Comment notification sent to {email}")
         return True
     except Exception as e:

@@ -1,7 +1,6 @@
 from typing import List, Optional
 
 from dotenv import load_dotenv
-from pydantic import AnyHttpUrl
 from pydantic_settings import BaseSettings
 
 
@@ -17,10 +16,10 @@ class Settings(BaseSettings):
     REFRESH_TOKEN_EXPIRE_DAYS: int = 7
 
     # Cookie settings
-    COOKIE_DOMAIN: Optional[str] = None  # None позволяет использовать куки на localhost
-    COOKIE_SECURE: bool = False  # Set to False for HTTP connections
-    COOKIE_SAMESITE: str = "lax"  # Use "lax" for better browser compatibility
-    COOKIE_HTTP_ONLY: bool = True  # Recommended for security
+    COOKIE_DOMAIN: Optional[str] = None
+    COOKIE_SECURE: bool = False
+    COOKIE_SAMESITE: str = "lax"
+    COOKIE_HTTP_ONLY: bool = True
 
     # CORS
     CORS_ORIGINS: List[str] = []
