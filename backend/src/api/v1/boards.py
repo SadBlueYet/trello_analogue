@@ -3,13 +3,13 @@ from typing import Any, List
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core import deps
-from app.crud import board as crud_board
-from app.crud import board_share as crud_board_share
-from app.crud import list as crud_list
-from app.crud import user as crud_user
-from app.models.user import User
-from app.schemas.board import (
+from src.core import deps
+from src.crud import board as crud_board
+from src.crud import board_share as crud_board_share
+from src.crud import list as crud_list
+from src.crud import user as crud_user
+from src.models.user import User
+from src.schemas.board import (
     BoardCreate,
     BoardInDBBase,
     BoardShareCreate,

@@ -5,9 +5,9 @@ from sqlalchemy import select, text, update
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import joinedload
 
-from app.models.board_list import BoardList
-from app.models.card import Card
-from app.schemas.card import CardCreate, CardUpdate
+from src.models.board_list import BoardList
+from src.models.card import Card
+from src.schemas.card import CardCreate, CardUpdate
 
 
 async def get_card(db: AsyncSession, card_id: int) -> Optional[Card]:

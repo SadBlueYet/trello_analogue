@@ -4,10 +4,10 @@ from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
-from app.models.board_list import BoardList
-from app.models.card import Card
-from app.schemas.board import BoardListCreate, BoardListUpdate
-from app.schemas.list import ResponseBoardList
+from src.models.board_list import BoardList
+from src.models.card import Card
+from src.schemas.board import BoardListCreate, BoardListUpdate
+from src.schemas.list import ResponseBoardList
 
 
 async def get_list(db: AsyncSession, list_id: int, include_cards: bool = False) -> Optional[BoardList]:

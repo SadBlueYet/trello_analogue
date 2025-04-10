@@ -6,8 +6,8 @@ from fastapi import Response
 from jose import jwt
 from passlib.context import CryptContext
 
-from app.core.config import settings
-from app.schemas.token import TokenType
+from src.core.config import settings
+from src.schemas.token import TokenType
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 

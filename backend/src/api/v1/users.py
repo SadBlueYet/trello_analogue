@@ -4,9 +4,9 @@ from fastapi import APIRouter, Depends, Query
 from sqlalchemy import or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core import deps
-from app.models.user import User
-from app.schemas.user import UserInDBBase
+from src.core import deps
+from src.models.user import User
+from src.schemas.user import UserInDBBase
 
 router = APIRouter()
 

@@ -7,7 +7,7 @@ from email.mime.text import MIMEText
 from celery import Celery
 from jinja2 import Environment, FileSystemLoader
 
-from app.core.config import settings
+from src.core.config import settings
 
 celery_app = Celery("tasks", broker=settings.REDIS_DSN)
 celery_app.conf.task_default_queue = "default"

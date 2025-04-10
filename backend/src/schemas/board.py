@@ -3,7 +3,7 @@ from typing import ForwardRef, List, Optional
 
 from pydantic import BaseModel
 
-from app.schemas.user import UserInDBBase
+from src.schemas.user import UserInDBBase
 
 
 class BoardBase(BaseModel):

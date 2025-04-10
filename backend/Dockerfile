@@ -24,4 +24,4 @@ RUN pdm install -gp /app/ -v --prod
 # Копируем файлы проекта в рабочую директорию
 COPY . /app/
 
-CMD ["sh", "-c", "alembic upgrade head && celery -A app.tasks worker --loglevel=info & python app/main.py"]
+CMD ["sh", "-c", "alembic upgrade head && celery -A src.tasks worker --loglevel=info & python src/main.py"]

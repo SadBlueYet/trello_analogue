@@ -3,8 +3,8 @@ from typing import List, Optional
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.models.comment import Comment
-from app.schemas.comment import CommentCreate, CommentUpdate
+from src.models.comment import Comment
+from src.schemas.comment import CommentCreate, CommentUpdate
 
 
 async def create_comment(db: AsyncSession, comment_in: CommentCreate, user_id: int) -> Comment:

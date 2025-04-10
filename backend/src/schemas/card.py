@@ -3,8 +3,8 @@ from typing import List, Optional
 
 from pydantic import BaseModel
 
-from app.schemas.comment import CommentWithUser
-from app.schemas.user import UserInDBBase
+from src.schemas.comment import CommentWithUser
+from src.schemas.user import UserInDBBase
 
 
 class CardBase(BaseModel):

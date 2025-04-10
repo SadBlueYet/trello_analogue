@@ -5,12 +5,12 @@ from fastapi.security import OAuth2PasswordBearer
 from jose import JWTError, jwt
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.config import settings
-from app.crud.board_share import get_board_share
-from app.db.session import get_db
-from app.models.board import Board
-from app.models.user import User
-from app.schemas.token import TokenPayload, TokenType
+from src.core.config import settings
+from src.crud.board_share import get_board_share
+from src.db.session import get_db
+from src.models.board import Board
+from src.models.user import User
+from src.schemas.token import TokenPayload, TokenType
 
 # Keep OAuth2PasswordBearer for compatibility
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl=f"{settings.API_V1_STR}/auth/login")

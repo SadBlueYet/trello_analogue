@@ -4,9 +4,9 @@ from fastapi import HTTPException, status
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.security import get_password_hash, verify_password
-from app.models.user import User
-from app.schemas.user import UserCreate, UserProfileUpdate, UserUpdate
+from src.core.security import get_password_hash, verify_password
+from src.models.user import User
+from src.schemas.user import UserCreate, UserProfileUpdate, UserUpdate
 
 
 async def get_user(db: AsyncSession, user_id: int) -> Optional[User]:

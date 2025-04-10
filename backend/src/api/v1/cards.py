@@ -3,18 +3,18 @@ from typing import Any, List
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core import deps
-from app.core.deps import check_board_access
-from app.crud import board as crud_board
-from app.crud import board_share as crud_board_share
-from app.crud import card as crud_card
-from app.crud import comment as crud_comment
-from app.crud import list as crud_list
-from app.crud import user as crud_user
-from app.models.user import User
-from app.schemas.card import CardCreate, CardUpdate, CardWithAssignee, MoveCard
-from app.schemas.comment import CommentCreate, CommentUpdate, CommentWithUser
-from app.tasks import send_comment_notification, send_email
+from src.core import deps
+from src.core.deps import check_board_access
+from src.crud import board as crud_board
+from src.crud import board_share as crud_board_share
+from src.crud import card as crud_card
+from src.crud import comment as crud_comment
+from src.crud import list as crud_list
+from src.crud import user as crud_user
+from src.models.user import User
+from src.schemas.card import CardCreate, CardUpdate, CardWithAssignee, MoveCard
+from src.schemas.comment import CommentCreate, CommentUpdate, CommentWithUser
+from src.tasks import send_comment_notification, send_email
 
 router = APIRouter()
 
