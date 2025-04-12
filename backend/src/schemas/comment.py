@@ -30,3 +30,6 @@ class CommentInDBBase(CommentBase):
 
 class CommentWithUser(CommentInDBBase):
     user: Optional[UserInDBBase] = None
+
+    class Config:
+        from_attributes = True

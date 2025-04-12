@@ -1,3 +1,4 @@
+import pprint
 from typing import Any, List
 
 from fastapi import APIRouter, Depends, HTTPException, Query
@@ -6,7 +7,6 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from src.core import deps
 from src.core.deps import check_board_access
 from src.crud import board as crud_board
-from src.crud import board_share as crud_board_share
 from src.crud import card as crud_card
 from src.crud import comment as crud_comment
 from src.crud import list as crud_list
@@ -101,50 +101,6 @@ async def create_card(
     return {**card.__dict__, "assignee": assignee, "formatted_id": formatted_id}
 
 
-@router.get("/{card_id}", response_model=CardWithAssignee)
-async def get_card(
-    *,
-    db: AsyncSession = Depends(deps.get_db),
-    card_id: int,
-    current_user: User = Depends(deps.get_current_active_user),
-) -> Any:
-    card = await crud_card.get_card(db, card_id)
-    if not card:
-        raise HTTPException(status_code=404, detail="CardInDBBase not found")
-
-    list_obj = await crud_list.get_list(db, card.list_id)
-    board = await crud_board.get_board(db, list_obj.board_id)
-
-    await check_board_access(board, current_user, db, ["read", "write", "admin"])
-
-    comments = await crud_comment.get_card_comments(db, card_id)
-
-    formatted_comments = []
-    for comment in comments:
-        comment_dict = comment.__dict__
-        comment_dict = {k: v for k, v in comment_dict.items() if not k.startswith("_")}
-
-        user = await crud_user.get_user(db, comment.user_id)
-        user_dict = {k: v for k, v in user.__dict__.items() if not k.startswith("_")}
-
-        comment_dict["user"] = user_dict
-        formatted_comments.append(comment_dict)
-
-    assignee = None
-    if card.assignee_id:
-        assignee = await crud_user.get_user(db, card.assignee_id)
-
-    board_prefix = generate_board_prefix(board.title)
-    formatted_id = f"{board_prefix}-{card.card_id}"
-
-    return {
-        **card.__dict__,
-        "assignee": assignee,
-        "comments": formatted_comments,
-        "formatted_id": formatted_id,
-    }
-
-
 @router.put("/{card_id}", response_model=CardWithAssignee)
 async def update_card(
     *,
@@ -182,7 +138,7 @@ async def update_card(
                 board.id,
             )
 
-    return {**card.__dict__, "assignee": assignee, "formatted_id": formatted_id}
+    return CardWithAssignee(**card.__dict__, assignee=assignee, formatted_id=formatted_id)
 
 
 @router.delete("/{card_id}")
@@ -288,14 +244,8 @@ async def get_card_comments(
 
     result = []
     for comment in comments:
-        comment_dict = comment.__dict__
-        comment_dict = {k: v for k, v in comment_dict.items() if not k.startswith("_")}
-
-        user = await crud_user.get_user(db, comment.user_id)
-        user_dict = {k: v for k, v in user.__dict__.items() if not k.startswith("_")}
-
-        comment_dict["user"] = user_dict
-        result.append(comment_dict)
+        comment.user = await crud_user.get_user(db, comment.user_id)
+        result.append(comment)
 
     return result
 
@@ -326,25 +276,13 @@ async def create_comment(
 
     comment = await crud_comment.create_comment(db, comment_in, current_user.id)
 
-    comment_dict = comment.__dict__
-    comment_dict = {k: v for k, v in comment_dict.items() if not k.startswith("_")}
-
-    user = await crud_user.get_user(db, comment.user_id)
-    user_dict = {k: v for k, v in user.__dict__.items() if not k.startswith("_")}
-
-    comment_dict["user"] = user_dict
-
-    # Если у карточки есть ответственный, отправляем ему уведомление о новом комментарии
-    if (
-        card.assignee_id and card.assignee_id != current_user.id
-    ):  # Don't notify if the assignee is the one who commented
+    comment.user =  await crud_user.get_user(db, comment.user_id)
+    if card.assignee_id and card.assignee_id != current_user.id:
         assignee = await crud_user.get_user(db, card.assignee_id)
         if assignee:
-            # Generate formatted task ID
             board_prefix = generate_board_prefix(board.title)
             formatted_id = f"{board_prefix}-{card.card_id}"
 
-            # Отправляем email-уведомление с информацией о новом комментарии
             send_comment_notification.delay(
                 assignee.email,
                 assignee.username,
@@ -352,10 +290,10 @@ async def create_comment(
                 formatted_id,
                 current_user.username,
                 board.id,
-                comment_in.text,  # Pass the comment text
+                comment_in.text,
             )
 
-    return comment_dict
+    return comment
 
 
 @router.put("/{card_id}/comments/{comment_id}", response_model=CommentWithUser)
@@ -385,15 +323,9 @@ async def update_comment(
         await check_board_access(board, current_user, db, ["write", "admin"])
 
     comment = await crud_comment.update_comment(db, comment, comment_in)
+    comment.user = await crud_user.get_user(db, comment.user_id)
 
-    comment_dict = {k: v for k, v in comment.__dict__.items() if not k.startswith("_")}
-
-    user = await crud_user.get_user(db, comment.user_id)
-    user_dict = {k: v for k, v in user.__dict__.items() if not k.startswith("_")}
-
-    comment_dict["user"] = user_dict
-
-    return comment_dict
+    return comment
 
 
 @router.delete("/{card_id}/comments/{comment_id}")

@@ -45,6 +45,9 @@ class CardWithAssignee(CardInDBBase):
     assignee: Optional[UserInDBBase] = None
     comments: Optional[List[CommentWithUser]] = None
 
+    class Config:
+        from_attributes = True
+
 
 class MoveCard(BaseModel):
     new_position: int

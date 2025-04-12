@@ -5,6 +5,8 @@ from fastapi.security import OAuth2PasswordBearer
 from jose import JWTError, jwt
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from services import UserService
+from src.repositories import RepositoryFactory
 from src.core.config import settings
 from src.crud.board_share import get_board_share
 from src.db.session import get_db
@@ -12,8 +14,15 @@ from src.models.board import Board
 from src.models.user import User
 from src.schemas.token import TokenPayload, TokenType
 
+
 # Keep OAuth2PasswordBearer for compatibility
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl=f"{settings.API_V1_STR}/auth/login")
+
+
+async def get_repository_factory(
+    db: AsyncSession = Depends(get_db),
+) -> RepositoryFactory:
+    return RepositoryFactory(db)
 
 
 async def get_token_from_cookie_or_header(
@@ -38,9 +47,10 @@ async def get_token_from_cookie_or_header(
 
 
 async def get_current_user(
-    db: AsyncSession = Depends(get_db),
+    factory: RepositoryFactory = Depends(get_repository_factory),
     token: str = Depends(get_token_from_cookie_or_header),
 ) -> User:
+    service = UserService(factory.create_user_repository())
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
         detail="Could not validate credentials",
@@ -49,15 +59,12 @@ async def get_current_user(
     try:
         payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
         token_data = TokenPayload(**payload)
-        if token_data.sub is None:
-            raise credentials_exception
-
-        if token_data.type != TokenType.ACCESS:
+        if token_data.sub is None or token_data.type != TokenType.ACCESS:
             raise credentials_exception
     except JWTError:
         raise credentials_exception
 
-    user = await db.get(User, token_data.sub)
+    user = await service.get_user_by_id(token_data.sub)
     if not user:
         raise credentials_exception
     return user
@@ -77,9 +84,9 @@ async def get_refresh_token(
 
 
 async def get_user_from_refresh_token(
-    db: AsyncSession = Depends(get_db), refresh_token: str = Depends(get_refresh_token)
+    factory: RepositoryFactory = Depends(get_repository_factory), refresh_token: str = Depends(get_refresh_token)
 ) -> User:
-    """Validate refresh token and return user."""
+    service = UserService(factory.create_user_repository())
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
         detail="Invalid refresh token",
@@ -88,16 +95,12 @@ async def get_user_from_refresh_token(
     try:
         payload = jwt.decode(refresh_token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
         token_data = TokenPayload(**payload)
-        if token_data.sub is None:
-            raise credentials_exception
-
-        # Verify it's a refresh token not an access token
-        if token_data.type != TokenType.REFRESH:
+        if token_data.sub is None or token_data.type != TokenType.REFRESH:
             raise credentials_exception
     except JWTError:
         raise credentials_exception
 
-    user = await db.get(User, token_data.sub)
+    user = await service.get_user_by_id(token_data.sub)
     if not user:
         raise credentials_exception
     return user

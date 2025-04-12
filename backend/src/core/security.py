@@ -73,7 +73,6 @@ def delete_auth_cookies(response: Response) -> None:
     response.delete_cookie(
         key="access_token",
         domain=settings.COOKIE_DOMAIN,
-        path="/",
         secure=settings.COOKIE_SECURE,
         httponly=settings.COOKIE_HTTP_ONLY,
         samesite=settings.COOKIE_SAMESITE,
@@ -81,7 +80,6 @@ def delete_auth_cookies(response: Response) -> None:
     response.delete_cookie(
         key="refresh_token",
         domain=settings.COOKIE_DOMAIN,
-        path="/",
         secure=settings.COOKIE_SECURE,
         httponly=settings.COOKIE_HTTP_ONLY,
         samesite=settings.COOKIE_SAMESITE,

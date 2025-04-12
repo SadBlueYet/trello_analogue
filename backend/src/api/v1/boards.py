@@ -3,11 +3,13 @@ from typing import Any, List
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from services import UserService
+from src.core.deps import get_repository_factory
+from src.repositories import RepositoryFactory
 from src.core import deps
 from src.crud import board as crud_board
 from src.crud import board_share as crud_board_share
 from src.crud import list as crud_list
-from src.crud import user as crud_user
 from src.models.user import User
 from src.schemas.board import (
     BoardCreate,
@@ -131,10 +133,12 @@ async def get_board_shares(
     db: AsyncSession = Depends(deps.get_db),
     board_id: int,
     current_user: User = Depends(deps.get_current_active_user),
+    factory: RepositoryFactory = Depends(get_repository_factory)
 ) -> Any:
     """
     Get all users who have access to the board.
     """
+    user_service = UserService(factory.create_user_repository())
     board = await crud_board.get_board(db, board_id)
     if not board:
         raise HTTPException(status_code=404, detail="Board not found")
@@ -143,7 +147,7 @@ async def get_board_shares(
 
     board_shares = await crud_board_share.get_board_shares_with_user_info(db, board_id)
 
-    owner_user = await crud_user.get_user(db, board.owner_id)
+    owner_user = await user_service.get_user_by_id(board.owner_id)
 
     result = []
 
@@ -166,30 +170,28 @@ async def create_board_share(
     board_id: int,
     board_share_in: BoardShareCreate,
     current_user: User = Depends(deps.get_current_active_user),
+    factory: RepositoryFactory = Depends(get_repository_factory)
 ) -> Any:
     """
     Share a board with another user.
     """
-    board = await crud_board.get_board(db, board_id)
-    if not board:
+    user_service = UserService(factory.create_user_repository())
+    if not (board := await crud_board.get_board(db, board_id)):
         raise HTTPException(status_code=404, detail="Board not found")
 
     await deps.check_board_access(board, current_user, db, ["admin"])
 
-    user = await crud_user.get_user(db, board_share_in.user_id)
-    if not user:
+    if not (user := await user_service.get_user_by_id(board_share_in.user_id)):
         raise HTTPException(status_code=404, detail="User not found")
 
     if user.id == current_user.id:
         raise HTTPException(status_code=400, detail="You are the owner of this board")
 
-    existing_share = await crud_board_share.get_board_share(db, board_id, user.id)
-    if existing_share:
+    if await crud_board_share.get_board_share(db, board_id, user.id):
         raise HTTPException(status_code=400, detail="User already has access to this board")
 
     board_share = await crud_board_share.create_board_share(db, board_share_in)
 
-    # Формируем ответ
     return {"id": board_share.id, "access_type": board_share.access_type, "user": user}
 
 
@@ -201,10 +203,12 @@ async def update_board_share(
     user_id: int,
     board_share_in: BoardShareUpdate,
     current_user: User = Depends(deps.get_current_active_user),
+    factory: RepositoryFactory = Depends(get_repository_factory)
 ) -> Any:
     """
     Update a board share (change access type).
     """
+    user_service = UserService(factory.create_user_repository())
     board = await crud_board.get_board(db, board_id)
     if not board:
         raise HTTPException(status_code=404, detail="Board not found")
@@ -215,17 +219,12 @@ async def update_board_share(
     if not board_share:
         raise HTTPException(status_code=404, detail="Share not found")
 
-    user = await crud_user.get_user(db, user_id)
-    if not user:
+    if not (user := await user_service.get_user_by_id(user_id)):
         raise HTTPException(status_code=404, detail="User not found")
 
     updated_share = await crud_board_share.update_board_share(db, board_share, board_share_in)
 
-    return {
-        "id": updated_share.id,
-        "access_type": updated_share.access_type,
-        "user": user,
-    }
+    return {"id": updated_share.id, "access_type": updated_share.access_type, "user": user}
 
 
 @router.delete("/{board_id}/share/{user_id}")
