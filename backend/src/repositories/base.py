@@ -34,6 +34,7 @@ class SqlAlchemyRepository(BaseRepository):
             query = select(self.model).filter_by(**kwargs)
             return (await self.session.execute(query)).scalars().all()
         except Exception as e:
+            
             raise HTTPException(status_code=400, detail=f"Invalid filter: {e}")
 
     async def get_one(self, **kwargs):
@@ -43,13 +44,23 @@ class SqlAlchemyRepository(BaseRepository):
         try:
             query = select(self.model).filter_by(**kwargs)
             return (await self.session.execute(query)).scalar_one_or_none()
-        except Exception as e:
-            raise HTTPException(status_code=400, detail=f"Invalid filter: {e}")
+        except Exception:
+            raise HTTPException(status_code=400, detail=f"Invalid filter: {kwargs}")
 
     async def create(self, data: dict):
         try:
             model = self.model(**data)
             self.session.add(model)
+            await self.session.commit()
+            await self.session.refresh(model)
+            return model
+        except Exception as e:
+            raise HTTPException(status_code=400, detail=f"Invalid data: {e}")
+
+    async def update(self, model: Any, update_data: dict):
+        try:
+            for field, value in update_data.items():
+                setattr(model, field, value)
             await self.session.commit()
             await self.session.refresh(model)
             return model

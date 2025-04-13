@@ -5,8 +5,9 @@ from fastapi.security import OAuth2PasswordBearer
 from jose import JWTError, jwt
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from services import UserService
-from src.repositories import RepositoryFactory
+from services import UserService, BoardShareService
+from src.repositories import SQLAlchemyRepositoryFactory
+from src.services import ServiceFactory
 from src.core.config import settings
 from src.crud.board_share import get_board_share
 from src.db.session import get_db
@@ -19,10 +20,16 @@ from src.schemas.token import TokenPayload, TokenType
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl=f"{settings.API_V1_STR}/auth/login")
 
 
-async def get_repository_factory(
+async def get_sqlalchemy_repository_factory(
     db: AsyncSession = Depends(get_db),
-) -> RepositoryFactory:
-    return RepositoryFactory(db)
+) -> SQLAlchemyRepositoryFactory:
+    return SQLAlchemyRepositoryFactory(db)
+
+
+def get_sqlalchemy_service_factory(
+    db: AsyncSession = Depends(get_db),
+) -> ServiceFactory:
+    return ServiceFactory(SQLAlchemyRepositoryFactory(db))
 
 
 async def get_token_from_cookie_or_header(
@@ -47,10 +54,10 @@ async def get_token_from_cookie_or_header(
 
 
 async def get_current_user(
-    factory: RepositoryFactory = Depends(get_repository_factory),
+    factory: ServiceFactory = Depends(get_sqlalchemy_service_factory),
     token: str = Depends(get_token_from_cookie_or_header),
 ) -> User:
-    service = UserService(factory.create_user_repository())
+    service = factory.create_user_service()
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
         detail="Could not validate credentials",
@@ -84,9 +91,9 @@ async def get_refresh_token(
 
 
 async def get_user_from_refresh_token(
-    factory: RepositoryFactory = Depends(get_repository_factory), refresh_token: str = Depends(get_refresh_token)
+    service_factory: ServiceFactory = Depends(get_sqlalchemy_service_factory), refresh_token: str = Depends(get_refresh_token)
 ) -> User:
-    service = UserService(factory.create_user_repository())
+    service = service_factory.create_user_service()
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
         detail="Invalid refresh token",
@@ -125,10 +132,10 @@ async def get_current_active_superuser(
 async def check_board_access(
     board: Board,
     current_user: User,
-    db: AsyncSession = Depends(get_db),
-    access_type: list[str] = ["write", "admin"],
+    access_type: list[str],
+    service: BoardShareService
 ):
     if board.owner_id != current_user.id:
-        board_share = await get_board_share(db, board.id, current_user.id)
+        board_share = await service.get_board_share(board.id, current_user.id)
         if not board_share or board_share.access_type not in access_type:
             raise HTTPException(status_code=403, detail="Not enough permissions")

@@ -1,4 +1,9 @@
 from .base import SqlAlchemyRepository
 from .user import UserRepository
 from .base import BaseRepository
-from .factory import RepositoryFactory
+from .board import BoardRepository
+from .board_share import BoardShareReository
+from .list import ListRepository
+from .card import CardRepository
+from .comment import CommentRepository
+from .factory import SQLAlchemyRepositoryFactory, BaseRepositoryFactory

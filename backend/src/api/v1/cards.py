@@ -1,358 +1,309 @@
 import pprint
-from typing import Any, List
+from typing import Any, List, Tuple, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.core import deps
 from src.core.deps import check_board_access
-from src.crud import board as crud_board
-from src.crud import card as crud_card
-from src.crud import comment as crud_comment
-from src.crud import list as crud_list
-from src.crud import user as crud_user
 from src.models.user import User
 from src.schemas.card import CardCreate, CardUpdate, CardWithAssignee, MoveCard
 from src.schemas.comment import CommentCreate, CommentUpdate, CommentWithUser
 from src.tasks import send_comment_notification, send_email
+from src.services.factory import ServiceFactory
 
 router = APIRouter()
 
 
-# Helper function to generate board prefix from title
 def generate_board_prefix(board_title: str) -> str:
     """
     Generate board prefix from board title by taking first letter of each word.
     Example: "Awesome Board" -> "AB"
     """
-    if not board_title:
+    if not board_title or not (words := board_title.split()):
         return "TA"
+    return "".join(word[0].upper() for word in words)
 
-    words = board_title.split()
-    if not words:
-        return "TA"
 
-    return "".join([word[0].upper() for word in words if word])
+async def get_card_context(
+    card_id: int,
+    factory: ServiceFactory,
+    user: User,
+    required_access: List[str]
+) -> tuple[Any, Any, Any, str]:
+    """Get card context including card, list, board and formatted card ID."""
+    card_service = factory.create_card_service()
+    list_service = factory.create_list_service()
+    board_service = factory.create_board_service()
+    board_share_service = factory.create_board_share_service()
+    if not (card := await card_service.get_card(card_id)):
+        raise HTTPException(status_code=404, detail="Card not found")
+
+    if not (list_obj := await list_service.get_list(card.list_id)):
+        raise HTTPException(status_code=404, detail="List not found")
+
+    if not (board := await board_service.get_board(list_obj.board_id)):
+        raise HTTPException(status_code=404, detail="Board not found")
+
+    await check_board_access(board, user, required_access, board_share_service)
+    
+    formatted_id = f"{generate_board_prefix(board.title)}-{card.card_id}"
+    return card, list_obj, board, formatted_id
+
+
+async def notify_assignee(
+    card: Any,
+    formatted_id: str,
+    current_user: User,
+    board_id: int,
+    factory: ServiceFactory,
+    comment_text: Optional[str] = None
+) -> None:
+    """Notify card assignee about changes or comments."""
+    if not card.assignee_id or card.assignee_id == current_user.id:
+        return
+
+    user_service = factory.create_user_service()
+    if not (assignee := await user_service.get_user_by_id(card.assignee_id)):
+        return
+
+    notification_data = {
+        "email": assignee.email,
+        "username": assignee.username,
+        "card_title": card.title,
+        "formatted_id": formatted_id,
+        "current_username": current_user.username,
+        "board_id": board_id,
+    }
+
+    if comment_text:
+        send_comment_notification.delay(**notification_data, comment_text=comment_text)
+    else:
+        send_email.delay(**notification_data)
+
+
+async def get_card_with_assignee(
+    card: Any,
+    formatted_id: str,
+    factory: ServiceFactory
+) -> CardWithAssignee:
+    """Convert card to CardWithAssignee format with assignee information."""
+    user_service = factory.create_user_service()
+    assignee = None
+    if card.assignee_id:
+        assignee = await user_service.get_user_by_id(card.assignee_id)
+    return CardWithAssignee(**card.__dict__, assignee=assignee, formatted_id=formatted_id)
 
 
 @router.get("/", response_model=List[CardWithAssignee])
 async def get_cards(
-    *,
-    db: AsyncSession = Depends(deps.get_db),
     list_id: int = Query(..., description="ID of the list"),
     current_user: User = Depends(deps.get_current_active_user),
-) -> Any:
-    list_obj = await crud_list.get_list(db, list_id)
-    if not list_obj:
+    factory: ServiceFactory = Depends(deps.get_sqlalchemy_service_factory),
+) -> list[CardWithAssignee]:
+    """Get all cards in a list."""
+    list_service = factory.create_list_service()
+    board_service = factory.create_board_service()
+    card_service = factory.create_card_service()
+    board_share_service = factory.create_board_share_service()
+    if not (list_obj := await list_service.get_list(list_id)):
         raise HTTPException(status_code=404, detail="List not found")
 
-    board = await crud_board.get_board(db, list_obj.board_id)
-    if not board:
+    if not (board := await board_service.get_board(list_obj.board_id)):
         raise HTTPException(status_code=404, detail="Board not found")
 
-    await check_board_access(board, current_user, db, ["read", "write", "admin"])
+    await check_board_access(board, current_user, ["read", "write", "admin"], board_share_service)
 
-    cards = await crud_card.get_list_cards(db, list_id)
-
-    # Generate board prefix for formatted IDs
+    cards = await card_service.get_list_cards(list_id)
     board_prefix = generate_board_prefix(board.title)
 
     result = []
     for card in cards:
-        card_dict = card.__dict__
-        card_dict = {k: v for k, v in card_dict.items() if not k.startswith("_")}
-
-        card_dict["formatted_id"] = f"{board_prefix}-{card.card_id}"
-
-        result.append(card_dict)
-
+        result.append(CardWithAssignee(**card.__dict__, formatted_id=f"{board_prefix}-{card.card_id}"))
     return result
 
 
 @router.post("/", response_model=CardWithAssignee)
 async def create_card(
-    *,
-    db: AsyncSession = Depends(deps.get_db),
     card_in: CardCreate,
     current_user: User = Depends(deps.get_current_active_user),
-) -> Any:
-    """
-    Create a new card.
-    """
-    # Check if list exists
-    list_obj = await crud_list.get_list(db, card_in.list_id)
-    if not list_obj:
+    factory: ServiceFactory = Depends(deps.get_sqlalchemy_service_factory),
+) -> CardWithAssignee:
+    """Create a new card."""
+    list_service = factory.create_list_service()
+    board_service = factory.create_board_service()
+    card_service = factory.create_card_service()
+    board_share_service = factory.create_board_share_service()
+    
+    if not (list_obj := await list_service.get_list(card_in.list_id)):
         raise HTTPException(status_code=404, detail="List not found")
 
-    board = await crud_board.get_board(db, list_obj.board_id)
-    if not board:
+    if not (board := await board_service.get_board(list_obj.board_id)):
         raise HTTPException(status_code=404, detail="Board not found")
 
-    await check_board_access(board, current_user, db, ["write", "admin"])
+    await check_board_access(board, current_user, ["write", "admin"], board_share_service)
 
-    card = await crud_card.create_card(db, card_in)
-    assignee = None
-    if card.assignee_id:
-        assignee = await crud_user.get_user(db, card.assignee_id)
-
-    board_prefix = generate_board_prefix(board.title)
-    formatted_id = f"{board_prefix}-{card.card_id}"
-
-    return {**card.__dict__, "assignee": assignee, "formatted_id": formatted_id}
+    card = await card_service.create_card(card_in)
+    formatted_id = f"{generate_board_prefix(board.title)}-{card.card_id}"
+    
+    return await get_card_with_assignee(card, formatted_id, factory)
 
 
 @router.put("/{card_id}", response_model=CardWithAssignee)
 async def update_card(
-    *,
-    db: AsyncSession = Depends(deps.get_db),
     card_id: int,
     card_in: CardUpdate,
     current_user: User = Depends(deps.get_current_active_user),
-) -> Any:
-    card = await crud_card.get_card(db, card_id)
-    if not card:
-        raise HTTPException(status_code=404, detail="CardInDBBase not found")
+    factory: ServiceFactory = Depends(deps.get_sqlalchemy_service_factory),
+) -> CardWithAssignee:
+    """Update an existing card."""
+    card_service = factory.create_card_service()
+    card, _, board, formatted_id = await get_card_context(
+        card_id, factory, current_user, ["write", "admin"]
+    )
 
-    list_obj = await crud_list.get_list(db, card.list_id)
-    board = await crud_board.get_board(db, list_obj.board_id)
-
-    await check_board_access(board, current_user, db, ["write", "admin"])
-
-    card = await crud_card.update_card(db, card, card_in)
-
-    # Generate formatted ID for response
-    board_prefix = generate_board_prefix(board.title)
-    formatted_id = f"{board_prefix}-{card.card_id}"
-
-    assignee = None
-    if card.assignee_id:
-        assignee = await crud_user.get_user(db, card.assignee_id)
-
-        if card.assignee_id != current_user.id:
-            send_email.delay(
-                assignee.email,
-                assignee.username,
-                card.title,
-                formatted_id,  # Use the formatted ID here
-                current_user.username,
-                board.id,
-            )
-
-    return CardWithAssignee(**card.__dict__, assignee=assignee, formatted_id=formatted_id)
+    card = await card_service.update_card(card, card_in)
+    await notify_assignee(card, formatted_id, current_user, board.id, factory)
+    
+    return await get_card_with_assignee(card, formatted_id, factory)
 
 
 @router.delete("/{card_id}")
 async def delete_card(
-    *,
-    db: AsyncSession = Depends(deps.get_db),
     card_id: int,
     current_user: User = Depends(deps.get_current_active_user),
-) -> Any:
-    card = await crud_card.get_card(db, card_id)
-    if not card:
-        raise HTTPException(status_code=404, detail="CardInDBBase not found")
-
-    list_obj = await crud_list.get_list(db, card.list_id)
-    board = await crud_board.get_board(db, list_obj.board_id)
-
-    await check_board_access(board, current_user, db, ["write", "admin"])
-
-    await crud_card.delete_card(db, card_id)
-    return {"message": "CardInDBBase deleted successfully"}
+    factory: ServiceFactory = Depends(deps.get_sqlalchemy_service_factory),
+) -> dict:
+    """Delete a card."""
+    card_service = factory.create_card_service()
+    await get_card_context(card_id, factory, current_user, ["write", "admin"])
+    await card_service.delete_card(card_id)
+    return {"message": "Card deleted successfully"}
 
 
 @router.post("/{card_id}/move", response_model=CardWithAssignee)
 async def move_card(
-    *,
-    db: AsyncSession = Depends(deps.get_db),
     card_id: int,
     move_data: MoveCard,
     current_user: User = Depends(deps.get_current_active_user),
-) -> Any:
-    card = await crud_card.get_card(db, card_id)
-    if not card:
-        raise HTTPException(status_code=404, detail="CardInDBBase not found")
+    factory: ServiceFactory = Depends(deps.get_sqlalchemy_service_factory),
+) -> CardWithAssignee:
+    """Move a card to a different list."""
+    card_service = factory.create_card_service()
+    list_service = factory.create_list_service()
+    
+    card, source_list, board, formatted_id = await get_card_context(
+        card_id, factory, current_user, ["write", "admin"]
+    )
 
-    # Проверяем исходный список и доску
-    source_list = await crud_list.get_list(db, card.list_id)
-    source_board = await crud_board.get_board(db, source_list.board_id)
-
-    target_list = await crud_list.get_list(db, move_data.target_list_id)
-    if not target_list:
+    if not (target_list := await list_service.get_list(move_data.target_list_id)):
         raise HTTPException(status_code=404, detail="Target list not found")
 
-    # Проверяем, что целевой список принадлежит той же доске
     if source_list.board_id != target_list.board_id:
         raise HTTPException(status_code=400, detail="Cannot move card between different boards")
 
-    await check_board_access(source_board, current_user, db, ["write", "admin"])
+    if card.list_id != move_data.target_list_id:
+        await notify_assignee(card, formatted_id, current_user, board.id, factory)
 
-    board_prefix = generate_board_prefix(source_board.title)
-    formatted_id = f"{board_prefix}-{card.card_id}"
-
-    if card.assignee_id:
-        assignee = await crud_user.get_user(db, card.assignee_id)
-
-        if card.list_id != move_data.target_list_id and card.assignee_id != current_user.id:
-            send_email.delay(
-                assignee.email,
-                assignee.username,
-                card.title,
-                formatted_id,
-                current_user.username,
-                source_board.id,
-            )
-
-    card = await crud_card.move_card(
-        db,
+    card = await card_service.move_card(
         card_id=card_id,
         target_list_id=move_data.target_list_id,
         new_position=move_data.new_position,
     )
-
-    assignee = None
-    if card and card.assignee_id:
-        assignee = await crud_user.get_user(db, card.assignee_id)
-
-    if card:
-        return {**card.__dict__, "assignee": assignee, "formatted_id": formatted_id}
-    return None
+    
+    return await get_card_with_assignee(card, formatted_id, factory)
 
 
 @router.get("/{card_id}/comments", response_model=List[CommentWithUser])
 async def get_card_comments(
-    *,
-    db: AsyncSession = Depends(deps.get_db),
     card_id: int,
     current_user: User = Depends(deps.get_current_active_user),
-) -> Any:
-    card = await crud_card.get_card(db, card_id)
-    if not card:
-        raise HTTPException(status_code=404, detail="Card not found")
+    factory: ServiceFactory = Depends(deps.get_sqlalchemy_service_factory),
+) -> List[CommentWithUser]:
+    """Get all comments for a card."""
+    user_service = factory.create_user_service()
+    comment_service = factory.create_comment_service()
+    
+    await get_card_context(card_id, factory, current_user, ["read", "write", "admin"])
+    comments = await comment_service.get_card_comments(card_id)
 
-    list_obj = await crud_list.get_list(db, card.list_id)
-    if not list_obj:
-        raise HTTPException(status_code=404, detail="List not found")
-
-    board = await crud_board.get_board(db, list_obj.board_id)
-    if not board:
-        raise HTTPException(status_code=404, detail="Board not found")
-
-    await check_board_access(board, current_user, db, ["read", "write", "admin"])
-
-    comments = await crud_comment.get_card_comments(db, card_id)
-
-    result = []
     for comment in comments:
-        comment.user = await crud_user.get_user(db, comment.user_id)
-        result.append(comment)
+        comment.user = await user_service.get_user_by_id(comment.user_id)
 
-    return result
+    return comments
 
 
 @router.post("/{card_id}/comments", response_model=CommentWithUser)
 async def create_comment(
-    *,
-    db: AsyncSession = Depends(deps.get_db),
     card_id: int,
     comment_in: CommentCreate,
     current_user: User = Depends(deps.get_current_active_user),
-) -> Any:
-    card = await crud_card.get_card(db, card_id)
-    if not card:
-        raise HTTPException(status_code=404, detail="Card not found")
+    factory: ServiceFactory = Depends(deps.get_sqlalchemy_service_factory),
+) -> CommentWithUser:
+    """Create a new comment for a card."""
+    user_service = factory.create_user_service()
+    comment_service = factory.create_comment_service()
 
-    # Check if list exists
-    list_obj = await crud_list.get_list(db, card.list_id)
-    if not list_obj:
-        raise HTTPException(status_code=404, detail="List not found")
+    card, _, board, formatted_id = await get_card_context(
+        card_id, factory, current_user, ["write", "admin"]
+    )
 
-    # Check if board exists
-    board = await crud_board.get_board(db, list_obj.board_id)
-    if not board:
-        raise HTTPException(status_code=404, detail="Board not found")
-
-    await check_board_access(board, current_user, db, ["write", "admin"])
-
-    comment = await crud_comment.create_comment(db, comment_in, current_user.id)
-
-    comment.user =  await crud_user.get_user(db, comment.user_id)
-    if card.assignee_id and card.assignee_id != current_user.id:
-        assignee = await crud_user.get_user(db, card.assignee_id)
-        if assignee:
-            board_prefix = generate_board_prefix(board.title)
-            formatted_id = f"{board_prefix}-{card.card_id}"
-
-            send_comment_notification.delay(
-                assignee.email,
-                assignee.username,
-                card.title,
-                formatted_id,
-                current_user.username,
-                board.id,
-                comment_in.text,
-            )
-
+    comment = await comment_service.create_comment(comment_in, current_user.id)
+    comment.user = await user_service.get_user_by_id(comment.user_id)
+    
+    await notify_assignee(card, formatted_id, current_user, board.id, factory, comment_in.text)
     return comment
 
 
 @router.put("/{card_id}/comments/{comment_id}", response_model=CommentWithUser)
 async def update_comment(
-    *,
-    db: AsyncSession = Depends(deps.get_db),
     card_id: int,
     comment_id: int,
     comment_in: CommentUpdate,
     current_user: User = Depends(deps.get_current_active_user),
-) -> Any:
-    card = await crud_card.get_card(db, card_id)
-    if not card:
-        raise HTTPException(status_code=404, detail="Card not found")
+    factory: ServiceFactory = Depends(deps.get_sqlalchemy_service_factory),
+) -> CommentWithUser:
+    """Update an existing comment."""
+    user_service = factory.create_user_service()
+    comment_service = factory.create_comment_service()
+    board_share_service = factory.create_board_share_service()
+    card, _, board, _ = await get_card_context(card_id, factory, current_user, ["read"])
 
-    comment = await crud_comment.get_comment(db, comment_id)
-    if not comment:
+    if not (comment := await comment_service.get_comment(comment_id)):
         raise HTTPException(status_code=404, detail="Comment not found")
 
     if comment.card_id != card.id:
         raise HTTPException(status_code=400, detail="Comment does not belong to this card")
 
     if comment.user_id != current_user.id:
-        list_obj = await crud_list.get_list(db, card.list_id)
-        board = await crud_board.get_board(db, list_obj.board_id)
+        await check_board_access(board, current_user, ["write", "admin"], board_share_service)
 
-        await check_board_access(board, current_user, db, ["write", "admin"])
-
-    comment = await crud_comment.update_comment(db, comment, comment_in)
-    comment.user = await crud_user.get_user(db, comment.user_id)
-
+    comment = await comment_service.update_comment(comment, comment_in)
+    comment.user = await user_service.get_user_by_id(comment.user_id)
     return comment
 
 
 @router.delete("/{card_id}/comments/{comment_id}")
 async def delete_comment(
-    *,
-    db: AsyncSession = Depends(deps.get_db),
     card_id: int,
     comment_id: int,
     current_user: User = Depends(deps.get_current_active_user),
-) -> Any:
-    card = await crud_card.get_card(db, card_id)
-    if not card:
-        raise HTTPException(status_code=404, detail="Card not found")
+    factory: ServiceFactory = Depends(deps.get_sqlalchemy_service_factory),
+) -> dict:
+    """Delete a comment."""
+    comment_service = factory.create_comment_service()
+    board_share_service = factory.create_board_share_service()
+    
+    card, _, board, _ = await get_card_context(card_id, factory, current_user, ["read"])
 
-    comment = await crud_comment.get_comment(db, comment_id)
-    if not comment:
+    if not (comment := await comment_service.get_comment(comment_id)):
         raise HTTPException(status_code=404, detail="Comment not found")
 
     if comment.card_id != card.id:
         raise HTTPException(status_code=400, detail="Comment does not belong to this card")
 
     if comment.user_id != current_user.id:
-        list_obj = await crud_list.get_list(db, card.list_id)
-        board = await crud_board.get_board(db, list_obj.board_id)
+        await check_board_access(board, current_user, ["write", "admin"], board_share_service)
 
-        await check_board_access(board, current_user, db, ["write", "admin"])
-
-    await crud_comment.delete_comment(db, comment)
-
+    await comment_service.delete_comment(comment)
     return {"success": True}

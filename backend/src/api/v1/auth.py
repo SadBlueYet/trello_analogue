@@ -4,9 +4,8 @@ from typing import Any
 from fastapi import APIRouter, Depends, HTTPException, Response, status
 from fastapi.security import OAuth2PasswordRequestForm
 
-from src.core.deps import get_repository_factory
-from src.repositories import RepositoryFactory
-from src.services import UserService
+from src.core.deps import get_sqlalchemy_service_factory
+from src.services import UserService, ServiceFactory
 from src.core.config import settings
 from src.core.deps import get_current_active_user, get_user_from_refresh_token
 from src.core.security import create_access_token, create_refresh_token, delete_auth_cookies, set_auth_cookies
@@ -21,12 +20,12 @@ router = APIRouter()
 async def register(
     *,
     user_in: UserCreate,
-    factory: RepositoryFactory = Depends(get_repository_factory),
+    service_factory: ServiceFactory = Depends(get_sqlalchemy_service_factory),
 ) -> Any:
     """
     Register a new user.
     """
-    service = UserService(factory.create_user_repository())
+    service = service_factory.create_user_service()
     user = await service.get_user_by_email(user_in.email)
     if user:
         raise HTTPException(
@@ -44,13 +43,13 @@ async def register(
 async def login(
     response: Response,
     form_data: OAuth2PasswordRequestForm = Depends(),
-    factory: RepositoryFactory = Depends(get_repository_factory),
+    service_factory: ServiceFactory = Depends(get_sqlalchemy_service_factory),
 ) -> Any:
     """
     OAuth2 compatible token login, get an access token for future requests.
     Sets HTTP-only cookies for access and refresh tokens.
     """
-    service = UserService(factory.create_user_repository())
+    service = service_factory.create_user_service()
     user = await service.authenticate(username=form_data.username, password=form_data.password)
 
     access_token_expires = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
@@ -114,14 +113,14 @@ async def get_current_user_info(
 async def update_profile(
     *,
     profile_update: UserProfileUpdate,
-    factory: RepositoryFactory = Depends(get_repository_factory),
+    service_factory: ServiceFactory = Depends(get_sqlalchemy_service_factory),
     current_user: User = Depends(get_current_active_user),
 ) -> Any:
     """
     Update current user profile.
     """
     try:
-        service = UserService(factory.create_user_repository())
+        service = service_factory.create_user_service()
         updated_user = await service.update_user_profile(
             current_user=current_user, profile_update=profile_update
         )
