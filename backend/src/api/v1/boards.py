@@ -3,12 +3,9 @@ from typing import Any, List
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from services import UserService
-from src.core.deps import get_repository_factory
-from src.repositories import RepositoryFactory
+from services import UserService, BoardService, BoardShareService, ServiceFactory
+from src.core.deps import get_sqlalchemy_service_factory
 from src.core import deps
-from src.crud import board as crud_board
-from src.crud import board_share as crud_board_share
 from src.crud import list as crud_list
 from src.models.user import User
 from src.schemas.board import (
@@ -27,18 +24,21 @@ router = APIRouter()
 @router.get("/", response_model=List[BoardWithLists])
 async def get_boards(
     *,
-    db: AsyncSession = Depends(deps.get_db),
     current_user: User = Depends(deps.get_current_active_user),
+    service_factory: ServiceFactory = Depends(get_sqlalchemy_service_factory),
 ) -> Any:
     """
     Get all boards for the current user.
     """
-    owned_boards = await crud_board.get_boards(db, current_user.id)
-    shared_boards_access = await crud_board_share.get_shared_boards_for_user(db, current_user.id)
+    board_service = service_factory.create_board_service()
+    board_share_service = service_factory.create_board_share_service()
+
+    owned_boards = await board_service.get_boards(current_user.id)
+    shared_boards_access = await board_share_service.get_shared_boards_for_user(current_user.id)
 
     shared_boards = []
     for share in shared_boards_access:
-        board = await crud_board.get_board(db, share.board_id)
+        board = await board_service.get_board(share.board_id)
         if board:
             shared_boards.append(board)
 
@@ -49,103 +49,106 @@ async def get_boards(
 @router.post("/", response_model=BoardInDBBase)
 async def create_board(
     *,
-    db: AsyncSession = Depends(deps.get_db),
     board_in: BoardCreate,
     current_user: User = Depends(deps.get_current_active_user),
+    service_factory: ServiceFactory = Depends(get_sqlalchemy_service_factory),
 ) -> Any:
     """
     Create a new board.
     """
-    return await crud_board.create_board(db, board_in, current_user.id)
+    service = service_factory.create_board_service()
+    return await service.create_board(board_in, current_user.id)
 
 
 @router.get("/{board_id}", response_model=BoardWithLists)
 async def get_board(
     *,
-    db: AsyncSession = Depends(deps.get_db),
     board_id: int,
     current_user: User = Depends(deps.get_current_active_user),
+    service_factory: ServiceFactory = Depends(get_sqlalchemy_service_factory),
 ) -> Any:
     """
     Get a specific board by id.
     """
-    # Load board with all related data
-
-    board = await crud_board.get_board(db, board_id)
+    board_service = service_factory.create_board_service()
+    list_service = service_factory.create_list_service()
+    board_share_service = service_factory.create_board_share_service()
+    
+    board = await board_service.get_board(board_id)
     if not board:
         raise HTTPException(status_code=404, detail="Board not found")
 
-    await deps.check_board_access(board, current_user, db, ["read", "write", "admin"])
-
-    # Load lists with cards and assignees
-    lists = await crud_list.get_board_lists(db, board_id, include_cards=True)
-
-    # Assign the loaded lists to the board
-    board.lists = lists
-
+    await deps.check_board_access(board, current_user, ["read", "write", "admin"], board_share_service)
+    board.lists = await list_service.get_board_lists(board_id, include_cards=True)
     return board
 
 
 @router.put("/{board_id}", response_model=BoardInDBBase)
 async def update_board(
     *,
-    db: AsyncSession = Depends(deps.get_db),
     board_id: int,
     board_in: BoardUpdate,
     current_user: User = Depends(deps.get_current_active_user),
+    service_factory: ServiceFactory = Depends(get_sqlalchemy_service_factory),
 ) -> Any:
     """
     Update a board.
     """
-    board = await crud_board.get_board(db, board_id)
+    service = service_factory.create_board_service()
+    board_share_service = service_factory.create_board_share_service()
+    
+    board = await service.get_board(board_id)
     if not board:
         raise HTTPException(status_code=404, detail="Board not found")
 
-    await deps.check_board_access(board, current_user, db, ["write", "admin"])
+    await deps.check_board_access(board, current_user, ["write", "admin"], board_share_service)
 
-    board = await crud_board.update_board(db, board, board_in)
-    return board
+    return await service.update_board(board, board_in)
 
 
 @router.delete("/{board_id}")
 async def delete_board(
     *,
-    db: AsyncSession = Depends(deps.get_db),
     board_id: int,
     current_user: User = Depends(deps.get_current_active_user),
+    service_factory: ServiceFactory = Depends(get_sqlalchemy_service_factory),
 ) -> Any:
     """
     Delete a board.
     """
-    board = await crud_board.get_board(db, board_id)
+    service = service_factory.create_board_service()
+    board_share_service = service_factory.create_board_share_service()
+    
+    board = await service.get_board(board_id)
     if not board:
         raise HTTPException(status_code=404, detail="Board not found")
+    await deps.check_board_access(board, current_user, ["admin"], board_share_service)
 
-    await deps.check_board_access(board, current_user, db, ["admin"])
-
-    await crud_board.delete_board(db, board_id)
+    await service.delete_board(board_id)
     return {"message": "Board deleted successfully"}
 
 
 @router.get("/{board_id}/share", response_model=List[BoardShareInfo])
 async def get_board_shares(
     *,
-    db: AsyncSession = Depends(deps.get_db),
     board_id: int,
     current_user: User = Depends(deps.get_current_active_user),
-    factory: RepositoryFactory = Depends(get_repository_factory)
+    service_factory: ServiceFactory = Depends(get_sqlalchemy_service_factory),
 ) -> Any:
     """
     Get all users who have access to the board.
     """
-    user_service = UserService(factory.create_user_repository())
-    board = await crud_board.get_board(db, board_id)
+    user_service = service_factory.create_user_service()
+    board_service = service_factory.create_board_service()
+    board_share_service = service_factory.create_board_share_service()
+
+    board = await board_service.get_board(board_id)
     if not board:
         raise HTTPException(status_code=404, detail="Board not found")
 
-    await deps.check_board_access(board, current_user, db, ["read", "write", "admin"])
+    await deps.check_board_access(board, current_user, ["read", "write", "admin"], board_share_service)
 
-    board_shares = await crud_board_share.get_board_shares_with_user_info(db, board_id)
+    board_shares = await board_share_service.get_board_shares_with_user_info(board_id)
 
     owner_user = await user_service.get_user_by_id(board.owner_id)
 
@@ -166,20 +169,22 @@ async def get_board_shares(
 @router.post("/{board_id}/share", response_model=BoardShareInfo)
 async def create_board_share(
     *,
-    db: AsyncSession = Depends(deps.get_db),
     board_id: int,
     board_share_in: BoardShareCreate,
     current_user: User = Depends(deps.get_current_active_user),
-    factory: RepositoryFactory = Depends(get_repository_factory)
+    service_factory: ServiceFactory = Depends(get_sqlalchemy_service_factory),
 ) -> Any:
     """
     Share a board with another user.
     """
-    user_service = UserService(factory.create_user_repository())
-    if not (board := await crud_board.get_board(db, board_id)):
+    user_service = service_factory.create_user_service()
+    board_service = service_factory.create_board_service()
+    board_share_service = service_factory.create_board_share_service()
+
+    if not (board := await board_service.get_board(board_id)):
         raise HTTPException(status_code=404, detail="Board not found")
 
-    await deps.check_board_access(board, current_user, db, ["admin"])
+    await deps.check_board_access(board, current_user, ["admin"], board_share_service)
 
     if not (user := await user_service.get_user_by_id(board_share_in.user_id)):
         raise HTTPException(status_code=404, detail="User not found")
@@ -187,10 +192,10 @@ async def create_board_share(
     if user.id == current_user.id:
         raise HTTPException(status_code=400, detail="You are the owner of this board")
 
-    if await crud_board_share.get_board_share(db, board_id, user.id):
+    if await board_share_service.get_board_share(board_id, user.id):
         raise HTTPException(status_code=400, detail="User already has access to this board")
 
-    board_share = await crud_board_share.create_board_share(db, board_share_in)
+    board_share = await board_share_service.create_board_share(board_share_in)
 
     return {"id": board_share.id, "access_type": board_share.access_type, "user": user}
 
@@ -198,31 +203,32 @@ async def create_board_share(
 @router.put("/{board_id}/share/{user_id}", response_model=BoardShareInfo)
 async def update_board_share(
     *,
-    db: AsyncSession = Depends(deps.get_db),
     board_id: int,
     user_id: int,
     board_share_in: BoardShareUpdate,
     current_user: User = Depends(deps.get_current_active_user),
-    factory: RepositoryFactory = Depends(get_repository_factory)
+    service_factory: ServiceFactory = Depends(get_sqlalchemy_service_factory),
 ) -> Any:
     """
     Update a board share (change access type).
     """
-    user_service = UserService(factory.create_user_repository())
-    board = await crud_board.get_board(db, board_id)
-    if not board:
+    user_service = service_factory.create_user_service()
+    board_service = service_factory.create_board_service()
+    board_share_service = service_factory.create_board_share_service()
+
+    if not (board := await board_service.get_board(board_id)):
         raise HTTPException(status_code=404, detail="Board not found")
 
-    await deps.check_board_access(board, current_user, db, ["admin"])
+    await deps.check_board_access(board, current_user, ["admin"], board_share_service)
 
-    board_share = await crud_board_share.get_board_share(db, board_id, user_id)
+    board_share = await board_share_service.get_board_share(board_id, user_id)
     if not board_share:
         raise HTTPException(status_code=404, detail="Share not found")
 
     if not (user := await user_service.get_user_by_id(user_id)):
         raise HTTPException(status_code=404, detail="User not found")
 
-    updated_share = await crud_board_share.update_board_share(db, board_share, board_share_in)
+    updated_share = await board_share_service.update_board_share(board_share, board_share_in)
 
     return {"id": updated_share.id, "access_type": updated_share.access_type, "user": user}
 
@@ -230,24 +236,27 @@ async def update_board_share(
 @router.delete("/{board_id}/share/{user_id}")
 async def delete_board_share(
     *,
-    db: AsyncSession = Depends(deps.get_db),
     board_id: int,
     user_id: int,
     current_user: User = Depends(deps.get_current_active_user),
+    service_factory: ServiceFactory = Depends(get_sqlalchemy_service_factory),
 ) -> Any:
     """
     Remove a user's access to a board.
     """
-    board = await crud_board.get_board(db, board_id)
+    board_service = service_factory.create_board_service()
+    board_share_service = service_factory.create_board_share_service()
+
+    board = await board_service.get_board(board_id)
     if not board:
         raise HTTPException(status_code=404, detail="Board not found")
 
-    await deps.check_board_access(board, current_user, db, ["admin"])
+    await deps.check_board_access(board, current_user, ["admin"], board_share_service)
 
-    board_share = await crud_board_share.get_board_share(db, board_id, user_id)
+    board_share = await board_share_service.get_board_share(board_id, user_id)
     if not board_share:
         raise HTTPException(status_code=404, detail="Share not found")
 
-    await crud_board_share.delete_board_share(db, board_share)
+    await board_share_service.delete_board_share(board_share)
 
     return {"message": "Share removed successfully"}
