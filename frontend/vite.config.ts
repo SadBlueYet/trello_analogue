@@ -5,7 +5,8 @@ import react from '@vitejs/plugin-react'
 export default defineConfig({
   plugins: [react()],
   server: {
-    host: '0.0.0.0',
-    port: 5173 // или порт, который вы используете
+    host: true,
+    allowedHosts: ['localhost', '127.0.0.1', '0.0.0.0', 'task-flow.site'],
+    port: 5173,
   }
 })
