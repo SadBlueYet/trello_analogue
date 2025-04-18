@@ -13,7 +13,7 @@ celery_app = Celery("tasks", broker=settings.REDIS_DSN)
 celery_app.conf.task_default_queue = "default"
 
 # Автоматически обнаруживать задачи в этом файле
-celery_app.autodiscover_tasks(["app.tasks"])
+celery_app.autodiscover_tasks(["src.tasks"])
 
 # Настраиваем Jinja2
 template_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "templates")
