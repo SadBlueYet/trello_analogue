@@ -6,7 +6,6 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from services import UserService, BoardService, BoardShareService, ServiceFactory
 from src.core.deps import get_sqlalchemy_service_factory
 from src.core import deps
-from src.crud import list as crud_list
 from src.models.user import User
 from src.schemas.board import (
     BoardCreate,

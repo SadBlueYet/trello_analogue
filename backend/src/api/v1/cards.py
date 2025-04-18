@@ -263,7 +263,6 @@ async def update_comment(
     current_user: User = Depends(deps.get_current_active_user),
     factory: ServiceFactory = Depends(deps.get_sqlalchemy_service_factory),
 ) -> CommentWithUser:
-    """Update an existing comment."""
     user_service = factory.create_user_service()
     comment_service = factory.create_comment_service()
     board_share_service = factory.create_board_share_service()

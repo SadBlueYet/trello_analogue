@@ -9,7 +9,6 @@ from services import UserService, BoardShareService
 from src.repositories import SQLAlchemyRepositoryFactory
 from src.services import ServiceFactory
 from src.core.config import settings
-from src.crud.board_share import get_board_share
 from src.db.session import get_db
 from src.models.board import Board
 from src.models.user import User

@@ -33,7 +33,7 @@ export const register = createAsyncThunk(
     'auth/register',
     async (data: { email: string; username: string; password: string; full_name?: string }, { dispatch }) => {
         // 1. Register user
-        const response = await authService.register(data);
+        await authService.register(data);
 
         // 2. Login to get auth cookies
         await authService.login({

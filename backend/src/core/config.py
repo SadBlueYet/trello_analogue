@@ -6,7 +6,7 @@ from pydantic_settings import BaseSettings
 
 class Settings(BaseSettings):
     load_dotenv(override=True)
-    PROJECT_NAME: str = "Trello Clone"
+    PROJECT_NAME: str = "Task Flow"
     API_V1_STR: str = "/api/v1"
 
     # JWT
