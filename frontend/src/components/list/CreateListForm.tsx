@@ -24,16 +24,13 @@ const CreateListForm: React.FC<CreateListFormProps> = ({ boardId, position }) =>
             setTitle('');
             setIsOpen(false);
         } catch (err) {
-            // Error is handled by the board slice
+            console.error('Error creating list:', err);
         }
     };
 
     if (!isOpen) {
         return (
-            <button
-                onClick={() => setIsOpen(true)}
-                className="w-full text-left px-4 py-3 bg-gray-100 hover:bg-gray-200 rounded-lg text-gray-600 focus:outline-none"
-            >
+            <button onClick={() => setIsOpen(true)} className="w-full text-left px-4 py-3 bg-gray-100 hover:bg-gray-200 rounded-lg text-gray-600 focus:outline-none">
                 + Add another list
             </button>
         );

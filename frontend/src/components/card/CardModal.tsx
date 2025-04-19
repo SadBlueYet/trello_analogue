@@ -92,23 +92,10 @@ const CardModal: React.FC<CardModalProps> = ({ isOpen, onClose, card, onSave, li
   const loadBoardUsers = async () => {
     setLoadingUsers(true);
     try {
-      const sharesData = await boardService.getBoardShares(boardId);
+      const shares = await boardService.getBoardShares(boardId);
 
       // Check if we have a valid response with users
-      if (!sharesData || sharesData.length === 0) {
-
-        // Try to load from localStorage first
-        try {
-          const cachedShares = localStorage.getItem(`boardShares_${boardId}`);
-          if (cachedShares) {
-            const parsedShares = JSON.parse(cachedShares);
-            setBoardUsers(parsedShares);
-            return; // Exit early if we have cached data
-          }
-        } catch (localErr) {
-          console.error("Failed to load cached board shares:", localErr);
-        }
-
+      if (!shares || shares.length === 0) {
         // If the current user is available and current board is loaded, at least include them
         if (currentUser && currentBoard) {
           // Include owner separately if available
@@ -138,26 +125,14 @@ const CardModal: React.FC<CardModalProps> = ({ isOpen, onClose, card, onSave, li
         }
       } else {
         // Normal case - API returned valid users
-        setBoardUsers(sharesData);
-
-        // Also store in localStorage as fallback for reloads
-        try {
-          localStorage.setItem(`boardShares_${boardId}`, JSON.stringify(sharesData));
-        } catch (err) {
-          console.warn("Failed to cache board shares in localStorage:", err);
-        }
+        setBoardUsers(shares);
       }
     } catch (error) {
       console.error('Error loading board users:', error);
 
       // Try to load from localStorage as fallback
       try {
-        const cachedShares = localStorage.getItem(`boardShares_${boardId}`);
-        if (cachedShares) {
-          const parsedShares = JSON.parse(cachedShares);
-          console.log("Using cached board shares from localStorage:", parsedShares);
-          setBoardUsers(parsedShares);
-        } else if (currentUser && currentBoard?.owner) {
+        if (currentUser && currentBoard?.owner) {
           // Minimal fallback with just owner and current user
           const fallbackUsers = [];
 

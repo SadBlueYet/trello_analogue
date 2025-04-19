@@ -6,7 +6,6 @@ import { updateList, deleteList } from '../../store/board.slice';
 import { AppDispatch } from '../../store/store';
 import CardComponent from '../card/Card';
 import CreateCardForm from '../card/CreateCardForm';
-import { clearListCardsCache } from '../../pages/BoardPage';
 
 interface ListProps {
     list: BoardList;
@@ -39,10 +38,9 @@ const List: React.FC<ListProps> = ({ list, index }) => {
         }
     };
 
-    // Функция для обновления карточек в списке
+    // Функция для обновления карточек в списке - больше не требует очистки кеша
     const handleCardUpdate = () => {
-        // Очищаем кеш карточек для этого списка
-        clearListCardsCache(list.id);
+        // Пустая функция, так как кеширование удалено
     };
 
     return (
@@ -129,4 +127,4 @@ const List: React.FC<ListProps> = ({ list, index }) => {
     );
 };
 
-export default List;
+export default List; 

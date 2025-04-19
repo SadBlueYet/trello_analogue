@@ -27,9 +27,7 @@ interface UpdateShareData {
 export const boardService = {
     async getBoards(): Promise<Board[]> {
         try {
-            console.log('Fetching boards from:', API_ENDPOINTS.BOARDS.LIST);
             const response = await api.get<any[]>(API_ENDPOINTS.BOARDS.LIST);
-            console.log('Raw API response:', response.data);
 
             if (!Array.isArray(response.data)) {
                 console.error('API response is not an array:', response.data);
@@ -40,7 +38,6 @@ export const boardService = {
                 ...board,
                 lists: board.lists || []
             }));
-            console.log('Processed boards:', boards);
             return boards;
         } catch (error) {
             console.error('Error in getBoards:', error);

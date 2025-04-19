@@ -3,7 +3,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { useParams, Navigate, useNavigate } from 'react-router-dom';
 import { DragDropContext, Droppable, Draggable, DroppableProvided, DraggableProvided } from '@hello-pangea/dnd';
 import { RootState, AppDispatch } from '../store';
-import { fetchBoard, setCurrentBoard, clearBoardCache, updateBoard } from '../store/board.slice';
+import { fetchBoard, setCurrentBoard, updateBoard } from '../store/board.slice';
 import { Board, Card } from '../store/types';
 import { listService } from '../services/list.service';
 import { cardService } from '../services/card.service';
@@ -227,82 +227,21 @@ const AddItemForm: React.FC<{
   </form>
 );
 
-// Кеширование загрузки карточек
-const cardsCache = new Map<number, { cards: Card[], timestamp: number }>();
-const CARDS_CACHE_TIME = 30000; // 30 секунд
-
-// Избегаем дублирования запросов
-const pendingCardRequests = new Map<number, Promise<Card[]>>();
-
-// Функция для загрузки карточек списка с кешированием
-async function getListCardsWithCache(listId: number): Promise<Card[]> {
+// Добавьте простую функцию без кеширования:
+async function getListCards(listId: number): Promise<Card[]> {
   // Проверка на корректный ID
   if (!listId || typeof listId !== 'number' || isNaN(listId)) {
-    console.error("Invalid list ID provided to getListCardsWithCache:", listId);
+    console.error("Invalid list ID provided to getListCards:", listId);
     return [];
   }
-
-  // Проверяем кеш
-  const cachedData = cardsCache.get(listId);
-  const now = Date.now();
-
-  if (cachedData && now - cachedData.timestamp < CARDS_CACHE_TIME) {
-    return cachedData.cards;
+  
+  try {
+    return await cardService.getListCards(listId);
+  } catch (error) {
+    console.error(`Error fetching cards for list ${listId}:`, error);
+    return [];
   }
-
-  // Проверяем, есть ли уже запрос на эти карточки
-  if (pendingCardRequests.has(listId)) {
-    try {
-      return await pendingCardRequests.get(listId)!;
-    } catch (error) {
-      console.error(`Error in pending card request for list ${listId}:`, error);
-      return [];
-    }
-  }
-
-  // Создаем новый запрос
-  const cardPromise = cardService.getListCards(listId)
-    .then(cards => {
-      // Проверяем корректность полученных данных
-      if (!Array.isArray(cards)) {
-        console.error(`Received invalid cards data for list ${listId}:`, cards);
-        return [];
-      }
-
-      // Кешируем результат
-      cardsCache.set(listId, { cards, timestamp: Date.now() });
-      // Удаляем запрос из списка ожидающих
-      setTimeout(() => pendingCardRequests.delete(listId), 0);
-      return cards;
-    })
-    .catch(error => {
-      // Удаляем запрос из списка ожидающих в случае ошибки
-      setTimeout(() => pendingCardRequests.delete(listId), 0);
-      console.error(`Error fetching cards for list ${listId}:`, error);
-      return [];
-    });
-
-  // Сохраняем запрос
-  pendingCardRequests.set(listId, cardPromise);
-
-  return cardPromise;
 }
-
-// Функция для очистки кеша карточек для всех списков
-function clearAllCardsCache() {
-  // Очищаем весь кеш карточек
-  cardsCache.clear();
-  // Также очищаем все ожидающие запросы
-  pendingCardRequests.clear();
-}
-
-// Функция для очистки кеша списка карточек
-export function clearListCardsCache(listId: number) {
-  console.log(`Clearing cache for list ${listId}`);
-  cardsCache.delete(listId);
-  pendingCardRequests.delete(listId);
-}
-
 
 const BoardPage: React.FC = () => {
   const { boardId } = useParams<{ boardId: string }>();
@@ -336,7 +275,7 @@ const BoardPage: React.FC = () => {
 
     const loadBoard = async () => {
       // Очищаем весь кеш при загрузке доски
-      clearAllCardsCache();
+      // clearAllCardsCache();
 
       try {
     if (boardId) {
@@ -360,7 +299,7 @@ const BoardPage: React.FC = () => {
                 }
 
                 try {
-                  const cards = await getListCardsWithCache(list.id);
+                  const cards = await getListCards(list.id);
                   return { ...list, cards: Array.isArray(cards) ? cards : [] };
                 } catch (error) {
                   console.error(`Error loading cards for list ${list.id}:`, error);
@@ -438,9 +377,9 @@ const BoardPage: React.FC = () => {
       };
 
       // Очищаем кеш доски
-      clearBoardCache(currentBoard.id);
+      // clearBoardCache(currentBoard.id);
       // Очищаем кеш карточек
-      clearAllCardsCache();
+      // clearAllCardsCache();
 
       const updatedBoard: Board = {
         ...currentBoard,
@@ -468,10 +407,9 @@ const BoardPage: React.FC = () => {
       });
 
       // Очищаем кэш для этого списка
-      cardsCache.delete(listId);
-      pendingCardRequests.delete(listId);
+      // cardsCache.delete(listId);
       // Очищаем кеш доски
-      clearBoardCache(currentBoard.id);
+      // clearBoardCache(currentBoard.id);
 
       const updatedBoard: Board = {
         ...currentBoard,
@@ -555,9 +493,9 @@ const BoardPage: React.FC = () => {
         try {
           await listService.reorderList(movedList.id, destination.index);
           // Очищаем весь кеш после перетаскивания списков
-          clearAllCardsCache();
+          // clearAllCardsCache();
           // Очищаем кеш доски
-          clearBoardCache(currentBoard.id);
+          // clearBoardCache(currentBoard.id);
       } catch (err) {
         console.error('Failed to update list position', err);
         // Если была ошибка, загружаем актуальное состояние с сервера
@@ -699,13 +637,13 @@ const BoardPage: React.FC = () => {
         );
 
           // Очищаем кеш для затронутых списков
-          clearListCardsCache(sourceListId);
+          // clearListCardsCache(sourceListId);
           if (sourceListId !== destListId) {
-            clearListCardsCache(destListId);
+            // clearListCardsCache(destListId);
           }
 
           // Очищаем кеш доски
-          clearBoardCache(currentBoard.id);
+          // clearBoardCache(currentBoard.id);
       } catch (err) {
         console.error('Failed to update card position', err);
         // Если была ошибка, загружаем актуальное состояние с сервера
@@ -776,9 +714,6 @@ const BoardPage: React.FC = () => {
           ...currentBoard,
           lists: updatedLists
         }));
-
-        // Очищаем кеш карточек этого списка
-        clearListCardsCache(response.list_id);
 
         // Обновляем выбранную карточку
         setSelectedCard(response);

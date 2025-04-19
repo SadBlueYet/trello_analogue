@@ -19,7 +19,7 @@ const RegisterForm: React.FC = () => {
             await dispatch(register({ email, username, password, full_name: fullName })).unwrap();
             navigate('/boards');
         } catch (err) {
-            // Error is handled by the auth slice
+            console.error('Error registering:', err);
         }
     };
 

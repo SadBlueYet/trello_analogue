@@ -1,19 +1,19 @@
-import React, { useEffect } from 'react';
+import { useEffect } from 'react';
 import { useParams } from 'react-router-dom';
-import { clearBoardCache } from '../../store/board.slice';
+import { useDispatch } from 'react-redux';
+import { fetchBoard } from '../../store/board.slice';
 import BoardPage from '../../pages/BoardPage';
+import { AppDispatch } from '../../store';
 
-const BoardWrapper: React.FC = () => {
+const BoardWrapper = () => {
   const { boardId } = useParams<{ boardId: string }>();
+  const dispatch = useDispatch<AppDispatch>();
 
-  // Очищаем кеш при монтировании компонента или изменении boardId
   useEffect(() => {
     if (boardId) {
-      // Сбрасываем кеш для этой доски
-      clearBoardCache(parseInt(boardId));
-      console.log('Board cache cleared for ID:', boardId);
+      dispatch(fetchBoard(parseInt(boardId)));
     }
-  }, [boardId]);
+  }, [dispatch, boardId]);
 
   return <BoardPage />;
 };

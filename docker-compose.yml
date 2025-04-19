@@ -20,6 +20,9 @@ services:
       network: host
     environment:
       BACKEND_HOSTNAME: backend
+      VITE_PUBLIC_PATH: /
+      VITE_HOST: 0.0.0.0
+      VITE_PORT: 5173
     ports:
       - "5173:5173"
     depends_on:

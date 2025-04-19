@@ -27,7 +27,7 @@ const CreateCardForm: React.FC<CreateCardFormProps> = ({ listId, position }) => 
             setDescription('');
             setIsOpen(false);
         } catch (err) {
-            // Error is handled by the board slice
+            console.error('Error creating card:', err);
         }
     };
 

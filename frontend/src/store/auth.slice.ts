@@ -12,10 +12,6 @@ const initialState: AuthState = {
     lastAuthCheck: null,
 };
 
-// Кэширование проверки аутентификации
-let authCheckPromise: Promise<any> | null = null;
-const AUTH_CACHE_TIME = 30000; // 30 секунд
-
 export const login = createAsyncThunk(
     'auth/login',
     async (credentials: { username: string; password: string }) => {
@@ -53,8 +49,6 @@ export const logoutAsync = createAsyncThunk(
     'auth/logoutAsync',
     async () => {
         await authService.logout();
-        // Сбрасываем кэш при выходе
-        authCheckPromise = null;
         return {};
     }
 );
@@ -62,48 +56,11 @@ export const logoutAsync = createAsyncThunk(
 // Check authentication thunk
 export const checkAuth = createAsyncThunk(
     'auth/checkAuth',
-    async (_, { getState, rejectWithValue }) => {
-        const state = getState() as { auth: AuthState };
-        const lastCheck = state.auth.lastAuthCheck;
-        const now = Date.now();
-
-        // Если аутентификация уже проверена и проверка была недавно, используем кэш
-        if (
-            state.auth.isAuthenticated &&
-            lastCheck &&
-            now - lastCheck < AUTH_CACHE_TIME
-        ) {
-            return { user: state.auth.user };
-        }
-
-        // Если запрос уже выполняется, возвращаем его
-        if (authCheckPromise) {
-            try {
-                return await authCheckPromise;
-            } catch (error) {
-                return rejectWithValue('Not authenticated');
-            }
-        }
-
+    async (_, { rejectWithValue }) => {
         try {
-            // Создаем новый запрос и кэшируем его
-            authCheckPromise = api.get(API_ENDPOINTS.AUTH.ME).then(response => ({ user: response.data }));
-
-            // Выполняем запрос
-            const result = await authCheckPromise;
-
-            // После выполнения запроса сбрасываем промис
-            setTimeout(() => {
-                authCheckPromise = null;
-            }, 0);
-
-            return result;
+            const response = await api.get(API_ENDPOINTS.AUTH.ME);
+            return { user: response.data };
         } catch (error) {
-            // После выполнения запроса сбрасываем промис
-            setTimeout(() => {
-                authCheckPromise = null;
-            }, 0);
-
             return rejectWithValue('Not authenticated');
         }
     }

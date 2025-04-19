@@ -334,29 +334,6 @@ const boardSlice = createSlice({
                 state.isLoading = false;
                 state.error = action.error.message || 'Failed to delete list';
             })
-            // Create List
-            .addCase(createList.pending, (state) => {
-                state.isLoading = true;
-                state.error = null;
-            })
-            .addCase(createList.fulfilled, (state, action) => {
-                state.isLoading = false;
-                if (state.currentBoard && state.currentBoard.id === action.payload.board_id) {
-                    state.currentBoard.lists.push(action.payload);
-                }
-                // Also update the board in the boards array if exists
-                const boardIndex = state.boards.findIndex(b => b.id === action.payload.board_id);
-                if (boardIndex !== -1) {
-                    if (!state.boards[boardIndex].lists) {
-                        state.boards[boardIndex].lists = [];
-                    }
-                    state.boards[boardIndex].lists.push(action.payload);
-                }
-            })
-            .addCase(createList.rejected, (state, action) => {
-                state.isLoading = false;
-                state.error = action.error.message || 'Failed to create list';
-            })
             // Create Card
             .addCase(createCard.pending, (state) => {
                 state.isLoading = true;
