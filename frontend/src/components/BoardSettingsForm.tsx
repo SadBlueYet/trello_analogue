@@ -138,7 +138,7 @@ const BoardSettingsForm: React.FC<BoardSettingsFormProps> = ({
             <div
               className={`h-16 rounded-md bg-gradient-to-r ${selectedColor} p-3 flex items-center justify-center shadow-md`}
             >
-              <span className="text-white font-medium">Предпросмотр цвета доски</span>
+              <span className="text-white font-medium">Board color preview</span>
             </div>
           </div>
         </div>
