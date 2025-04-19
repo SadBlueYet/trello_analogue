@@ -8,4 +8,4 @@ RUN npm install --legacy-peer-deps
 
 COPY . .
 
-CMD ["npm", "run", "build", "--", "--host", "0.0.0.0", "--port", "5173"]
+CMD ["npm", "run", "build"]
