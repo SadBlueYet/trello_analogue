@@ -4,23 +4,19 @@ import { useParams, Navigate, useNavigate } from 'react-router-dom';
 import { DragDropContext, Droppable, Draggable, DroppableProvided, DraggableProvided } from '@hello-pangea/dnd';
 import { RootState, AppDispatch } from '../store';
 import { fetchBoard, setCurrentBoard, clearBoardCache, updateBoard } from '../store/board.slice';
-import api from '../api/axios';
-import { Board, BoardList, Card } from '../store/types';
+import { Board, Card } from '../store/types';
 import { listService } from '../services/list.service';
 import { cardService } from '../services/card.service';
-import { boardService } from '../services/board.service';
 import {
   Button,
   Input,
-  Card as UICard,
   ErrorMessage,
   PageContainer,
-  PageHeader,
   Modal
 } from '../components/ui';
-import BoardSettingsForm from '../components/BoardSettingsForm';
-import CardModal from '../components/CardModal';
-import ShareBoardModal from '../components/ShareBoardModal';
+import BoardSettingsForm from '../components/board/BoardSettingsForm';
+import CardModal from '../components/card/CardModal';
+import ShareBoardModal from '../components/board/ShareBoardModal';
 
 // Список предустановленных цветов для списков
 const listColors = [
@@ -41,7 +37,7 @@ const ListCard: React.FC<{
   dragHandleProps?: any;
   listColor?: string;
   onEditColor?: () => void;
-}> = ({ id, title, children, onAddCard, dragHandleProps, listColor, onEditColor }) => {
+}> = ({ title, children, onAddCard, dragHandleProps, listColor, onEditColor }) => {
   // Определяем цвет градиента, используя собственный цвет списка или дефолтный
   const gradientClass = listColor || 'from-indigo-600 to-indigo-500';
 
@@ -111,7 +107,7 @@ const TaskCard: React.FC<{
   card_color?: string;
   formatted_id?: string;
   assignee?: any;
-}> = ({ id, title, description, dragHandleProps, onClick, card_id, created_at, card_color, formatted_id, assignee }) => {
+}> = ({ title, description, dragHandleProps, onClick, card_id, created_at, card_color, formatted_id, assignee }) => {
   // Форматируем дату создания, если она есть
   const formattedDate = created_at ? new Date(created_at).toLocaleDateString('ru-RU', {
     day: '2-digit',
@@ -307,16 +303,6 @@ export function clearListCardsCache(listId: number) {
   pendingCardRequests.delete(listId);
 }
 
-// Добавляем нашу функцию перед определением функции BoardPage
-const generateBoardPrefix = (boardTitle: string): string => {
-  // Аналогично логике на бэкенде: берем первые буквы каждого слова
-  if (!boardTitle) return 'TA';
-
-  const words = boardTitle.match(/\b\w/g);
-  if (!words || words.length === 0) return 'TA';
-
-  return words.join('').toUpperCase();
-};
 
 const BoardPage: React.FC = () => {
   const { boardId } = useParams<{ boardId: string }>();
@@ -332,7 +318,7 @@ const BoardPage: React.FC = () => {
 
   // Добавляем новые состояния для управления модальным окном настроек
   const [settingsModalOpen, setSettingsModalOpen] = useState(false);
-  const [isSavingSettings, setIsSavingSettings] = useState(false);
+  const [isSavingSettings] = useState(false);
 
   // Избегаем повторной загрузки
   const boardLoadedRef = useRef(false);
@@ -1059,7 +1045,7 @@ const BoardPage: React.FC = () => {
                                         draggableId={String(card.id)}
                                         index={cardIndex}
                                   >
-                                    {(provided) => (
+                                    {(provided: DraggableProvided) => (
                                       <div
                                         ref={provided.innerRef}
                                         {...provided.draggableProps}

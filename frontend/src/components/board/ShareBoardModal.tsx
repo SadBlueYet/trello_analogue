@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { Modal } from './ui';
-import { Button, Input } from './ui';
-import { BoardShare, User } from '../store/types';
-import { boardService } from '../services/board.service';
-import { userService } from '../services/user.service';
+import { Modal } from '../ui';
+import { Button, Input } from '../ui';
+import { BoardShare, User } from '../../store/types';
+import { boardService } from '../../services/board.service';
+import { userService } from '../../services/user.service';
 
 interface ShareBoardModalProps {
   isOpen: boolean;

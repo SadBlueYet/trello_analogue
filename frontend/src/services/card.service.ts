@@ -17,14 +17,6 @@ interface UpdateCardData {
     assignee_id?: number | null;
 }
 
-interface CreateCommentData {
-    text: string;
-    card_id: number;
-}
-
-interface UpdateCommentData {
-    text: string;
-}
 
 export const cardService = {
     async getListCards(listId: number): Promise<Card[]> {

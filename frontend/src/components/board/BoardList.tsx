@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { fetchBoards } from '../../store/board.slice';
 import { RootState, AppDispatch } from '../../store/store';
 import BoardCard from './BoardCard';
@@ -8,6 +8,7 @@ import CreateBoardForm from './CreateBoardForm';
 
 const BoardList: React.FC = () => {
     const dispatch = useDispatch<AppDispatch>();
+    const navigate = useNavigate();
     const { boards, isLoading, error } = useSelector((state: RootState) => state.board);
 
     useEffect(() => {
@@ -39,9 +40,12 @@ const BoardList: React.FC = () => {
 
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                 {boards.map((board) => (
-                    <Link key={board.id} to={`/boards/${board.id}`}>
-                        <BoardCard board={board} />
-                    </Link>
+                    <div key={board.id} className="w-full">
+                        <BoardCard 
+                            board={board} 
+                            onClick={() => navigate(`/boards/${board.id}`)}
+                        />
+                    </div>
                 ))}
             </div>
         </div>

@@ -5,7 +5,6 @@ WORKDIR /app/frontend
 COPY package.json package-lock.json ./
 
 RUN npm install --legacy-peer-deps
-RUN npm install @hello-pangea/dnd --legacy-peer-deps
 
 COPY . .
 

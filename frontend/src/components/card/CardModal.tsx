@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { Modal, Button, Input, ErrorMessage } from './ui';
-import { Card, BoardList, User, BoardShare, Comment } from '../store/types';
-import { cardService } from '../services/card.service';
-import { boardService } from '../services/board.service';
+import { Modal, Button, Input, ErrorMessage } from '../ui';
+import { Card, BoardList, BoardShare, Comment } from '../../store/types';
+import { cardService } from '../../services/card.service';
+import { boardService } from '../../services/board.service';
 import { useDispatch, useSelector } from 'react-redux';
-import { fetchBoard, setCurrentBoard } from '../store/board.slice';
-import { AppDispatch, RootState } from '../store';
+import { fetchBoard, setCurrentBoard } from '../../store/board.slice';
+import { AppDispatch, RootState } from '../../store';
 
 // Card color presets that match commonly used tailwind colors
 const CARD_COLORS = [
@@ -257,7 +257,7 @@ const CardModal: React.FC<CardModalProps> = ({ isOpen, onClose, card, onSave, li
                   list_id: newListId,
                   position: list.cards.length, // Add to the end of the list
                   assignee_id: selectedAssigneeId,
-                  assignee: selectedAssigneeId ? boardUsers.find(u => u.user.id === selectedAssigneeId)?.user : undefined,
+                  assignee: selectedAssigneeId ? boardUsers.find((u: BoardShare) => u.user.id === selectedAssigneeId)?.user : undefined,
                 };
 
                 return {
@@ -284,7 +284,7 @@ const CardModal: React.FC<CardModalProps> = ({ isOpen, onClose, card, onSave, li
                         description: updatedCard.description,
                         card_color: updatedCard.card_color,
                         assignee_id: selectedAssigneeId,
-                        assignee: selectedAssigneeId ? boardUsers.find(u => u.user.id === selectedAssigneeId)?.user : undefined,
+                        assignee: selectedAssigneeId ? boardUsers.find((u: BoardShare) => u.user.id === selectedAssigneeId)?.user : undefined,
                       };
                       console.log('Updated card object:', updatedCardObj);
                       return updatedCardObj;
@@ -339,7 +339,7 @@ const CardModal: React.FC<CardModalProps> = ({ isOpen, onClose, card, onSave, li
 
     try {
       await cardService.deleteComment(card.id, commentId);
-      setComments(comments.filter(comment => comment.id !== commentId));
+      setComments(comments.filter((comment: Comment) => comment.id !== commentId));
     } catch (error) {
       console.error('Error deleting comment:', error);
     }
@@ -414,7 +414,7 @@ const CardModal: React.FC<CardModalProps> = ({ isOpen, onClose, card, onSave, li
 
   // Find the assignee user object
   const assigneeUser = selectedAssigneeId ?
-    boardUsers.find(share => share.user.id === selectedAssigneeId)?.user :
+    boardUsers.find((share: BoardShare) => share.user.id === selectedAssigneeId)?.user :
     undefined;
 
   return (
@@ -570,7 +570,7 @@ const CardModal: React.FC<CardModalProps> = ({ isOpen, onClose, card, onSave, li
                     <p className="text-gray-400 text-xs mt-1">Be the first to add a comment!</p>
                   </div>
                 ) : (
-                  comments.map(comment => (
+                  comments.map((comment: Comment) => (
                     <div key={comment.id} className="bg-gray-50 rounded-lg p-3 hover:bg-gray-100 transition-colors">
                       <div className="flex">
                         {/* User avatar */}
@@ -694,7 +694,7 @@ const CardModal: React.FC<CardModalProps> = ({ isOpen, onClose, card, onSave, li
                       {/* All shared users */}
                       {boardUsers.length > 0 && (
                         <optgroup label="Shared users">
-                          {boardUsers.map(share => {
+                          {boardUsers.map((share: BoardShare) => {
                             // Skip owner and current user as they're already included above
                             const isOwner = currentBoard?.owner && share.user.id === currentBoard.owner.id;
                             const isCurrentUser = currentUser && share.user.id === currentUser.id;

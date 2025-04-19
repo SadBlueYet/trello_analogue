@@ -4,7 +4,7 @@ import { store } from './store';
 import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
 import HomePage from './pages/HomePage';
-import BoardWrapper from './components/BoardWrapper';
+import BoardWrapper from './components/board/BoardWrapper';
 import ProfilePage from './pages/ProfilePage';
 import PrivateRoute from './components/PrivateRoute';
 import SessionProvider from './components/SessionProvider';

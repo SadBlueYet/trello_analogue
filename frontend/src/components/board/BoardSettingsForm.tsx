@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { Button, Input } from './ui';
-import { Board } from '../store/types';
+import { Button, Input } from '../ui';
+import { Board } from '../../store/types';
 
 interface BoardSettingsFormProps {
   board: Board;
@@ -70,14 +70,6 @@ const BoardSettingsForm: React.FC<BoardSettingsFormProps> = ({
       setError('Failed to update board settings');
       console.error('Error updating board:', err);
     }
-  };
-
-  // Функция для предпросмотра цвета
-  const getPreviewStyle = (color: string) => {
-    return {
-      backgroundImage: `linear-gradient(to right, var(--tw-gradient-stops))`,
-      backgroundColor: color.includes('from-') ? undefined : color,
-    };
   };
 
   return (

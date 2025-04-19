@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useDispatch } from 'react-redux';
-import { createList } from '../../store/board.slice';
-import { AppDispatch } from '../../store/store';
+import { createList } from "../../store/board.slice"
+import { AppDispatch } from '../../store';
 
 interface CreateListFormProps {
     boardId: number;

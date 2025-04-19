@@ -7,32 +7,11 @@ import {
   Button,
   Input,
   Card,
-  ErrorMessage,
-  Badge
+  ErrorMessage
 } from '../components/ui';
-import BoardCard from '../components/BoardCard';
+import BoardCard from '../components/board/BoardCard';
 
-// Яркие цветовые градиенты для карточек досок
-const BOARD_GRADIENTS = [
-  'from-indigo-600 to-indigo-500',
-  'from-pink-500 to-rose-500',
-  'from-orange-400 to-pink-500',
-  'from-green-400 to-cyan-500',
-  'from-blue-500 to-indigo-500',
-  'from-purple-500 to-indigo-500',
-  'from-yellow-400 to-orange-500',
-  'from-red-500 to-pink-500',
-  'from-teal-400 to-cyan-500',
-];
 
-// Получение градиента на основе ID доски
-const getGradientByBoardId = (id: number): string => {
-  // Используем ID доски для детерминированного выбора градиента
-  const gradientIndex = id % BOARD_GRADIENTS.length;
-  return BOARD_GRADIENTS[gradientIndex];
-};
-
-// Улучшенное пустое состояние с анимацией
 const EmptyState: React.FC<{ onCreateClick: () => void }> = ({ onCreateClick }) => (
   <div className="text-center py-12 px-6 bg-white rounded-xl shadow-md border border-gray-100 max-w-lg mx-auto">
     <div className="w-24 h-24 mx-auto bg-gradient-to-r from-indigo-600 to-indigo-500 rounded-full flex items-center justify-center animate-pulse-soft">
@@ -223,13 +202,8 @@ const HomePage = () => {
                 {boards.map((board) => (
                   <div className="w-full" key={board.id}>
                     <BoardCard
-                      title={board.title}
-                      listsCount={board.lists?.length || 0}
-                      background_color={board.background_color}
-                      boardId={board.id}
-                      description={board.description}
+                      board={board}
                       onClick={() => navigate(`/boards/${board.id}`)}
-                      created_at={board.created_at}
                     />
                   </div>
                 ))}

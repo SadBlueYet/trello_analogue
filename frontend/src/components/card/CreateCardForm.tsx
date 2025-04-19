@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useDispatch } from 'react-redux';
 import { createCard } from '../../store/board.slice';
-import { AppDispatch } from '../../store/store';
+import { AppDispatch } from '../../store';
 
 interface CreateCardFormProps {
     listId: number;

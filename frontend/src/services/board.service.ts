@@ -1,5 +1,5 @@
 import api from '../api/axios';
-import { Board, BoardShare, User } from '../store/types';
+import { Board, BoardShare } from '../store/types';
 import { API_ENDPOINTS } from '../config';
 
 interface CreateBoardData {

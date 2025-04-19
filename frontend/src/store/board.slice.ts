@@ -2,6 +2,7 @@ import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import { BoardState, Board } from './types';
 import { boardService } from '../services/board.service';
 import { listService } from '../services/list.service';
+import { cardService } from '../services/card.service';
 
 const initialState: BoardState = {
     boards: [],
@@ -155,6 +156,22 @@ export const deleteList = createAsyncThunk(
     }
 );
 
+export const createList = createAsyncThunk(
+    'board/createList',
+    async (data: { title: string; board_id: number; position: number }) => {
+        const response = await listService.createList(data.board_id, data);
+        return response;
+    }
+);
+
+export const createCard = createAsyncThunk(
+    'board/createCard',
+    async (data: { title: string; description?: string; position: number; list_id: number }) => {
+        const response = await cardService.createCard(data.list_id, data);
+        return response;
+    }
+);
+
 const boardSlice = createSlice({
     name: 'board',
     initialState,
@@ -262,6 +279,101 @@ const boardSlice = createSlice({
             .addCase(deleteBoard.rejected, (state, action) => {
                 state.isLoading = false;
                 state.error = action.error.message || 'Failed to delete board';
+            })
+            // Update List
+            .addCase(updateList.pending, (state) => {
+                state.isLoading = true;
+                state.error = null;
+            })
+            .addCase(updateList.fulfilled, (state, action) => {
+                state.isLoading = false;
+                const index = state.boards.findIndex(board => board.id === action.payload.id);
+                if (index !== -1) {
+                    // Preserve lists when updating the board in boards array
+                    state.boards[index] = {
+                        ...state.boards[index],
+                        lists: state.boards[index].lists.map(list =>
+                            list.id === action.payload.id ? action.payload : list
+                        )
+                    };
+                }
+                if (state.currentBoard?.id === action.payload.id) {
+                    // Preserve lists when updating the current board
+                    state.currentBoard = {
+                        ...state.currentBoard,
+                        lists: state.currentBoard.lists.map(list =>
+                            list.id === action.payload.id ? action.payload : list
+                        )
+                    };
+                    state.lastBoardFetch = Date.now();
+                }
+            })
+            .addCase(updateList.rejected, (state, action) => {
+                state.isLoading = false;
+                state.error = action.error.message || 'Failed to update list';
+            })
+            // Delete List
+            .addCase(deleteList.pending, (state) => {
+                state.isLoading = true;
+                state.error = null;
+            })
+            .addCase(deleteList.fulfilled, (state, action) => {
+                state.isLoading = false;
+                state.boards = state.boards.map(board => ({
+                    ...board,
+                    lists: board.lists.filter(list => list.id !== action.payload)
+                }));
+                if (state.currentBoard) {
+                    state.currentBoard = {
+                        ...state.currentBoard,
+                        lists: state.currentBoard.lists.filter(list => list.id !== action.payload)
+                    };
+                }
+            })
+            .addCase(deleteList.rejected, (state, action) => {
+                state.isLoading = false;
+                state.error = action.error.message || 'Failed to delete list';
+            })
+            // Create List
+            .addCase(createList.pending, (state) => {
+                state.isLoading = true;
+                state.error = null;
+            })
+            .addCase(createList.fulfilled, (state, action) => {
+                state.isLoading = false;
+                if (state.currentBoard && state.currentBoard.id === action.payload.board_id) {
+                    state.currentBoard.lists.push(action.payload);
+                }
+                // Also update the board in the boards array if exists
+                const boardIndex = state.boards.findIndex(b => b.id === action.payload.board_id);
+                if (boardIndex !== -1) {
+                    if (!state.boards[boardIndex].lists) {
+                        state.boards[boardIndex].lists = [];
+                    }
+                    state.boards[boardIndex].lists.push(action.payload);
+                }
+            })
+            .addCase(createList.rejected, (state, action) => {
+                state.isLoading = false;
+                state.error = action.error.message || 'Failed to create list';
+            })
+            // Create Card
+            .addCase(createCard.pending, (state) => {
+                state.isLoading = true;
+                state.error = null;
+            })
+            .addCase(createCard.fulfilled, (state, action) => {
+                state.isLoading = false;
+                if (state.currentBoard) {
+                    const list = state.currentBoard.lists.find(list => list.id === action.payload.list_id);
+                    if (list) {
+                        list.cards.push(action.payload);
+                    }
+                }
+            })
+            .addCase(createCard.rejected, (state, action) => {
+                state.isLoading = false;
+                state.error = action.error.message || 'Failed to create card';
             });
     },
 });

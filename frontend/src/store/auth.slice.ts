@@ -1,5 +1,5 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
-import { AuthState, LoginResponse, RegisterResponse, User } from './types';
+import { AuthState, User } from './types';
 import { authService } from '../services/auth.service';
 import api from '../api/axios';
 import { API_ENDPOINTS } from '../config';
@@ -18,7 +18,7 @@ const AUTH_CACHE_TIME = 30000; // 30 секунд
 
 export const login = createAsyncThunk(
     'auth/login',
-    async (credentials: { username: string; password: string }, { dispatch }) => {
+    async (credentials: { username: string; password: string }) => {
         // 1. Perform login to get auth cookies
         await authService.login(credentials);
 
@@ -31,7 +31,7 @@ export const login = createAsyncThunk(
 
 export const register = createAsyncThunk(
     'auth/register',
-    async (data: { email: string; username: string; password: string; full_name?: string }, { dispatch }) => {
+    async (data: { email: string; username: string; password: string; full_name?: string }) => {
         // 1. Register user
         await authService.register(data);
 

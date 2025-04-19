@@ -11,7 +11,7 @@ interface SessionProviderProps {
 const SessionProvider: React.FC<SessionProviderProps> = ({ children }) => {
   const dispatch = useDispatch<AppDispatch>();
   const navigate = useNavigate();
-  const { isAuthenticated, lastAuthCheck } = useSelector((state: RootState) => state.auth);
+  const { isAuthenticated } = useSelector((state: RootState) => state.auth);
   const authCheckPerformedRef = useRef(false);
 
   // Check authentication status on mount, only once
