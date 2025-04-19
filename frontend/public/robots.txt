@@ -1,0 +1,20 @@
+User-agent: *
+Allow: /
+
+# Разрешаем доступ ко всем статическим ресурсам
+Allow: /*.js
+Allow: /*.css
+Allow: /*.png
+Allow: /*.jpg
+Allow: /*.svg
+Allow: /*.ico
+
+# Запрещаем доступ к служебным директориям
+Disallow: /api/
+Disallow: /admin/
+
+# Указываем расположение файла Sitemap
+Sitemap: https://ваш-домен.com/sitemap.xml
+
+# Указание периода индексации (в секундах)
+Crawl-delay: 10 
