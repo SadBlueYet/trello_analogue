@@ -14,7 +14,7 @@ Disallow: /api/
 Disallow: /admin/
 
 # Указываем расположение файла Sitemap
-Sitemap: https://ваш-домен.com/sitemap.xml
+Sitemap: https://task-flow.site/sitemap.xml
 
 # Указание периода индексации (в секундах)
 Crawl-delay: 10 
