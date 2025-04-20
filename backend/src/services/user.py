@@ -75,3 +75,6 @@ class UserService:
             current_user.hashed_password = get_password_hash(profile_update.new_password)
 
         return await self.repository.update_user_profile(current_user)
+
+    async def search_users(self, query: str, limit: int, current_user_id: int):
+        return await self.repository.search_users(query, limit, current_user_id)

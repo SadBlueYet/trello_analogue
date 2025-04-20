@@ -39,7 +39,6 @@ async def get_lists(
 @router.post("/", response_model=ResponseBoardList)
 async def create_list(
     *,
-    db: AsyncSession = Depends(deps.get_db),
     list_in: BoardListBase,
     current_user: User = Depends(deps.get_current_active_user),
     service_factory: ServiceFactory = Depends(deps.get_sqlalchemy_service_factory),

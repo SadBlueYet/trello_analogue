@@ -1,7 +1,5 @@
-# Используем официальный образ Python
 FROM python:3.13
 
-# Устанавливаем рабочую директорию в контейнере
 WORKDIR /app/
 
 ENV PYTHONFAULTHANDLER=1 \
@@ -12,7 +10,6 @@ ENV PYTHONFAULTHANDLER=1 \
     PYTHONPATH=/app
 
 
-# Установка зависимостей
 RUN pip install --no-cache-dir "pdm==$PDM_VERSION" pip==23.2 && \
     pdm config python.use_venv false && \
     pdm config venv.in_project false && \
@@ -21,7 +18,6 @@ RUN pip install --no-cache-dir "pdm==$PDM_VERSION" pip==23.2 && \
 COPY pyproject.toml pdm.lock /app/
 RUN pdm install -gp /app/ -v --prod
 
-# Копируем файлы проекта в рабочую директорию
 COPY . /app/
 
 CMD ["sh", "-c", "alembic upgrade head && celery -A src.tasks worker --loglevel=info & python src/main.py"]
