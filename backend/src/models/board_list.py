@@ -7,7 +7,6 @@ from .base import Base
 class BoardList(Base):
     __tablename__ = "list"
 
-    id = Column(Integer, primary_key=True, index=True)
     title = Column(String, nullable=False)
     position = Column(Integer, nullable=False)
     board_id = Column(Integer, ForeignKey("board.id"), nullable=False)

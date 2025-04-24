@@ -11,7 +11,6 @@ class BoardShare(Base):
 
     __tablename__ = "board_share"
 
-    id = Column(Integer, primary_key=True, index=True)
     board_id = Column(Integer, ForeignKey("board.id", ondelete="CASCADE"), nullable=False)
     user_id = Column(Integer, ForeignKey("user.id", ondelete="CASCADE"), nullable=False)
     access_type = Column(String, default="read")  # read, write, admin
