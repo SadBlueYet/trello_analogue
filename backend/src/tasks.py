@@ -80,7 +80,7 @@ def send_comment_notification(
     username: str,
     card_title: str,
     task_id: str,
-    commenter_username: str,
+    editor_username: str,
     board_id: int,
     comment_text: str,
 ):
@@ -92,7 +92,7 @@ def send_comment_notification(
         username: Имя получателя
         card_title: Название карточки
         task_id: ID задачи (формат XX-N)
-        commenter_username: Имя пользователя, который добавил комментарий
+        editor_username: Имя пользователя, который внес изменения
         board_id: ID доски
         comment_text: Текст комментария
     """
@@ -105,7 +105,7 @@ def send_comment_notification(
             username=username,
             card_title=card_title,
             task_id=task_id,
-            editor_username=commenter_username,
+            editor_username=editor_username,
             board_id=board_id,
             frontend_url=settings.FRONTEND_URL,
             notification_type="comment",

@@ -71,8 +71,8 @@ async def notify_assignee(
         "email": assignee.email,
         "username": assignee.username,
         "card_title": card.title,
-        "formatted_id": formatted_id,
-        "current_username": current_user.username,
+        "task_id": formatted_id,
+        "editor_username": current_user.username,
         "board_id": board_id,
     }
 
