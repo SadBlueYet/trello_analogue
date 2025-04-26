@@ -83,7 +83,7 @@ class CardRepository(SqlAlchemyRepository):
     The task numbers (LA-XXX) remain consistent for existing cards.
     Next task number after deletion will continue the sequence.
     """
-        card = await self.get_card(card_id)
+        card = await self.get_one(id=card_id)
         if card:
             stmt = (
                 update(Card)
